@@ -67,10 +67,39 @@ const generateQuizFlow = ai.defineFlow(
     outputSchema: GenerateQuizOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
-    if (!output) {
-      throw new Error('Failed to generate quiz content. Please try again.');
+    const response = await prompt(input);
+    
+    // First, try the structured output. It's the most efficient.
+    if (response.output) {
+      return response.output;
     }
-    return output;
+    
+    // If structured output failed, try to manually parse the raw text.
+    const rawText = response.text;
+    if (!rawText) {
+      throw new Error('AI returned an empty response. Please try again.');
+    }
+
+    try {
+      // Clean up the text: find the JSON block, even if it's inside markdown fences
+      const jsonRegex = /```json\n([\s\S]*?)\n```|({[\s\S]*})/;
+      const match = rawText.match(jsonRegex);
+      
+      if (!match) {
+        throw new Error('AI response did not contain valid JSON.');
+      }
+      
+      // Get the JSON part from the match. It can be in group 1 (markdown) or 2 (raw object)
+      const jsonString = match[1] || match[2];
+      const parsed = JSON.parse(jsonString);
+      
+      // Validate with Zod schema
+      return GenerateQuizOutputSchema.parse(parsed);
+
+    } catch (error) {
+      console.error('Failed to parse or validate AI output:', error);
+      console.error('Raw AI response was:', rawText);
+      throw new Error('AI returned data in an unexpected format. Please try again.');
+    }
   }
 );

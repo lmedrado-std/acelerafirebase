@@ -71,10 +71,34 @@ const generateCourseFlow = ai.defineFlow(
     outputSchema: GenerateCourseOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
-    if (!output) {
-      throw new Error('Failed to generate course content. Please try again.');
+    const response = await prompt(input);
+
+    if (response.output) {
+      return response.output;
     }
-    return output;
+    
+    const rawText = response.text;
+    if (!rawText) {
+      throw new Error('AI returned an empty response. Please try again.');
+    }
+    
+    try {
+      const jsonRegex = /```json\n([\s\S]*?)\n```|({[\s\S]*})/;
+      const match = rawText.match(jsonRegex);
+
+      if (!match) {
+        throw new Error('AI response did not contain valid JSON.');
+      }
+      
+      const jsonString = match[1] || match[2];
+      const parsed = JSON.parse(jsonString);
+
+      return GenerateCourseOutputSchema.parse(parsed);
+
+    } catch (error) {
+      console.error('Failed to parse or validate AI output:', error);
+      console.error('Raw AI response was:', rawText);
+      throw new Error('AI returned data in an unexpected format. Please try again.');
+    }
   }
 );
