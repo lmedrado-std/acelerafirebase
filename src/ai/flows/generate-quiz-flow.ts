@@ -68,38 +68,39 @@ const generateQuizFlow = ai.defineFlow(
   },
   async (input) => {
     const response = await prompt(input);
-    
-    // First, try the structured output. It's the most efficient.
+    console.log("🔍 AI raw response:", response);
+
+    // 1. Tenta usar a resposta estruturada (ideal)
     if (response.output) {
       return response.output;
     }
-    
-    // If structured output failed, try to manually parse the raw text.
+
+    // 2. Tenta extrair JSON mesmo se vier com código markdown ou misturado
     const rawText = response.text;
     if (!rawText) {
-      throw new Error('AI returned an empty response. Please try again.');
+      throw new Error('A IA retornou uma resposta vazia.');
     }
 
     try {
-      // Clean up the text: find the JSON block, even if it's inside markdown fences
+      // Regex para encontrar JSON mesmo com ```json ... ``` ou sem
       const jsonRegex = /```json\n([\s\S]*?)\n```|({[\s\S]*})/;
       const match = rawText.match(jsonRegex);
-      
+
       if (!match) {
-        throw new Error('AI response did not contain valid JSON.');
+        console.error('❌ Não foi possível identificar JSON na resposta:', rawText);
+        throw new Error('A IA não retornou dados em formato válido.');
       }
-      
-      // Get the JSON part from the match. It can be in group 1 (markdown) or 2 (raw object)
+
       const jsonString = match[1] || match[2];
       const parsed = JSON.parse(jsonString);
-      
-      // Validate with Zod schema
+
+      // 3. Valida com o schema
       return GenerateQuizOutputSchema.parse(parsed);
 
     } catch (error) {
-      console.error('Failed to parse or validate AI output:', error);
-      console.error('Raw AI response was:', rawText);
-      throw new Error('AI returned data in an unexpected format. Please try again.');
+      console.error('❌ Erro ao analisar ou validar o JSON gerado pela IA:', error);
+      console.error('📄 Resposta bruta da IA:', rawText);
+      throw new Error('Erro ao interpretar a resposta da IA. Tente novamente ou revise o prompt.');
     }
   }
 );
