@@ -27,12 +27,12 @@ const ModuleSchema = z.object({
   content: z.string().describe("The content of the course module, in Markdown format."),
 });
 
-export const GenerateCourseInputSchema = z.object({
+const GenerateCourseInputSchema = z.object({
   topic: z.string().describe('The topic for the course.'),
 });
 export type GenerateCourseInput = z.infer<typeof GenerateCourseInputSchema>;
 
-export const GenerateCourseOutputSchema = z.object({
+const GenerateCourseOutputSchema = z.object({
   title: z.string().describe('The title of the generated course.'),
   description: z.string().describe('A brief description of the course.'),
   points: z.number().describe('The suggested number of points for completing the course (between 100 and 500).'),
