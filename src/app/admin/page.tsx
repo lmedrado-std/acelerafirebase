@@ -126,31 +126,6 @@ export default function AdminPage() {
            <Card className="bg-card mt-4 border-border"><CardContent className="p-6 text-center text-muted-foreground">Funcionalidade da Loja em breve...</CardContent></Card>
         </TabsContent>
         <TabsContent value="vendedores" className="space-y-6 mt-4">
-           <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="text-xl">Adicionar Novo Vendedor</CardTitle>
-              <CardDescription>Digite o nome do vendedor para adicioná-lo à lista.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleAddSeller} className="flex items-end gap-4">
-                <div className="space-y-2 flex-grow">
-                  <Label htmlFor="sellerName">Nome do Vendedor</Label>
-                  <Input 
-                    id="sellerName" 
-                    placeholder="Nome do Vendedor" 
-                    className="bg-input" 
-                    value={sellerName}
-                    onChange={(e) => setSellerName(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
-                    Adicionar Vendedor
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-xl">Vendedores Cadastrados</CardTitle>
@@ -217,6 +192,31 @@ export default function AdminPage() {
                     <p className="text-sm">Adicione um novo vendedor para começar a gerenciar.</p>
                   </div>
                 )}
+            </CardContent>
+          </Card>
+
+           <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-xl">Adicionar Novo Vendedor</CardTitle>
+              <CardDescription>Digite o nome do vendedor para adicioná-lo à lista.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleAddSeller} className="flex items-end gap-4">
+                <div className="space-y-2 flex-grow">
+                  <Label htmlFor="sellerName">Nome do Vendedor</Label>
+                  <Input 
+                    id="sellerName" 
+                    placeholder="Nome do Vendedor" 
+                    className="bg-input" 
+                    value={sellerName}
+                    onChange={(e) => setSellerName(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                    Adicionar Vendedor
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </TabsContent>
