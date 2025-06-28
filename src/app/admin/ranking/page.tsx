@@ -14,7 +14,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 
 type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa' | 'points';
-type TimePeriod = 'dia' | 'semana' | 'mes';
 type GoalLevel = 'Nenhuma' | 'Metinha' | 'Meta' | 'Metona' | 'Lendária';
 
 const goalLevelConfig: Record<GoalLevel, { label: string; className: string }> = {
@@ -27,7 +26,6 @@ const goalLevelConfig: Record<GoalLevel, { label: string; className: string }> =
 
 export default function RankingPage() {
   const [criterion, setCriterion] = useState<RankingCriterion>('salesValue');
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('mes');
   const { sellers: sellersData, goals: goalsData } = useAdminContext();
 
   const sortedSellers = useMemo(() => {
@@ -38,7 +36,7 @@ export default function RankingPage() {
         }
         return b[criterion] - a[criterion];
     });
-  }, [sellersData, criterion, timePeriod]);
+  }, [sellersData, criterion]);
   
   const getCriterionLabel = (currentCriterion: RankingCriterion) => {
     switch (currentCriterion) {
@@ -110,14 +108,6 @@ export default function RankingPage() {
     return <span className="font-bold text-lg text-muted-foreground">{index + 1}</span>;
   };
 
-  const getTimePeriodLabel = (period: TimePeriod) => {
-    switch (period) {
-      case 'dia': return 'Diário';
-      case 'semana': return 'Semanal';
-      case 'mes': return 'Mensal';
-    }
-  }
-
   return (
     <div className="space-y-8">
        <div className="flex items-center gap-4">
@@ -128,39 +118,27 @@ export default function RankingPage() {
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Filtros do Ranking</CardTitle>
-          <CardDescription>Selecione os critérios para visualizar a classificação dos vendedores.</CardDescription>
+          <CardDescription>Selecione o critério para visualizar a classificação dos vendedores.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-                 <div>
-                    <Label className="text-sm font-medium mb-2 block">Critério de Classificação</Label>
-                    <Tabs value={criterion} onValueChange={(value) => setCriterion(value as RankingCriterion)}>
-                        <TabsList className="grid w-full grid-cols-4 bg-input p-1 h-auto">
-                            <TabsTrigger value="salesValue" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
-                                <DollarSign className="mr-2 size-4" /> Vendas
-                            </TabsTrigger>
-                            <TabsTrigger value="ticketAverage" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
-                                <Ticket className="mr-2 size-4" /> Ticket Médio
-                            </TabsTrigger>
-                            <TabsTrigger value="pa" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
-                                <Box className="mr-2 size-4" /> PA
-                            </TabsTrigger>
-                             <TabsTrigger value="points" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
-                                <Star className="mr-2 size-4" /> Pontos
-                            </TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-                </div>
-                 <div>
-                    <Label className="text-sm font-medium mb-2 block">Período</Label>
-                    <Tabs value={timePeriod} onValueChange={(value) => setTimePeriod(value as TimePeriod)}>
-                        <TabsList className="grid w-full grid-cols-3 bg-input p-1 h-auto">
-                            <TabsTrigger value="dia" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">Dia</TabsTrigger>
-                            <TabsTrigger value="semana" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">Semana</TabsTrigger>
-                            <TabsTrigger value="mes" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">Mês</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-                </div>
+        <CardContent>
+            <div>
+                <Label className="text-sm font-medium mb-2 block">Critério de Classificação</Label>
+                <Tabs value={criterion} onValueChange={(value) => setCriterion(value as RankingCriterion)}>
+                    <TabsList className="grid w-full grid-cols-4 bg-input p-1 h-auto">
+                        <TabsTrigger value="salesValue" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+                            <DollarSign className="mr-2 size-4" /> Vendas
+                        </TabsTrigger>
+                        <TabsTrigger value="ticketAverage" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+                            <Ticket className="mr-2 size-4" /> Ticket Médio
+                        </TabsTrigger>
+                        <TabsTrigger value="pa" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+                            <Box className="mr-2 size-4" /> PA
+                        </TabsTrigger>
+                          <TabsTrigger value="points" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+                            <Star className="mr-2 size-4" /> Pontos
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
             </div>
         </CardContent>
       </Card>
@@ -169,7 +147,7 @@ export default function RankingPage() {
         <CardHeader>
           <CardTitle>Classificação por {getCriterionLabel(criterion)}</CardTitle>
            <CardDescription>
-              Visualizando a classificação dos vendedores para o período: <span className="font-semibold capitalize">{getTimePeriodLabel(timePeriod)}</span>.
+              Visualizando a classificação dos vendedores com base nos dados mais recentes.
            </CardDescription>
         </CardHeader>
         <CardContent>
