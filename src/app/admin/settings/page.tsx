@@ -6,11 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2, Flag, CalendarRange } from "lucide-react";
+import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2, Flag, CalendarRange, CalendarIcon } from "lucide-react";
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { sellersData, goalsData } from '@/lib/data';
 import type { Seller, Goals, GoalLevels } from '@/lib/types';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 
 export default function SettingsPage() {
@@ -19,6 +23,14 @@ export default function SettingsPage() {
   const [sellerName, setSellerName] = useState('');
 
   const [goals, setGoals] = useState<Goals>(goalsData);
+
+  const [periods, setPeriods] = useState([
+    { id: '1', name: 'Mês de Julho', startDate: new Date(2024, 6, 1), endDate: new Date(2024, 6, 31) },
+    { id: '2', name: 'Mês de Agosto', startDate: new Date(2024, 7, 1), endDate: new Date(2024, 7, 31) },
+  ]);
+  const [periodName, setPeriodName] = useState('');
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
 
   const handleGoalChange = (
     criterion: keyof Goals,
@@ -60,6 +72,27 @@ export default function SettingsPage() {
   const handleDeleteSeller = (id: string) => {
     setSellers(prevSellers => prevSellers.filter(seller => seller.id !== id));
   };
+  
+  const handleAddPeriod = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!periodName.trim() || !startDate || !endDate) return;
+
+    const newPeriod = {
+      id: new Date().getTime().toString(),
+      name: periodName,
+      startDate,
+      endDate,
+    };
+    setPeriods(prev => [...prev, newPeriod]);
+    setPeriodName('');
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
+
+  const handleDeletePeriod = (id: string) => {
+    setPeriods(prev => prev.filter(p => p.id !== id));
+  };
+
 
   return (
     <div className="space-y-8">
@@ -320,14 +353,116 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Gerenciar Períodos de Duração</CardTitle>
               <CardDescription>
-                Defina os períodos que serão usados para filtrar os rankings.
+                Defina os períodos personalizados que serão usados para filtrar os rankings.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="text-center text-muted-foreground border-2 border-dashed border-border rounded-lg p-8">
-                  <CalendarRange className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <p className="mt-4 font-semibold">Funcionalidade de Períodos em breve</p>
-                  <p className="text-sm">Em breve você poderá cadastrar períodos personalizados.</p>
+            <CardContent className="space-y-8">
+              <form onSubmit={handleAddPeriod} className="grid md:grid-cols-5 gap-4 items-end">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="periodName">Nome do Período</Label>
+                  <Input 
+                      id="periodName" 
+                      placeholder="Ex: Mês de Setembro" 
+                      className="bg-input" 
+                      value={periodName}
+                      onChange={(e) => setPeriodName(e.target.value)}
+                      required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Data de Início</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="startDate"
+                        variant={'outline'}
+                        className={cn(
+                          'w-full justify-start text-left font-normal bg-input',
+                          !startDate && 'text-muted-foreground'
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, 'PPP') : <span>Escolha uma data</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">Data de Fim</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="endDate"
+                        variant={'outline'}
+                        className={cn(
+                          'w-full justify-start text-left font-normal bg-input',
+                          !endDate && 'text-muted-foreground'
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate ? format(endDate, 'PPP') : <span>Escolha uma data</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        initialFocus
+                        disabled={{ before: startDate }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                  Adicionar
+                </Button>
+              </form>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Períodos Cadastrados</h3>
+                {periods.length > 0 ? (
+                  <div className="rounded-md border border-border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Data de Início</TableHead>
+                          <TableHead>Data de Fim</TableHead>
+                          <TableHead className="text-center">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {periods.map((period) => (
+                          <TableRow key={period.id}>
+                            <TableCell className="font-medium">{period.name}</TableCell>
+                            <TableCell>{format(period.startDate, 'dd/MM/yyyy')}</TableCell>
+                            <TableCell>{format(period.endDate, 'dd/MM/yyyy')}</TableCell>
+                            <TableCell className="text-center">
+                              <Button variant="ghost" size="icon" onClick={() => handleDeletePeriod(period.id)} aria-label="Remover período">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground border-2 border-dashed border-border rounded-lg p-8">
+                    <CalendarRange className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <p className="mt-4 font-semibold">Nenhum período cadastrado</p>
+                    <p className="text-sm">Adicione um novo período para começar a gerenciar.</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
