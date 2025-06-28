@@ -58,10 +58,10 @@ const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { href: '/admin/ranking', label: 'Ranking', icon: Trophy },
   { href: '/admin/missions', label: 'Missões', icon: Target },
-  { href: '#', label: 'Academia', icon: GraduationCap },
-  { href: '#', label: 'Quiz', icon: Puzzle },
-  { href: '#', label: 'Loja', icon: ShoppingBag },
-  { href: '#', label: 'Perfil', icon: User },
+  { href: '/admin/academia', label: 'Academia', icon: GraduationCap },
+  { href: '/admin/quiz', label: 'Quiz', icon: Puzzle },
+  { href: '/admin/loja', label: 'Loja', icon: ShoppingBag },
+  { href: '/admin/perfil', label: 'Perfil', icon: User },
   { href: '/admin/settings', label: 'Configurações', icon: Shield },
 ];
 

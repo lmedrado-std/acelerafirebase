@@ -1,67 +1,154 @@
 'use client';
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Target, Star, Calendar } from 'lucide-react';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Target, Star, Calendar, Trash2, CalendarIcon } from 'lucide-react';
 import { useAdminContext } from '@/app/admin/layout';
 import { format } from 'date-fns';
+import type { Mission } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function MissionsPage() {
-  const { missions } = useAdminContext();
+  const { missions, setMissions } = useAdminContext();
+  const [missionName, setMissionName] = useState('');
+  const [missionDescription, setMissionDescription] = useState('');
+  const [missionPoints, setMissionPoints] = useState('');
+  const [missionStartDate, setMissionStartDate] = useState<Date>();
+  const [missionEndDate, setMissionEndDate] = useState<Date>();
+
+  const handleAddMission = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!missionName.trim() || !missionPoints || !missionStartDate || !missionEndDate) return;
+
+    const newMission: Mission = {
+      id: new Date().getTime().toString(),
+      name: missionName,
+      description: missionDescription,
+      points: parseInt(missionPoints, 10),
+      startDate: missionStartDate,
+      endDate: missionEndDate,
+    };
+    setMissions(prev => [...prev, newMission]);
+    setMissionName('');
+    setMissionDescription('');
+    setMissionPoints('');
+    setMissionStartDate(undefined);
+    setMissionEndDate(undefined);
+  };
+
+  const handleDeleteMission = (id: string) => {
+    setMissions(prev => prev.filter(m => m.id !== id));
+  };
 
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
         <Target className="size-8 text-primary" />
-        <h1 className="text-3xl font-bold">Missões Ativas</h1>
+        <h1 className="text-3xl font-bold">Gerenciamento de Missões</h1>
       </div>
 
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle>Acompanhe as Missões</CardTitle>
+          <CardTitle className="text-xl">Criar Nova Missão</CardTitle>
+          <CardDescription>Crie e gerencie as missões para os vendedores.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleAddMission} className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="missionName">Nome da Missão</Label>
+                <Input id="missionName" placeholder="Ex: Vender 5 Pares do Modelo X" className="bg-input" value={missionName} onChange={(e) => setMissionName(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="missionPoints">Pontos de Recompensa</Label>
+                <Input id="missionPoints" placeholder="Ex: 200" type="number" className="bg-input" value={missionPoints} onChange={(e) => setMissionPoints(e.target.value)} required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="missionDescription">Descrição da Missão</Label>
+              <Textarea id="missionDescription" placeholder="Descreva o objetivo da missão." className="bg-input" rows={2} value={missionDescription} onChange={(e) => setMissionDescription(e.target.value)} />
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="missionStartDate">Data de Início</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button id="missionStartDate" variant={'outline'} className={cn('w-full justify-start text-left font-normal bg-input', !missionStartDate && 'text-muted-foreground')}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {missionStartDate ? format(missionStartDate, 'PPP') : <span>Escolha uma data</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0"><CalendarComponent mode="single" selected={missionStartDate} onSelect={setMissionStartDate} initialFocus /></PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="missionEndDate">Data de Fim</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button id="missionEndDate" variant={'outline'} className={cn('w-full justify-start text-left font-normal bg-input', !missionEndDate && 'text-muted-foreground')}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {missionEndDate ? format(missionEndDate, 'PPP') : <span>Escolha uma data</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0"><CalendarComponent mode="single" selected={missionEndDate} onSelect={setMissionEndDate} initialFocus disabled={{ before: missionStartDate }} /></PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+              Criar Nova Missão
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle>Missões Ativas</CardTitle>
           <CardDescription>
             Visualize todas as missões disponíveis para os vendedores.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {missions.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {missions.map((mission) => (
-                <Card key={mission.id} className="bg-background/50 flex flex-col">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Target className="size-6 text-primary" />
-                      </div>
-                      <CardTitle className="text-lg">{mission.name}</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <p className="text-muted-foreground text-sm">
-                      {mission.description || 'Nenhuma descrição fornecida.'}
-                    </p>
-                  </CardContent>
-                  <CardFooter className="flex justify-between items-center text-sm font-medium text-muted-foreground bg-input/50 p-4 mt-4 rounded-b-lg">
-                    <div className="flex items-center gap-2">
-                       <Star className="size-4 text-yellow-400" />
-                       <span>{mission.points} Pontos</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <Calendar className="size-4" />
-                       <span>
-                          {format(mission.startDate, 'dd/MM')} - {format(mission.endDate, 'dd/MM')}
-                       </span>
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))}
+             <div className="rounded-md border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Missão</TableHead>
+                    <TableHead>Período</TableHead>
+                    <TableHead className="text-center">Pontos</TableHead>
+                    <TableHead className="text-center">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {missions.map((mission) => (
+                    <TableRow key={mission.id}>
+                      <TableCell className="font-medium">{mission.name}</TableCell>
+                      <TableCell>{format(mission.startDate, 'dd/MM/yy')} - {format(mission.endDate, 'dd/MM/yy')}</TableCell>
+                      <TableCell className="text-center font-semibold">{mission.points}</TableCell>
+                      <TableCell className="text-center">
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteMission(mission.id)} aria-label="Remover missão">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           ) : (
             <div className="text-center text-muted-foreground border-2 border-dashed border-border rounded-lg p-12">
               <Target className="mx-auto h-12 w-12 text-muted-foreground" />
               <p className="mt-4 font-semibold">Nenhuma missão encontrada</p>
               <p className="text-sm">
-                Vá para as <a href="/admin/settings" className="underline text-primary">Configurações</a> para criar novas missões.
+                Crie uma nova missão no formulário acima.
               </p>
             </div>
           )}
