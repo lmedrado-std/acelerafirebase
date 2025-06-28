@@ -9,19 +9,19 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { TrendingUp } from "lucide-react"
+import { Logo } from "@/components/icons/logo"
 
 export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="mx-auto max-w-sm">
+      <Card className="mx-auto max-w-sm bg-card border-border">
         <CardHeader>
           <div className="flex justify-center mb-4">
-             <TrendingUp className="h-8 w-8 text-primary" />
+             <Logo />
           </div>
-          <CardTitle className="text-2xl text-center">Login</CardTitle>
+          <CardTitle className="text-2xl text-center">Acessar Painel</CardTitle>
           <CardDescription className="text-center">
-            Enter your email below to login to your account
+            Entre com seu e-mail e senha para continuar
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -31,30 +31,31 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="m@exemplo.com"
                 required
+                className="bg-input"
               />
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                <Link href="#" className="ml-auto inline-block text-sm underline">
-                  Forgot your password?
+                <Label htmlFor="password">Senha</Label>
+                <Link href="#" className="ml-auto inline-block text-sm underline text-muted-foreground hover:text-primary">
+                  Esqueceu sua senha?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input id="password" type="password" required className="bg-input" />
             </div>
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+              Entrar
             </Button>
             <Button variant="outline" className="w-full">
-              Login with Google
+              Entrar com Google
             </Button>
           </div>
-          <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="#" className="underline">
-              Sign up
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            Não tem uma conta?{" "}
+            <Link href="#" className="underline hover:text-primary">
+              Cadastre-se
             </Link>
           </div>
         </CardContent>
