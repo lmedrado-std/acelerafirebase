@@ -41,7 +41,7 @@ const menuItems = [
   { href: '#', label: 'Quiz', icon: Puzzle },
   { href: '#', label: 'Loja', icon: ShoppingBag },
   { href: '#', label: 'Perfil', icon: User },
-  { href: '/admin/settings', label: 'Admin', icon: Shield },
+  { href: '/admin/settings', label: 'Configurações', icon: Shield },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

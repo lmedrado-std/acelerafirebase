@@ -1,16 +1,39 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Users, Trophy, DollarSign, LayoutGrid } from "lucide-react";
+import { sellersData, goalsData } from '@/lib/data';
 
 export default function DashboardPage() {
-  // Mock data - in a real app, this would come from an API
-  const bestSeller = { name: "Marcos Andrade", value: 6100.00 };
-  const totalSellers = 5;
-  const currentSales = 26131.45;
-  const monthlyGoal = 5000 * totalSellers; // Example goal calculation
-  const progress = (currentSales / monthlyGoal) * 100;
+  const { bestSeller, totalSellers, currentSales, monthlyGoal } = useMemo(() => {
+    if (sellersData.length === 0) {
+      return {
+        bestSeller: { name: "Nenhum", value: 0 },
+        totalSellers: 0,
+        currentSales: 0,
+        monthlyGoal: 0,
+      };
+    }
+
+    const totalSellers = sellersData.length;
+    const currentSales = sellersData.reduce((acc, seller) => acc + seller.salesValue, 0);
+    const monthlyGoal = goalsData.salesValue.meta * totalSellers;
+    
+    const bestSellerData = sellersData.reduce((prev, current) => 
+      (prev.salesValue > current.salesValue) ? prev : current
+    );
+
+    return { 
+      bestSeller: { name: bestSellerData.name, value: bestSellerData.salesValue },
+      totalSellers,
+      currentSales,
+      monthlyGoal,
+    };
+  }, []);
+
+  const progress = monthlyGoal > 0 ? (currentSales / monthlyGoal) * 100 : 0;
 
   return (
     <div className="space-y-8">

@@ -9,42 +9,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2, Flag, CalendarRange } from "lucide-react";
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { sellersData, goalsData } from '@/lib/data';
+import type { Seller, Goals, GoalLevels } from '@/lib/types';
 
-type Seller = {
-  id: string;
-  name: string;
-  salesValue: number;
-  ticketAverage: number;
-  pa: number;
-};
-
-type GoalLevels = {
-  metinha: number;
-  meta: number;
-  metona: number;
-  lendaria: number;
-};
-
-type Goals = {
-  salesValue: GoalLevels;
-  ticketAverage: GoalLevels;
-  pa: GoalLevels;
-};
 
 export default function SettingsPage() {
-  const [sellers, setSellers] = useState<Seller[]>([
-    { id: '1', name: 'Rian Breston', salesValue: 5240.75, ticketAverage: 150.25, pa: 2.1 },
-    { id: '2', name: 'Carla Dias', salesValue: 4890.50, ticketAverage: 142.80, pa: 2.5 },
-    { id: '3', name: 'Marcos Andrade', salesValue: 6100.00, ticketAverage: 185.00, pa: 1.9 },
-  ]);
+  const [sellers, setSellers] = useState<Seller[]>(sellersData);
 
   const [sellerName, setSellerName] = useState('');
 
-  const [goals, setGoals] = useState<Goals>({
-    salesValue: { metinha: 4000, meta: 5000, metona: 6000, lendaria: 7000 },
-    ticketAverage: { metinha: 130, meta: 150, metona: 180, lendaria: 200 },
-    pa: { metinha: 2.0, meta: 2.5, metona: 2.8, lendaria: 3.0 },
-  });
+  const [goals, setGoals] = useState<Goals>(goalsData);
 
   const handleGoalChange = (
     criterion: keyof Goals,

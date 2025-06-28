@@ -7,22 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Trophy, Medal, Award, DollarSign, Ticket, Box } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-
-type Seller = {
-  id: string;
-  name: string;
-  salesValue: number;
-  ticketAverage: number;
-  pa: number;
-};
-
-const sellersData: Seller[] = [
-    { id: '1', name: 'Rian Breston', salesValue: 5240.75, ticketAverage: 150.25, pa: 2.1 },
-    { id: '2', name: 'Carla Dias', salesValue: 4890.50, ticketAverage: 142.80, pa: 2.5 },
-    { id: '3', name: 'Marcos Andrade', salesValue: 6100.00, ticketAverage: 185.00, pa: 1.9 },
-    { id: '4', name: 'Ana Pereira', salesValue: 5800.00, ticketAverage: 190.50, pa: 2.0 },
-    { id: '5', name: 'Lucas Martins', salesValue: 4200.20, ticketAverage: 120.70, pa: 2.9 },
-];
+import { sellersData, goalsData } from '@/lib/data';
+import type { Seller } from '@/lib/types';
 
 type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa';
 type TimePeriod = 'dia' | 'semana' | 'mes';
@@ -37,24 +23,24 @@ const goalLevelConfig: Record<GoalLevel, { label: string; className: string }> =
 };
 
 const getGoalLevel = (value: number, criterion: RankingCriterion): GoalLevel => {
-  const thresholds: Record<RankingCriterion, { threshold: number; level: GoalLevel }[]> = {
+  const thresholds = {
     salesValue: [
-      { threshold: 7000, level: 'Lendária' },
-      { threshold: 6000, level: 'Metona' },
-      { threshold: 5000, level: 'Meta' },
-      { threshold: 4000, level: 'Metinha' },
+      { threshold: goalsData.salesValue.lendaria, level: 'Lendária' as GoalLevel },
+      { threshold: goalsData.salesValue.metona, level: 'Metona' as GoalLevel },
+      { threshold: goalsData.salesValue.meta, level: 'Meta' as GoalLevel },
+      { threshold: goalsData.salesValue.metinha, level: 'Metinha' as GoalLevel },
     ],
     ticketAverage: [
-      { threshold: 200, level: 'Lendária' },
-      { threshold: 180, level: 'Metona' },
-      { threshold: 150, level: 'Meta' },
-      { threshold: 130, level: 'Metinha' },
+       { threshold: goalsData.ticketAverage.lendaria, level: 'Lendária' as GoalLevel },
+       { threshold: goalsData.ticketAverage.metona, level: 'Metona' as GoalLevel },
+       { threshold: goalsData.ticketAverage.meta, level: 'Meta' as GoalLevel },
+       { threshold: goalsData.ticketAverage.metinha, level: 'Metinha' as GoalLevel },
     ],
     pa: [
-      { threshold: 3.0, level: 'Lendária' },
-      { threshold: 2.8, level: 'Metona' },
-      { threshold: 2.5, level: 'Meta' },
-      { threshold: 2.0, level: 'Metinha' },
+       { threshold: goalsData.pa.lendaria, level: 'Lendária' as GoalLevel },
+       { threshold: goalsData.pa.metona, level: 'Metona' as GoalLevel },
+       { threshold: goalsData.pa.meta, level: 'Meta' as GoalLevel },
+       { threshold: goalsData.pa.metinha, level: 'Metinha' as GoalLevel },
     ],
   };
 
