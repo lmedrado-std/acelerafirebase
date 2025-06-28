@@ -64,16 +64,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton
-                      as="a"
-                      href={item.href}
+                      asChild
                       isActive={pathname === item.href}
                       className={cn(
                         'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:font-semibold',
                         'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                       )}
                     >
+                      <Link href={item.href}>
                         <item.icon className="size-5" />
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                      </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
