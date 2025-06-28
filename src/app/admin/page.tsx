@@ -15,14 +15,14 @@ type Seller = {
   name: string;
   salesValue: number;
   ticketAverage: number;
-  ppa: number;
+  pa: number;
 };
 
 export default function AdminPage() {
   const [sellers, setSellers] = useState<Seller[]>([
-    { id: '1', name: 'Rian Breston', salesValue: 5240.75, ticketAverage: 150.25, ppa: 2.1 },
-    { id: '2', name: 'Carla Dias', salesValue: 4890.50, ticketAverage: 142.80, ppa: 2.5 },
-    { id: '3', name: 'Marcos Andrade', salesValue: 6100.00, ticketAverage: 185.00, ppa: 1.9 },
+    { id: '1', name: 'Rian Breston', salesValue: 5240.75, ticketAverage: 150.25, pa: 2.1 },
+    { id: '2', name: 'Carla Dias', salesValue: 4890.50, ticketAverage: 142.80, pa: 2.5 },
+    { id: '3', name: 'Marcos Andrade', salesValue: 6100.00, ticketAverage: 185.00, pa: 1.9 },
   ]);
 
   const [sellerName, setSellerName] = useState('');
@@ -36,7 +36,7 @@ export default function AdminPage() {
       name: sellerName,
       salesValue: 0,
       ticketAverage: 0,
-      ppa: 0,
+      pa: 0,
     };
     setSellers(prevSellers => [...prevSellers, newSeller]);
     setSellerName('');
@@ -140,7 +140,7 @@ export default function AdminPage() {
                           <TableHead>Vendedor</TableHead>
                           <TableHead className="text-right">Valor de Venda (R$)</TableHead>
                           <TableHead className="text-right">Ticket Médio (R$)</TableHead>
-                          <TableHead className="text-right">PPA</TableHead>
+                          <TableHead className="text-right">PA</TableHead>
                           <TableHead className="text-center">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -171,8 +171,8 @@ export default function AdminPage() {
                                   type="number"
                                   step="0.1"
                                   className="bg-input text-right min-w-[100px]"
-                                  value={seller.ppa}
-                                  onChange={(e) => handleSellerUpdate(seller.id, 'ppa', e.target.value)}
+                                  value={seller.pa}
+                                  onChange={(e) => handleSellerUpdate(seller.id, 'pa', e.target.value)}
                                 />
                             </TableCell>
                             <TableCell className="text-center">
