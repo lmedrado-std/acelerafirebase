@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2 } from "lucide-react";
+import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2, Flag, CalendarRange } from "lucide-react";
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -18,6 +18,19 @@ type Seller = {
   pa: number;
 };
 
+type GoalLevels = {
+  metinha: number;
+  meta: number;
+  metona: number;
+  lendaria: number;
+};
+
+type Goals = {
+  salesValue: GoalLevels;
+  ticketAverage: GoalLevels;
+  pa: GoalLevels;
+};
+
 export default function AdminPage() {
   const [sellers, setSellers] = useState<Seller[]>([
     { id: '1', name: 'Rian Breston', salesValue: 5240.75, ticketAverage: 150.25, pa: 2.1 },
@@ -26,6 +39,26 @@ export default function AdminPage() {
   ]);
 
   const [sellerName, setSellerName] = useState('');
+
+  const [goals, setGoals] = useState<Goals>({
+    salesValue: { metinha: 4000, meta: 5000, metona: 6000, lendaria: 7000 },
+    ticketAverage: { metinha: 130, meta: 150, metona: 180, lendaria: 200 },
+    pa: { metinha: 2.0, meta: 2.5, metona: 2.8, lendaria: 3.0 },
+  });
+
+  const handleGoalChange = (
+    criterion: keyof Goals,
+    level: keyof GoalLevels,
+    value: string
+  ) => {
+    setGoals(prev => ({
+      ...prev,
+      [criterion]: {
+        ...prev[criterion],
+        [level]: parseFloat(value) || 0,
+      },
+    }));
+  };
 
   const handleAddSeller = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -78,6 +111,9 @@ export default function AdminPage() {
             </TabsTrigger>
             <TabsTrigger value="vendedores" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
               <Users className="mr-2 size-5" /> Vendedores
+            </TabsTrigger>
+             <TabsTrigger value="metas" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+              <Flag className="mr-2 size-5" /> Metas
             </TabsTrigger>
           </TabsList>
         </div>
@@ -223,6 +259,102 @@ export default function AdminPage() {
                     Adicionar Vendedor
                 </Button>
               </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="metas" className="space-y-6 mt-4">
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle>Definir Metas de Performance</CardTitle>
+              <CardDescription>
+                Configure os valores para cada nível de meta. Esses valores serão usados no ranking.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              <div>
+                <h3 className="text-lg font-medium mb-4">Valor de Venda (R$)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="sales-metinha">Metinha</Label>
+                    <Input id="sales-metinha" type="number" value={goals.salesValue.metinha} onChange={(e) => handleGoalChange('salesValue', 'metinha', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sales-meta">Meta</Label>
+                    <Input id="sales-meta" type="number" value={goals.salesValue.meta} onChange={(e) => handleGoalChange('salesValue', 'meta', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sales-metona">Metona</Label>
+                    <Input id="sales-metona" type="number" value={goals.salesValue.metona} onChange={(e) => handleGoalChange('salesValue', 'metona', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sales-lendaria">Lendária</Label>
+                    <Input id="sales-lendaria" type="number" value={goals.salesValue.lendaria} onChange={(e) => handleGoalChange('salesValue', 'lendaria', e.target.value)} className="bg-input" />
+                  </div>
+                </div>
+              </div>
+               <div className="border-t border-border pt-8">
+                <h3 className="text-lg font-medium mb-4">Ticket Médio (R$)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ticket-metinha">Metinha</Label>
+                    <Input id="ticket-metinha" type="number" value={goals.ticketAverage.metinha} onChange={(e) => handleGoalChange('ticketAverage', 'metinha', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ticket-meta">Meta</Label>
+                    <Input id="ticket-meta" type="number" value={goals.ticketAverage.meta} onChange={(e) => handleGoalChange('ticketAverage', 'meta', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ticket-metona">Metona</Label>
+                    <Input id="ticket-metona" type="number" value={goals.ticketAverage.metona} onChange={(e) => handleGoalChange('ticketAverage', 'metona', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ticket-lendaria">Lendária</Label>
+                    <Input id="ticket-lendaria" type="number" value={goals.ticketAverage.lendaria} onChange={(e) => handleGoalChange('ticketAverage', 'lendaria', e.target.value)} className="bg-input" />
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-border pt-8">
+                <h3 className="text-lg font-medium mb-4">PA (Produtos por Atendimento)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="pa-metinha">Metinha</Label>
+                    <Input id="pa-metinha" type="number" step="0.1" value={goals.pa.metinha} onChange={(e) => handleGoalChange('pa', 'metinha', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pa-meta">Meta</Label>
+                    <Input id="pa-meta" type="number" step="0.1" value={goals.pa.meta} onChange={(e) => handleGoalChange('pa', 'meta', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pa-metona">Metona</Label>
+                    <Input id="pa-metona" type="number" step="0.1" value={goals.pa.metona} onChange={(e) => handleGoalChange('pa', 'metona', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pa-lendaria">Lendária</Label>
+                    <Input id="pa-lendaria" type="number" step="0.1" value={goals.pa.lendaria} onChange={(e) => handleGoalChange('pa', 'lendaria', e.target.value)} className="bg-input" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end pt-6 border-t border-border">
+                 <Button className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                  Salvar Metas
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle>Gerenciar Períodos de Duração</CardTitle>
+              <CardDescription>
+                Defina os períodos que serão usados para filtrar os rankings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center text-muted-foreground border-2 border-dashed border-border rounded-lg p-8">
+                  <CalendarRange className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <p className="mt-4 font-semibold">Funcionalidade de Períodos em breve</p>
+                  <p className="text-sm">Em breve você poderá cadastrar períodos personalizados.</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
