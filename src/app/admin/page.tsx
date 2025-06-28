@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag } from "lucide-react";
+import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users } from "lucide-react";
 
 export default function AdminPage() {
   return (
@@ -30,6 +30,9 @@ export default function AdminPage() {
             </TabsTrigger>
             <TabsTrigger value="loja" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
               <ShoppingBag className="mr-2 size-5" /> Loja
+            </TabsTrigger>
+            <TabsTrigger value="vendedores" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+              <Users className="mr-2 size-5" /> Vendedores
             </TabsTrigger>
           </TabsList>
         </div>
@@ -76,6 +79,47 @@ export default function AdminPage() {
         </TabsContent>
         <TabsContent value="loja">
            <Card className="bg-card mt-4 border-border"><CardContent className="p-6 text-center text-muted-foreground">Funcionalidade da Loja em breve...</CardContent></Card>
+        </TabsContent>
+        <TabsContent value="vendedores">
+          <Card className="bg-card mt-4 border-border">
+            <CardHeader>
+              <CardTitle className="text-xl">Gerenciar Vendedores</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <form className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sellerName">Nome do Vendedor</Label>
+                  <Input id="sellerName" placeholder="Nome do Vendedor" className="bg-input" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="salesValue">Valor de Venda (R$)</Label>
+                        <Input id="salesValue" placeholder="2500,00" type="number" step="0.01" className="bg-input" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="ticketAverage">Ticket Médio (R$)</Label>
+                        <Input id="ticketAverage" placeholder="150,50" type="number" step="0.01" className="bg-input" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="ppa">Produtos por Atendimento (PPA)</Label>
+                        <Input id="ppa" placeholder="2.5" type="number" step="0.1" className="bg-input" />
+                    </div>
+                </div>
+                <Button className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                    Adicionar Vendedor
+                </Button>
+              </form>
+
+              <div className="space-y-4 pt-6 border-t border-border">
+                <h3 className="text-lg font-semibold">Vendedores Cadastrados</h3>
+                <div className="text-center text-muted-foreground border-2 border-dashed border-border rounded-lg p-8">
+                  <Users className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <p className="mt-4 font-semibold">Nenhum vendedor encontrado</p>
+                  <p className="text-sm">Adicione um novo vendedor para começar a gerenciar.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
