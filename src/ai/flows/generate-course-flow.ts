@@ -21,16 +21,15 @@ const prompt = ai.definePrompt({
   name: 'generateCoursePrompt',
   input: {schema: GenerateCourseInputSchema},
   output: {schema: GenerateCourseOutputSchema},
-  prompt: `You are an expert in creating training materials for retail employees, especially for shoe stores.
-Generate a complete training course about "{{topic}}".
+  prompt: `You are an expert in creating training materials for retail employees, especially for shoe stores. Your task is to generate a complete training course about "{{topic}}".
 
-The course must include:
-1. A clear title and a short description.
-2. A suggested number of points for completion (between 100 and 500).
-3. At least 3-4 content modules. Each module must have a title and content in Markdown format. The content should be educational and practical for a shoe salesperson.
-4. A final quiz with 5 multiple-choice questions to test the course material. Each question must have exactly four options, a correct answer, and an explanation.
+The course must include the following components:
+1.  **Title and Description**: A clear title for the course and a short, engaging description.
+2.  **Points**: A suggested number of points for completing the course, ranging from 100 to 500.
+3.  **Modules**: At least 3-4 content modules. Each module must have a title and its content in Markdown format. The content should be educational and practical for a shoe salesperson.
+4.  **Final Quiz**: A quiz to test the material covered. The quiz must have its own title and contain exactly 5 multiple-choice questions. Each question must include four options, the correct answer, and an explanation.
 
-You must respond with a valid JSON object that strictly adheres to the output schema.`,
+You MUST respond with a valid JSON object that strictly adheres to the provided output schema. Ensure there is no extra text or formatting outside of the JSON structure.`,
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },

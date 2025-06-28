@@ -22,12 +22,21 @@ const prompt = ai.definePrompt({
   name: 'generateQuizPrompt',
   input: {schema: GenerateQuizInputSchema},
   output: {schema: GenerateQuizOutputSchema},
-  prompt: `You are an expert in creating training materials for retail employees.
-Generate a quiz with a relevant title and {{numberOfQuestions}} multiple-choice questions about "{{topic}}".
-The quiz should be challenging but fair, designed for shoe store salespeople.
-For each question, provide exactly four distinct options, identify the correct answer, and give a short explanation.
+  prompt: `You are an expert in creating training materials for retail employees. Your task is to generate a quiz about "{{topic}}" for shoe store salespeople.
 
-You must respond with a valid JSON object that strictly adheres to the output schema, containing a "title" string and a "questions" array.`,
+The quiz must contain:
+- A relevant title.
+- Exactly {{numberOfQuestions}} multiple-choice questions.
+
+For each question, provide:
+- The question text.
+- Exactly four distinct answer options.
+- The index of the correct answer.
+- A brief explanation for the correct answer.
+
+The quiz should be challenging but fair.
+
+You MUST respond with a valid JSON object that strictly adheres to the provided output schema. Do not include any text or formatting outside of the JSON object.`,
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
