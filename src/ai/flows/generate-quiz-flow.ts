@@ -31,18 +31,31 @@ The quiz must contain:
 For each question, provide:
 - The question text.
 - Exactly four distinct answer options.
-- The index of the correct answer.
+- The index of the correct answer (from 0 to 3).
 - A brief explanation for the correct answer.
 
 The quiz should be challenging but fair.
 
-You MUST respond with a valid JSON object that strictly adheres to the provided output schema. Do not include any text or formatting outside of the JSON object.`,
+You MUST respond with a valid JSON object that strictly adheres to the provided output schema. Do not include any text, formatting, or code fences (like \`\`\`json) outside of the JSON object.
+
+Example of the expected JSON structure:
+{
+  "title": "Quiz Title Example",
+  "questions": [
+    {
+      "questionText": "What is the best material for running shoes?",
+      "options": ["Leather", "Mesh", "Suede", "Canvas"],
+      "correctAnswerIndex": 1,
+      "explanation": "Mesh is lightweight, breathable, and flexible, making it ideal for running shoes."
+    }
+  ]
+}`,
   config: {
     safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
     ],
   },
 });
@@ -56,9 +69,7 @@ const generateQuizFlow = ai.defineFlow(
   async (input) => {
     const {output} = await prompt(input);
     if (!output) {
-      throw new Error(
-        'A IA não conseguiu gerar o conteúdo do quiz. Tente novamente.'
-      );
+      throw new Error('Failed to generate quiz content. Please try again.');
     }
     return output;
   }

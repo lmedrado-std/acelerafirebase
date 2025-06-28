@@ -29,13 +29,37 @@ The course must include the following components:
 3.  **Modules**: At least 3-4 content modules. Each module must have a title and its content in Markdown format. The content should be educational and practical for a shoe salesperson.
 4.  **Final Quiz**: A quiz to test the material covered. The quiz must have its own title and contain exactly 5 multiple-choice questions. Each question must include four options, the correct answer, and an explanation.
 
-You MUST respond with a valid JSON object that strictly adheres to the provided output schema. Ensure there is no extra text or formatting outside of the JSON structure.`,
+You MUST respond with a valid JSON object that strictly adheres to the provided output schema. Ensure there is no extra text, formatting, or code fences (like \`\`\`json) outside of the JSON structure.
+
+Example of the expected JSON structure:
+{
+  "title": "Course Title Example",
+  "description": "A brief description of the course.",
+  "points": 250,
+  "modules": [
+    {
+      "title": "Module 1: Introduction",
+      "content": "This is the content for module 1 in Markdown."
+    }
+  ],
+  "quiz": {
+    "title": "Final Quiz Example",
+    "questions": [
+      {
+        "questionText": "What is a key feature of our new shoe model?",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
+        "correctAnswerIndex": 0,
+        "explanation": "Explanation for the correct answer."
+      }
+    ]
+  }
+}`,
   config: {
     safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
     ],
   },
 });
@@ -49,9 +73,7 @@ const generateCourseFlow = ai.defineFlow(
   async (input) => {
     const {output} = await prompt(input);
     if (!output) {
-      throw new Error(
-        'A IA não conseguiu gerar o conteúdo do curso. Tente novamente.'
-      );
+      throw new Error('Failed to generate course content. Please try again.');
     }
     return output;
   }

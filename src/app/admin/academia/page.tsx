@@ -44,7 +44,7 @@ export default function AcademiaPage() {
       toast({
         variant: 'destructive',
         title: 'Falha ao Gerar Curso',
-        description: 'Não foi possível gerar o curso. Tente novamente.',
+        description: 'A IA não conseguiu gerar o conteúdo. Por favor, tente novamente.',
       });
     } finally {
       setIsGeneratingCourse(false);

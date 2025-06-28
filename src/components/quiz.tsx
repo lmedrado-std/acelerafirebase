@@ -47,7 +47,7 @@ export default function Quiz() {
       toast({
         variant: 'destructive',
         title: 'Falha ao Gerar Quiz',
-        description: 'Não foi possível carregar as perguntas. Tente novamente.',
+        description: 'A IA não conseguiu gerar o conteúdo. Por favor, tente novamente.',
       });
     } finally {
       setIsLoading(false);
