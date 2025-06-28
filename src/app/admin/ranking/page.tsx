@@ -11,6 +11,7 @@ import { useAdminContext } from '@/app/admin/layout';
 import type { Seller } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa' | 'points';
 type TimePeriod = 'dia' | 'semana' | 'mes';
@@ -29,43 +30,6 @@ export default function RankingPage() {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('mes');
   const { sellers: sellersData, goals: goalsData } = useAdminContext();
 
-  const getGoalLevel = (value: number, criterion: RankingCriterion): GoalLevel => {
-    const thresholds = {
-      salesValue: [
-        { threshold: goalsData.salesValue.lendaria, level: 'Lendária' as GoalLevel },
-        { threshold: goalsData.salesValue.metona, level: 'Metona' as GoalLevel },
-        { threshold: goalsData.salesValue.meta, level: 'Meta' as GoalLevel },
-        { threshold: goalsData.salesValue.metinha, level: 'Metinha' as GoalLevel },
-      ],
-      ticketAverage: [
-         { threshold: goalsData.ticketAverage.lendaria, level: 'Lendária' as GoalLevel },
-         { threshold: goalsData.ticketAverage.metona, level: 'Metona' as GoalLevel },
-         { threshold: goalsData.ticketAverage.meta, level: 'Meta' as GoalLevel },
-         { threshold: goalsData.ticketAverage.metinha, level: 'Metinha' as GoalLevel },
-      ],
-      pa: [
-         { threshold: goalsData.pa.lendaria, level: 'Lendária' as GoalLevel },
-         { threshold: goalsData.pa.metona, level: 'Metona' as GoalLevel },
-         { threshold: goalsData.pa.meta, level: 'Meta' as GoalLevel },
-         { threshold: goalsData.pa.metinha, level: 'Metinha' as GoalLevel },
-      ],
-      points: [
-        { threshold: goalsData.points.lendaria, level: 'Lendária' as GoalLevel },
-        { threshold: goalsData.points.metona, level: 'Metona' as GoalLevel },
-        { threshold: goalsData.points.meta, level: 'Meta' as GoalLevel },
-        { threshold: goalsData.points.metinha, level: 'Metinha' as GoalLevel },
-      ],
-    };
-
-    const criterionThresholds = thresholds[criterion];
-    for (const item of criterionThresholds) {
-      if (value >= item.threshold) {
-        return item.level;
-      }
-    }
-    return 'Nenhuma';
-  };
-  
   const sortedSellers = useMemo(() => {
     // NOTE: The time period filtering is mocked for now. In a real app, this would involve
     // fetching and processing data based on the selected 'timePeriod' before sorting.
@@ -212,15 +176,22 @@ export default function RankingPage() {
                     <TableRow>
                       <TableHead className="w-[100px] text-center">Posição</TableHead>
                       <TableHead>Vendedor</TableHead>
-                      <TableHead className="text-center">Nível da Meta</TableHead>
+                      <TableHead className="w-[320px] text-center">Nível da Meta</TableHead>
                       <TableHead className="w-[300px]">Progresso da Meta</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sortedSellers.map((seller, index) => {
-                      const goalLevel = getGoalLevel(seller[criterion], criterion);
-                      const config = goalLevelConfig[goalLevel];
+                      const sellerValue = seller[criterion];
+                      const criterionGoals = goalsData[criterion];
+                      const allGoals: Array<{ name: GoalLevel; threshold: number }> = [
+                        { name: 'Metinha', threshold: criterionGoals.metinha },
+                        { name: 'Meta', threshold: criterionGoals.meta },
+                        { name: 'Metona', threshold: criterionGoals.metona },
+                        { name: 'Lendária', threshold: criterionGoals.lendaria },
+                      ];
                       const { percent, label, details } = getGoalProgress(seller[criterion], criterion);
+                      
                       return (
                         <TableRow key={seller.id} className={index < 3 ? 'bg-card-foreground/5' : ''}>
                           <TableCell className="font-bold text-lg flex justify-center items-center h-full py-4">
@@ -228,7 +199,40 @@ export default function RankingPage() {
                           </TableCell>
                           <TableCell className="font-medium">{seller.name}</TableCell>
                           <TableCell className="text-center">
-                            <Badge className={config.className}>{config.label}</Badge>
+                            <div className="flex justify-center items-center gap-1.5 flex-wrap">
+                              {allGoals.map((goal) => {
+                                const isAchieved = sellerValue >= goal.threshold;
+                                const config = goalLevelConfig[goal.name];
+                                return (
+                                  <TooltipProvider key={goal.name}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Badge
+                                          className={cn(
+                                            'transition-all duration-300 ease-in-out',
+                                            isAchieved
+                                              ? `${config.className} scale-110 border-2 border-current shadow-lg`
+                                              : 'bg-muted border-transparent text-muted-foreground opacity-60 hover:bg-muted'
+                                          )}
+                                        >
+                                          {goal.name}
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <div className="space-y-1 text-xs">
+                                          <p className="font-semibold">{goal.name}</p>
+                                          <p>Meta: {formatValue(goal.threshold, criterion)}</p>
+                                          <p>Seu valor: {formatValue(sellerValue, criterion)}</p>
+                                          <p className={cn("font-bold", isAchieved ? 'text-green-400' : 'text-yellow-400')}>
+                                            {isAchieved ? 'Atingida!' : 'Pendente'}
+                                          </p>
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                );
+                              })}
+                            </div>
                           </TableCell>
                            <TableCell>
                             <TooltipProvider>
