@@ -20,6 +20,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { generateCourse } from "@/ai/flows/generate-course-flow";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 export default function SettingsPage() {
@@ -459,13 +460,25 @@ export default function SettingsPage() {
                                   onChange={(e) => handleSellerUpdate(seller.id, 'pa', e.target.value)}
                                 />
                             </TableCell>
-                            <TableCell>
-                                <Input
-                                  type="number"
-                                  className="bg-input text-right min-w-[100px]"
-                                  value={seller.points}
-                                  onChange={(e) => handleSellerUpdate(seller.id, 'points', e.target.value)}
-                                />
+                            <TableCell className="text-center">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="relative">
+                                      <Input
+                                        type="number"
+                                        className="bg-input text-right min-w-[100px] disabled:opacity-75 disabled:cursor-not-allowed"
+                                        value={seller.points}
+                                        onChange={(e) => handleSellerUpdate(seller.id, 'points', e.target.value)}
+                                        disabled
+                                      />
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Pontos são calculados com base em missões, cursos e quizzes.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </TableCell>
                             <TableCell className="text-center">
                               <Button variant="ghost" size="icon" onClick={() => handleDeleteSeller(seller.id)} aria-label="Remover vendedor">
