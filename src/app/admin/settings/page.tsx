@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2, Flag, CalendarRange, CalendarIcon, Star, Loader2 } from "lucide-react";
+import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2, Flag, CalendarRange, CalendarIcon, Star, Loader2, Sparkles } from "lucide-react";
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { sellersData, goalsData } from '@/lib/data';
