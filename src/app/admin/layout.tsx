@@ -34,14 +34,14 @@ import { Logo } from '@/components/icons/logo';
 import { cn } from '@/lib/utils';
 
 const menuItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutGrid },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { href: '/admin/ranking', label: 'Ranking', icon: Trophy },
   { href: '#', label: 'Missões', icon: Target },
   { href: '#', label: 'Academia', icon: GraduationCap },
   { href: '#', label: 'Quiz', icon: Puzzle },
   { href: '#', label: 'Loja', icon: ShoppingBag },
   { href: '#', label: 'Perfil', icon: User },
-  { href: '/admin', label: 'Admin', icon: Shield },
+  { href: '/admin/settings', label: 'Admin', icon: Shield },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
