@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -13,6 +13,27 @@ import { cn } from '@/lib/utils';
 
 type Question = GenerateQuizOutput['questions'][0];
 
+type QuizResult = {
+  score: number;
+  total: number;
+  date: string;
+};
+
+const saveResultToLocalStorage = (result: QuizResult) => {
+  if (typeof window === 'undefined') return;
+  const stored = localStorage.getItem('quizResults');
+  const results: QuizResult[] = stored ? JSON.parse(stored) : [];
+  results.push(result);
+  results.sort((a, b) => b.score - a.score);
+  localStorage.setItem('quizResults', JSON.stringify(results.slice(0, 5)));
+};
+
+const getResultsFromLocalStorage = (): QuizResult[] => {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem('quizResults');
+  return stored ? JSON.parse(stored) : [];
+};
+
 export default function Quiz() {
   const [quiz, setQuiz] = useState<GenerateQuizOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +42,12 @@ export default function Quiz() {
   const [score, setScore] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [bestResults, setBestResults] = useState<QuizResult[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setBestResults(getResultsFromLocalStorage());
+  }, []);
 
   const handleStartQuiz = async () => {
     setIsLoading(true);
@@ -63,15 +89,24 @@ export default function Quiz() {
   };
 
   const handleNextQuestion = () => {
-    setShowFeedback(false);
-    setSelectedAnswer(null);
-    if (currentQuestionIndex < quiz!.questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    } else {
+    const isLastQuestion = currentQuestionIndex === quiz!.questions.length - 1;
+
+    if (isLastQuestion) {
+      const finalResult: QuizResult = {
+        score: selectedAnswer === quiz!.questions[currentQuestionIndex].correctAnswerIndex ? score + 1 : score,
+        total: quiz!.questions.length,
+        date: new Date().toLocaleDateString('pt-BR'),
+      };
+      saveResultToLocalStorage(finalResult);
+      setBestResults(getResultsFromLocalStorage());
       setIsFinished(true);
+    } else {
+      setShowFeedback(false);
+      setSelectedAnswer(null);
+      setCurrentQuestionIndex(prev => prev + 1);
     }
   };
-  
+
   const currentQuestion: Question | null = quiz ? quiz.questions[currentQuestionIndex] : null;
 
   if (isLoading) {
@@ -92,13 +127,27 @@ export default function Quiz() {
         <p className="text-muted-foreground mt-2">
           Você acertou {score} de {quiz!.questions.length} perguntas.
         </p>
+
+        {bestResults.length > 0 && (
+          <>
+            <h3 className="mt-6 text-lg font-semibold">Seus Melhores Resultados</h3>
+            <ul className="mt-2 space-y-1 text-muted-foreground text-sm">
+              {bestResults.map((res, index) => (
+                <li key={index}>
+                  {index + 1}. {res.score} de {res.total} – {res.date}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
         <Button onClick={handleStartQuiz} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
-           <RotateCcw className="mr-2"/> Tentar Novamente
+          <RotateCcw className="mr-2" /> Tentar Novamente
         </Button>
       </div>
     );
   }
-  
+
   if (!quiz || !currentQuestion) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -106,85 +155,104 @@ export default function Quiz() {
         <p className="text-muted-foreground mt-2 max-w-md">
           Clique no botão abaixo para gerar um quiz aleatório sobre técnicas de vendas e produtos de calçados.
         </p>
+        
+        {bestResults.length > 0 && (
+          <Card className="mt-6 w-full max-w-md bg-background/50">
+            <CardHeader>
+              <CardTitle className="text-lg">Melhores Resultados</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-1 text-muted-foreground text-sm text-left">
+                {bestResults.map((res, index) => (
+                  <li key={index} className="flex justify-between">
+                    <span>{index + 1}. Em {res.date}</span>
+                    <span className="font-bold">{res.score} / {res.total}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
         <Button onClick={handleStartQuiz} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
           <Sparkles className="mr-2" /> Iniciar Quiz
         </Button>
       </div>
     );
   }
-  
+
   return (
     <div className="p-4 space-y-6">
-        <div className="flex justify-between items-center">
-             <CardTitle className="text-xl">Quiz: {quiz.title}</CardTitle>
-             <div className="text-sm font-medium text-muted-foreground">Pergunta {currentQuestionIndex + 1} de {quiz.questions.length}</div>
-        </div>
-      
+      <div className="flex justify-between items-center">
+        <CardTitle className="text-xl">Quiz: {quiz.title}</CardTitle>
+        <div className="text-sm font-medium text-muted-foreground">Pergunta {currentQuestionIndex + 1} de {quiz.questions.length}</div>
+      </div>
+
       <div>
         <h3 className="text-lg font-semibold">{currentQuestion.questionText}</h3>
-        <RadioGroup 
-            value={selectedAnswer?.toString()} 
-            onValueChange={(value) => setSelectedAnswer(parseInt(value))}
-            disabled={showFeedback}
-            className="mt-4 space-y-3"
+        <RadioGroup
+          value={selectedAnswer?.toString()}
+          onValueChange={(value) => setSelectedAnswer(parseInt(value))}
+          disabled={showFeedback}
+          className="mt-4 space-y-3"
         >
-            {currentQuestion.options.map((option, index) => {
-                const isCorrect = index === currentQuestion.correctAnswerIndex;
-                const isSelected = index === selectedAnswer;
-                
-                let variant = '';
-                if(showFeedback) {
-                    if(isCorrect) variant = 'border-green-500 bg-green-500/10';
-                    else if (isSelected) variant = 'border-destructive bg-destructive/10';
-                }
+          {currentQuestion.options.map((option, index) => {
+            const isCorrect = index === currentQuestion.correctAnswerIndex;
+            const isSelected = index === selectedAnswer;
 
-                return (
-                    <Label 
-                        key={index} 
-                        htmlFor={`option-${index}`}
-                        className={cn(
-                            "flex items-center p-4 rounded-lg border-2 cursor-pointer transition-colors",
-                            "hover:bg-accent/50",
-                             variant
-                        )}
-                    >
-                        <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                        <span className="ml-4 text-base">{option}</span>
-                    </Label>
-                )
-            })}
+            let variant = '';
+            if (showFeedback) {
+              if (isCorrect) variant = 'border-green-500 bg-green-500/10';
+              else if (isSelected) variant = 'border-destructive bg-destructive/10';
+            }
+
+            return (
+              <Label
+                key={index}
+                htmlFor={`option-${index}`}
+                className={cn(
+                  "flex items-center p-4 rounded-lg border-2 cursor-pointer transition-colors",
+                  "hover:bg-accent/50",
+                  variant
+                )}
+              >
+                <RadioGroupItem value={index.toString()} id={`option-${index}`} />
+                <span className="ml-4 text-base">{option}</span>
+              </Label>
+            );
+          })}
         </RadioGroup>
       </div>
-      
+
       {showFeedback && (
         <Card className={cn(
-            "border-2",
-            selectedAnswer === currentQuestion.correctAnswerIndex ? 'border-green-500' : 'border-destructive'
+          "border-2",
+          selectedAnswer === currentQuestion.correctAnswerIndex ? 'border-green-500' : 'border-destructive'
         )}>
-            <CardHeader>
-                <CardTitle className={cn(
-                    "text-lg",
-                     selectedAnswer === currentQuestion.correctAnswerIndex ? 'text-green-500' : 'text-destructive'
-                )}>
-                    {selectedAnswer === currentQuestion.correctAnswerIndex ? 'Resposta Correta!' : 'Resposta Incorreta!'}
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-muted-foreground">{currentQuestion.explanation}</p>
-            </CardContent>
+          <CardHeader>
+            <CardTitle className={cn(
+              "text-lg",
+              selectedAnswer === currentQuestion.correctAnswerIndex ? 'text-green-500' : 'text-destructive'
+            )}>
+              {selectedAnswer === currentQuestion.correctAnswerIndex ? 'Resposta Correta!' : 'Resposta Incorreta!'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">{currentQuestion.explanation}</p>
+          </CardContent>
         </Card>
       )}
 
       <div className="flex justify-end">
-          {showFeedback ? (
-            <Button onClick={handleNextQuestion}>
-                {currentQuestionIndex < quiz.questions.length - 1 ? 'Próxima Pergunta' : 'Finalizar Quiz'}
-            </Button>
-          ) : (
-            <Button onClick={handleAnswerSubmit} disabled={selectedAnswer === null}>
-                Confirmar Resposta
-            </Button>
-          )}
+        {showFeedback ? (
+          <Button onClick={handleNextQuestion}>
+            {currentQuestionIndex < quiz.questions.length - 1 ? 'Próxima Pergunta' : 'Finalizar Quiz'}
+          </Button>
+        ) : (
+          <Button onClick={handleAnswerSubmit} disabled={selectedAnswer === null}>
+            Confirmar Resposta
+          </Button>
+        )}
       </div>
     </div>
   );
