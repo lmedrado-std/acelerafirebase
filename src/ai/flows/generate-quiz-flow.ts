@@ -39,7 +39,9 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert in creating training materials for retail employees.
 Generate a quiz with {{numberOfQuestions}} multiple-choice questions about "{{topic}}".
 The quiz should be challenging but fair, designed for shoe store salespeople.
-For each question, provide four distinct options, identify the correct answer, and give a short explanation.`,
+For each question, provide exactly four distinct options, identify the correct answer, and give a short explanation.
+
+You must respond with a valid JSON object that strictly adheres to the output schema.`,
 });
 
 const generateQuizFlow = ai.defineFlow(

@@ -1,28 +1,32 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2, Flag, CalendarRange, CalendarIcon, Star } from "lucide-react";
+import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2, Flag, CalendarRange, CalendarIcon, Star, Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { sellersData, goalsData } from '@/lib/data';
-import type { Seller, Goals, GoalLevels, Course } from '@/lib/types';
+import type { Seller, Goals, GoalLevels, Course, Mission } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import Quiz from "@/components/quiz";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { generateCourse } from "@/ai/flows/generate-course-flow";
+import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from 'react-markdown';
 
 
 export default function SettingsPage() {
   const [sellers, setSellers] = useState<Seller[]>(sellersData);
   const [sellerName, setSellerName] = useState('');
-
   const [goals, setGoals] = useState<Goals>(goalsData);
+  const { toast } = useToast();
 
   const [periods, setPeriods] = useState([
     { id: '1', name: 'Mês de Julho', startDate: new Date(2024, 6, 1), endDate: new Date(2024, 6, 31) },
@@ -33,28 +37,77 @@ export default function SettingsPage() {
   const [endDate, setEndDate] = useState<Date>();
   
   const [courses, setCourses] = useState<Course[]>([]);
-  const [courseTitle, setCourseTitle] = useState('');
-  const [courseDescription, setCourseDescription] = useState('');
-  const [coursePoints, setCoursePoints] = useState('');
+  const [isGeneratingCourse, setIsGeneratingCourse] = useState(false);
   
-  const handleAddCourse = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!courseTitle.trim() || !courseDescription.trim() || !coursePoints) return;
-    const newCourse: Course = {
-      id: new Date().getTime().toString(),
-      title: courseTitle,
-      description: courseDescription,
-      points: parseInt(coursePoints, 10),
-    };
-    setCourses(prev => [...prev, newCourse]);
-    setCourseTitle('');
-    setCourseDescription('');
-    setCoursePoints('');
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [missionName, setMissionName] = useState('');
+  const [missionDescription, setMissionDescription] = useState('');
+  const [missionPoints, setMissionPoints] = useState('');
+  const [missionStartDate, setMissionStartDate] = useState<Date>();
+  const [missionEndDate, setMissionEndDate] = useState<Date>();
+
+  const courseTopics = [
+    'Técnicas de Atendimento ao Cliente para Lojas de Calçados',
+    'Conhecimento de Materiais: Couro, Sintéticos e Tecidos',
+    'Como Lidar com Objeções de Clientes e Fechar Vendas',
+    'Organização de Estoque e Vitrinismo para Calçados',
+    'Vendas Adicionais: Como Oferecer Meias e Produtos de Limpeza'
+  ];
+
+  const handleGenerateCourse = async () => {
+    setIsGeneratingCourse(true);
+    try {
+      const randomTopic = courseTopics[Math.floor(Math.random() * courseTopics.length)];
+      const result = await generateCourse({ topic: randomTopic });
+      
+      const newCourse: Course = {
+        id: new Date().getTime().toString(),
+        ...result,
+      };
+      setCourses(prev => [...prev, newCourse]);
+      toast({
+        title: "Curso Gerado com Sucesso!",
+        description: `O curso "${result.title}" foi criado.`,
+      });
+    } catch (error) {
+      console.error("Failed to generate course:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Falha ao Gerar Curso',
+        description: 'Não foi possível gerar o curso. Tente novamente.',
+      });
+    } finally {
+      setIsGeneratingCourse(false);
+    }
   };
   
   const handleDeleteCourse = (id: string) => {
     setCourses(prev => prev.filter(c => c.id !== id));
   }
+  
+  const handleAddMission = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!missionName.trim() || !missionPoints || !missionStartDate || !missionEndDate) return;
+
+    const newMission: Mission = {
+      id: new Date().getTime().toString(),
+      name: missionName,
+      description: missionDescription,
+      points: parseInt(missionPoints, 10),
+      startDate: missionStartDate,
+      endDate: missionEndDate,
+    };
+    setMissions(prev => [...prev, newMission]);
+    setMissionName('');
+    setMissionDescription('');
+    setMissionPoints('');
+    setMissionStartDate(undefined);
+    setMissionEndDate(undefined);
+  };
+
+  const handleDeleteMission = (id: string) => {
+    setMissions(prev => prev.filter(m => m.id !== id));
+  };
 
   const handleGoalChange = (
     criterion: keyof Goals,
@@ -153,62 +206,96 @@ export default function SettingsPage() {
           <Card className="bg-card mt-4 border-border">
             <CardHeader>
               <CardTitle className="text-xl">Gerenciar Cursos da Academia</CardTitle>
-              <CardDescription>Crie e gerencie os cursos de treinamento para os vendedores.</CardDescription>
+              <CardDescription>Gere e gerencie os cursos de treinamento para os vendedores usando IA.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <form onSubmit={handleAddCourse} className="space-y-4 p-6 border rounded-lg border-border">
-                <h3 className="text-lg font-semibold">Criar Novo Curso</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título do Curso</Label>
-                  <Input id="title" placeholder="Ex: Técnicas de Vendas Avançadas" className="bg-input" value={courseTitle} onChange={(e) => setCourseTitle(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição do Curso</Label>
-                  <Textarea id="description" placeholder="Descreva o conteúdo e os objetivos do curso." className="bg-input" rows={3} value={courseDescription} onChange={(e) => setCourseDescription(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="points">Pontos de Recompensa</Label>
-                  <Input id="points" placeholder="Ex: 150" type="number" className="bg-input" value={coursePoints} onChange={(e) => setCoursePoints(e.target.value)} required />
-                </div>
-                 <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
-                    Criar Novo Curso
+              <div className="p-6 border rounded-lg border-border">
+                <h3 className="text-lg font-semibold">Gerador de Cursos</h3>
+                <p className="text-muted-foreground mb-4">Clique no botão para gerar um curso completo com um tópico aleatório sobre vendas de calçados.</p>
+                <Button onClick={handleGenerateCourse} disabled={isGeneratingCourse} className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                  {isGeneratingCourse ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
+                  )}
+                  Gerar Curso com IA
                 </Button>
-              </form>
+              </div>
 
               <div className="space-y-4 pt-6 border-t border-border">
                 <h3 className="text-lg font-semibold">Cursos Existentes</h3>
                 {courses.length > 0 ? (
-                   <div className="rounded-md border border-border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Título</TableHead>
-                          <TableHead>Descrição</TableHead>
-                          <TableHead className="text-center">Pontos</TableHead>
-                          <TableHead className="text-center">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {courses.map((course) => (
-                          <TableRow key={course.id}>
-                            <TableCell className="font-medium">{course.title}</TableCell>
-                            <TableCell className="text-muted-foreground">{course.description}</TableCell>
-                            <TableCell className="text-center font-semibold">{course.points}</TableCell>
-                            <TableCell className="text-center">
-                              <Button variant="ghost" size="icon" onClick={() => handleDeleteCourse(course.id)} aria-label="Remover curso">
+                  <div className="space-y-4">
+                    {courses.map((course) => (
+                      <Card key={course.id} className="bg-background/50">
+                        <CardHeader className="flex flex-row items-start justify-between">
+                            <div>
+                                <CardTitle>{course.title}</CardTitle>
+                                <CardDescription>{course.description}</CardDescription>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteCourse(course.id)} aria-label="Remover curso">
                                 <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                          <Accordion type="single" collapsible className="w-full">
+                            {course.modules && course.modules.length > 0 && (
+                                <AccordionItem value="modules">
+                                <AccordionTrigger>Módulos do Curso</AccordionTrigger>
+                                <AccordionContent>
+                                    <div className="space-y-4">
+                                        {course.modules.map((module, index) => (
+                                            <div key={index} className="p-4 rounded-lg bg-input">
+                                                <h4 className="font-semibold text-lg">{module.title}</h4>
+                                                <div className="prose prose-sm prose-invert mt-2 text-muted-foreground">
+                                                    <ReactMarkdown>{module.content}</ReactMarkdown>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </AccordionContent>
+                                </AccordionItem>
+                            )}
+                            {course.quiz && course.quiz.questions.length > 0 && (
+                                <AccordionItem value="quiz">
+                                <AccordionTrigger>Quiz Final ({course.quiz.title})</AccordionTrigger>
+                                <AccordionContent>
+                                  <div className="space-y-6">
+                                    {course.quiz.questions.map((q, i) => (
+                                      <div key={i}>
+                                        <p><strong>{i + 1}. {q.questionText}</strong></p>
+                                        <ul className="mt-2 space-y-1 list-disc pl-5">
+                                          {q.options.map((opt, j) => (
+                                            <li key={j} className={cn(j === q.correctAnswerIndex && "font-bold text-primary")}>
+                                              {opt}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                        <p className="text-sm text-muted-foreground mt-2">
+                                          <span className="font-semibold">Explicação:</span> {q.explanation}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            )}
+                          </Accordion>
+                        </CardContent>
+                         <CardFooter>
+                            <div className="text-sm font-semibold flex items-center">
+                                <Star className="mr-2 size-4 text-yellow-400" />
+                                <span>{course.points} Pontos</span>
+                            </div>
+                        </CardFooter>
+                      </Card>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center text-muted-foreground border-2 border-dashed border-border rounded-lg p-8">
                     <BookCopy className="mx-auto h-12 w-12 text-muted-foreground" />
                     <p className="mt-4 font-semibold">Nenhum curso encontrado</p>
-                    <p className="text-sm">Crie um novo curso para começar a gerenciar.</p>
+                    <p className="text-sm">Gere um novo curso com IA para começar.</p>
                   </div>
                 )}
               </div>
@@ -221,7 +308,98 @@ export default function SettingsPage() {
            </Card>
         </TabsContent>
         <TabsContent value="missoes">
-           <Card className="bg-card mt-4 border-border"><CardContent className="p-6 text-center text-muted-foreground">Funcionalidade de Missões em breve...</CardContent></Card>
+           <Card className="bg-card mt-4 border-border">
+             <CardHeader>
+              <CardTitle className="text-xl">Gerenciar Missões</CardTitle>
+              <CardDescription>Crie e gerencie as missões para os vendedores.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+               <form onSubmit={handleAddMission} className="space-y-4 p-6 border rounded-lg border-border">
+                <h3 className="text-lg font-semibold">Criar Nova Missão</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="missionName">Nome da Missão</Label>
+                    <Input id="missionName" placeholder="Ex: Vender 5 Pares do Modelo X" className="bg-input" value={missionName} onChange={(e) => setMissionName(e.target.value)} required />
+                  </div>
+                   <div className="space-y-2">
+                    <Label htmlFor="missionPoints">Pontos de Recompensa</Label>
+                    <Input id="missionPoints" placeholder="Ex: 200" type="number" className="bg-input" value={missionPoints} onChange={(e) => setMissionPoints(e.target.value)} required />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="missionDescription">Descrição da Missão</Label>
+                  <Textarea id="missionDescription" placeholder="Descreva o objetivo da missão." className="bg-input" rows={2} value={missionDescription} onChange={(e) => setMissionDescription(e.target.value)} />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="missionStartDate">Data de Início</Label>
+                     <Popover>
+                      <PopoverTrigger asChild>
+                        <Button id="missionStartDate" variant={'outline'} className={cn('w-full justify-start text-left font-normal bg-input', !missionStartDate && 'text-muted-foreground')}>
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {missionStartDate ? format(missionStartDate, 'PPP') : <span>Escolha uma data</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={missionStartDate} onSelect={setMissionStartDate} initialFocus /></PopoverContent>
+                    </Popover>
+                  </div>
+                   <div className="space-y-2">
+                    <Label htmlFor="missionEndDate">Data de Fim</Label>
+                     <Popover>
+                      <PopoverTrigger asChild>
+                        <Button id="missionEndDate" variant={'outline'} className={cn('w-full justify-start text-left font-normal bg-input', !missionEndDate && 'text-muted-foreground')}>
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {missionEndDate ? format(missionEndDate, 'PPP') : <span>Escolha uma data</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={missionEndDate} onSelect={setMissionEndDate} initialFocus disabled={{ before: missionStartDate }} /></PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+                 <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                    Criar Nova Missão
+                </Button>
+              </form>
+              
+               <div className="space-y-4 pt-6 border-t border-border">
+                <h3 className="text-lg font-semibold">Missões Ativas</h3>
+                {missions.length > 0 ? (
+                   <div className="rounded-md border border-border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Missão</TableHead>
+                          <TableHead>Período</TableHead>
+                          <TableHead className="text-center">Pontos</TableHead>
+                          <TableHead className="text-center">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {missions.map((mission) => (
+                          <TableRow key={mission.id}>
+                            <TableCell className="font-medium">{mission.name}</TableCell>
+                            <TableCell>{format(mission.startDate, 'dd/MM/yy')} - {format(mission.endDate, 'dd/MM/yy')}</TableCell>
+                            <TableCell className="text-center font-semibold">{mission.points}</TableCell>
+                            <TableCell className="text-center">
+                              <Button variant="ghost" size="icon" onClick={() => handleDeleteMission(mission.id)} aria-label="Remover missão">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground border-2 border-dashed border-border rounded-lg p-8">
+                    <Target className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <p className="mt-4 font-semibold">Nenhuma missão encontrada</p>
+                    <p className="text-sm">Crie uma nova missão para engajar seus vendedores.</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+           </Card>
         </TabsContent>
         <TabsContent value="loja">
            <Card className="bg-card mt-4 border-border"><CardContent className="p-6 text-center text-muted-foreground">Funcionalidade da Loja em breve...</CardContent></Card>

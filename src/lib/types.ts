@@ -29,9 +29,35 @@ export type Goals = {
   points: GoalLevels;
 };
 
+export type QuizQuestion = {
+  questionText: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+};
+
+export type CourseModule = {
+  title: string;
+  content: string; // Markdown content
+};
+
 export type Course = {
   id: string;
   title: string;
   description: string;
   points: number;
+  modules?: CourseModule[];
+  quiz?: {
+    title: string;
+    questions: QuizQuestion[];
+  };
+};
+
+export type Mission = {
+  id: string;
+  name: string;
+  description: string;
+  points: number;
+  startDate: Date;
+  endDate: Date;
 };
