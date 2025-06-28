@@ -71,7 +71,7 @@ export type AnalyzeSalesTrendsOutput = z.infer<typeof AnalyzeSalesTrendsOutputSc
 // Generate Quiz
 export const QuizQuestionSchema = z.object({
   questionText: z.string().describe('The text of the quiz question.'),
-  options: z.array(z.string()).describe('A list of possible answers for the question.'),
+  options: z.array(z.string()).min(4).max(4).describe('A list of four possible answers for the question.'),
   correctAnswerIndex: z.number().describe('The index of the correct answer in the options array.'),
   explanation: z.string().describe('A brief explanation of why the correct answer is right.'),
 });
@@ -83,7 +83,8 @@ export const GenerateQuizInputSchema = z.object({
 export type GenerateQuizInput = z.infer<typeof GenerateQuizInputSchema>;
 
 export const GenerateQuizOutputSchema = z.object({
-    questions: z.array(QuizQuestionSchema)
+  title: z.string().describe('The title of the quiz.'),
+  questions: z.array(QuizQuestionSchema),
 });
 export type GenerateQuizOutput = z.infer<typeof GenerateQuizOutputSchema>;
 

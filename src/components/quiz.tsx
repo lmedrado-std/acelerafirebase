@@ -116,7 +116,7 @@ export default function Quiz() {
   return (
     <div className="p-4 space-y-6">
         <div className="flex justify-between items-center">
-             <CardTitle className="text-xl">Quiz: Conhecimento de Calçados</CardTitle>
+             <CardTitle className="text-xl">Quiz: {quiz.title}</CardTitle>
              <div className="text-sm font-medium text-muted-foreground">Pergunta {currentQuestionIndex + 1} de {quiz.questions.length}</div>
         </div>
       

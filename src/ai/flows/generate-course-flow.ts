@@ -31,6 +31,14 @@ The course must include:
 4. A final quiz with 5 multiple-choice questions to test the course material. Each question must have exactly four options, a correct answer, and an explanation.
 
 You must respond with a valid JSON object that strictly adheres to the output schema.`,
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+    ],
+  },
 });
 
 const generateCourseFlow = ai.defineFlow(
