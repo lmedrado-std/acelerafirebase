@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Trash2, Flag, CalendarRange, CalendarIcon, Shield } from "lucide-react";
+import { Users, Trash2, Flag, CalendarRange, CalendarIcon, Shield, Info } from "lucide-react";
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminContext } from '@/app/admin/layout';
@@ -14,6 +14,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export default function SettingsPage() {
   const { sellers, setSellers, goals, setGoals } = useAdminContext();
@@ -52,6 +58,7 @@ export default function SettingsPage() {
       ticketAverage: 0,
       pa: 0,
       points: 0,
+      extraPoints: 0,
     };
     setSellers(prevSellers => [...prevSellers, newSeller]);
     setSellerName('');
@@ -126,6 +133,7 @@ export default function SettingsPage() {
                           <TableHead className="text-right">Ticket Médio (R$)</TableHead>
                           <TableHead className="text-right">PA</TableHead>
                           <TableHead className="text-right">Pontos</TableHead>
+                          <TableHead className="text-right">Pontos Extras</TableHead>
                           <TableHead className="text-center">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -166,12 +174,32 @@ export default function SettingsPage() {
                                   onChange={(e) => handleSellerUpdate(seller.id, 'pa', e.target.value)}
                                 />
                             </TableCell>
-                             <TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-end gap-2">
                                 <Input
                                   type="number"
                                   className="bg-input text-right min-w-[100px]"
                                   value={seller.points}
-                                  onChange={(e) => handleSellerUpdate(seller.id, 'points', e.target.value)}
+                                  disabled
+                                />
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Info className="size-4 text-muted-foreground" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Pontos automáticos de missões, cursos e quizzes.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            </TableCell>
+                             <TableCell>
+                                <Input
+                                  type="number"
+                                  className="bg-input text-right min-w-[100px]"
+                                  value={seller.extraPoints}
+                                  onChange={(e) => handleSellerUpdate(seller.id, 'extraPoints', e.target.value)}
                                 />
                             </TableCell>
                             <TableCell className="text-center">

@@ -31,10 +31,13 @@ export default function RankingPage() {
   const { sellers: sellersData, goals: goalsData } = useAdminContext();
 
   const sortedSellers = useMemo(() => {
-    // NOTE: The time period filtering is mocked for now. In a real app, this would involve
-    // fetching and processing data based on the selected 'timePeriod' before sorting.
     const data = [...sellersData];
-    return data.sort((a, b) => b[criterion] - a[criterion]);
+    return data.sort((a, b) => {
+        if (criterion === 'points') {
+            return (b.points + b.extraPoints) - (a.points + a.extraPoints);
+        }
+        return b[criterion] - a[criterion];
+    });
   }, [sellersData, criterion, timePeriod]);
   
   const getCriterionLabel = (currentCriterion: RankingCriterion) => {
@@ -182,7 +185,7 @@ export default function RankingPage() {
                   </TableHeader>
                   <TableBody>
                     {sortedSellers.map((seller, index) => {
-                      const sellerValue = seller[criterion];
+                      const sellerValue = criterion === 'points' ? seller.points + seller.extraPoints : seller[criterion];
                       const criterionGoals = goalsData[criterion];
                       const allGoals: Array<{ name: GoalLevel; threshold: number }> = [
                         { name: 'Metinha', threshold: criterionGoals.metinha },
@@ -190,7 +193,7 @@ export default function RankingPage() {
                         { name: 'Metona', threshold: criterionGoals.metona },
                         { name: 'Lendária', threshold: criterionGoals.lendaria },
                       ];
-                      const { percent, label, details } = getGoalProgress(seller[criterion], criterion);
+                      const { percent, label, details } = getGoalProgress(sellerValue, criterion);
                       
                       return (
                         <TableRow key={seller.id} className={index < 3 ? 'bg-card-foreground/5' : ''}>

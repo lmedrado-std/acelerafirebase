@@ -17,7 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { analyzeSalesTrends, AnalyzeSalesTrendsOutput } from '@/ai/flows/analyze-sales-trends';
+import { analyzeSalesTrends } from '@/ai/flows/analyze-sales-trends';
+import type { AnalyzeSalesTrendsOutput } from '@/lib/types';
 import { SalesEntry } from '@/lib/types';
 import { Lightbulb, Loader2, Sparkles } from 'lucide-react';
 

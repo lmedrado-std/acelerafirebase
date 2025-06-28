@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { generateQuiz, GenerateQuizOutput } from '@/ai/flows/generate-quiz-flow';
+import { generateQuiz } from '@/ai/flows/generate-quiz-flow';
+import type { GenerateQuizOutput } from '@/lib/types';
 import { Loader2, Sparkles, Trophy, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

@@ -23,7 +23,7 @@ export default function DashboardPage() {
     const totalSellers = sellersData.length;
     const currentSales = sellersData.reduce((acc, seller) => acc + seller.salesValue, 0);
     const monthlyGoal = goalsData.salesValue.meta * totalSellers;
-    const totalPoints = sellersData.reduce((acc, seller) => acc + seller.points, 0);
+    const totalPoints = sellersData.reduce((acc, seller) => acc + seller.points + seller.extraPoints, 0);
 
     const bestSellerData = sellersData.reduce((prev, current) => 
       (prev.salesValue > current.salesValue) ? prev : current

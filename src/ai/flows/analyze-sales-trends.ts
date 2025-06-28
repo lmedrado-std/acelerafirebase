@@ -4,35 +4,16 @@
  * @fileOverview AI agent to analyze sales trends and identify key insights.
  *
  * - analyzeSalesTrends - A function that analyzes sales data for trends and anomalies.
- * - AnalyzeSalesTrendsInput - The input type for the analyzeSalesTrends function.
- * - AnalyzeSalesTrendsOutput - The return type for the analyzeSalesTrends function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { 
+  AnalyzeSalesTrendsInputSchema,
+  AnalyzeSalesTrendsOutputSchema,
+  type AnalyzeSalesTrendsInput,
+  type AnalyzeSalesTrendsOutput,
+} from '@/lib/types';
 
-const AnalyzeSalesTrendsInputSchema = z.object({
-  salesData: z
-    .string()
-    .describe(
-      `Sales data in JSON format containing sales value, ticket average, and products per service.
-      Example: [{
-        "date": "2024-01-01",
-        "salesValue": 1000,
-        "ticketAverage": 100,
-        "productsPerService": 2
-      }]`
-    ),
-  timeFrame: z.enum(['weekly', 'monthly']).describe('Time frame for analysis.'),
-});
-export type AnalyzeSalesTrendsInput = z.infer<typeof AnalyzeSalesTrendsInputSchema>;
-
-const AnalyzeSalesTrendsOutputSchema = z.object({
-  summary: z.string().describe('A summary of the sales trends and anomalies.'),
-  topProducts: z.string().describe('List of top-performing products based on the sales data.'),
-  insights: z.string().describe('Key insights into what is driving sales performance.'),
-});
-export type AnalyzeSalesTrendsOutput = z.infer<typeof AnalyzeSalesTrendsOutputSchema>;
 
 export async function analyzeSalesTrends(
   input: AnalyzeSalesTrendsInput
@@ -62,6 +43,9 @@ const analyzeSalesTrendsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('AI failed to generate analysis. Please try again.');
+    }
+    return output;
   }
 );

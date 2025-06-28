@@ -3,43 +3,15 @@
  * @fileOverview A flow for generating training courses.
  *
  * - generateCourse - A function that creates a course on a given topic.
- * - GenerateCourseInput - The input type for the generateCourse function.
- * - GenerateCourseOutput - The return type for the generateCourse function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const QuestionSchema = z.object({
-  questionText: z.string().describe('The text of the quiz question.'),
-  options: z.array(z.string()).describe('A list of exactly four possible answers for the question.'),
-  correctAnswerIndex: z.number().describe('The index of the correct answer in the options array.'),
-  explanation: z.string().describe('A brief explanation of why the correct answer is right.'),
-});
-
-const QuizSchema = z.object({
-  title: z.string().describe('The title of the quiz.'),
-  questions: z.array(QuestionSchema),
-});
-
-const ModuleSchema = z.object({
-  title: z.string().describe("The title of the course module."),
-  content: z.string().describe("The content of the course module, in Markdown format."),
-});
-
-const GenerateCourseInputSchema = z.object({
-  topic: z.string().describe('The topic for the course.'),
-});
-export type GenerateCourseInput = z.infer<typeof GenerateCourseInputSchema>;
-
-const GenerateCourseOutputSchema = z.object({
-  title: z.string().describe('The title of the generated course.'),
-  description: z.string().describe('A brief description of the course.'),
-  points: z.number().describe('The suggested number of points for completing the course (between 100 and 500).'),
-  modules: z.array(ModuleSchema).describe('An array of course modules.'),
-  quiz: QuizSchema.describe('A final quiz to test the knowledge from the course.'),
-});
-export type GenerateCourseOutput = z.infer<typeof GenerateCourseOutputSchema>;
+import { 
+  GenerateCourseInputSchema,
+  GenerateCourseOutputSchema,
+  type GenerateCourseInput,
+  type GenerateCourseOutput,
+} from '@/lib/types';
 
 export async function generateCourse(input: GenerateCourseInput): Promise<GenerateCourseOutput> {
   return generateCourseFlow(input);
