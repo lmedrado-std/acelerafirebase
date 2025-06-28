@@ -64,6 +64,33 @@ Example of the expected JSON structure:
   },
 });
 
+const getFallbackCourse = (): GenerateCourseOutput => ({
+  title: "Curso Básico de Atendimento",
+  description: "Um curso de emergência sobre como atender bem os clientes e conhecer os produtos. A IA falhou em gerar o conteúdo, mas você ainda pode aprender!",
+  points: 100,
+  modules: [
+    {
+      title: "Módulo 1: A Primeira Impressão",
+      content: "Aprenda a importância de um bom dia, um sorriso e de se colocar à disposição. A primeira impressão é a que fica."
+    },
+    {
+      title: "Módulo 2: Escuta Ativa",
+      content: "Mais importante do que falar, é ouvir. Entenda a necessidade do cliente para oferecer a solução certa."
+    }
+  ],
+  quiz: {
+    title: "Quiz de Atendimento",
+    questions: [
+      {
+        questionText: "Qual é o primeiro passo para um bom atendimento?",
+        options: ["Oferecer o produto mais caro", "Sorrir e cumprimentar", "Perguntar o que o cliente quer", "Falar das promoções"],
+        correctAnswerIndex: 1,
+        explanation: "Um sorriso e um cumprimento criam um ambiente acolhedor e abrem portas para a venda."
+      }
+    ]
+  }
+});
+
 const generateCourseFlow = ai.defineFlow(
   {
     name: 'generateCourseFlow',
@@ -71,18 +98,23 @@ const generateCourseFlow = ai.defineFlow(
     outputSchema: GenerateCourseOutputSchema,
   },
   async (input) => {
-    const response = await prompt(input);
-
-    if (response.output) {
-      return response.output;
-    }
-    
-    const rawText = response.text;
-    if (!rawText) {
-      throw new Error('AI returned an empty response. Please try again.');
-    }
-    
     try {
+      const response = await prompt(input);
+
+      if (response.output) {
+         if (response.output.modules.length === 0 || response.output.quiz.questions.length === 0) {
+          console.warn("⚠️ IA retornou um curso válido mas sem conteúdo. Usando fallback.");
+          return getFallbackCourse();
+        }
+        return response.output;
+      }
+      
+      const rawText = response.text;
+      if (!rawText) {
+        console.warn("⚠️ IA retornou uma resposta vazia. Usando fallback.");
+        return getFallbackCourse();
+      }
+      
       const jsonRegex = /```json\n([\s\S]*?)\n```|({[\s\S]*})/;
       const match = rawText.match(jsonRegex);
 
@@ -93,12 +125,19 @@ const generateCourseFlow = ai.defineFlow(
       const jsonString = match[1] || match[2];
       const parsed = JSON.parse(jsonString);
 
-      return GenerateCourseOutputSchema.parse(parsed);
+      const validated = GenerateCourseOutputSchema.parse(parsed);
+
+      if (validated.modules.length === 0 || validated.quiz.questions.length === 0) {
+        console.warn("⚠️ IA retornou um curso válido mas sem conteúdo (após parse). Usando fallback.");
+        return getFallbackCourse();
+      }
+
+      return validated;
 
     } catch (error) {
-      console.error('Failed to parse or validate AI output:', error);
-      console.error('Raw AI response was:', rawText);
-      throw new Error('AI returned data in an unexpected format. Please try again.');
+      console.error('❌ Erro no fluxo de geração de curso:', error);
+      console.warn("⚠️ Usando fallback local por falha na IA.");
+      return getFallbackCourse();
     }
   }
 );

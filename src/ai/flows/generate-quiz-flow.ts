@@ -61,6 +61,45 @@ Você é especialista em treinamentos para vendedores de lojas de calçados. Cri
   },
 });
 
+const getFallbackQuiz = (): GenerateQuizOutput => ({
+  title: "Quiz de Vendas - Básico",
+  questions: [
+    {
+      questionText: "Qual a melhor abordagem inicial com um cliente?",
+      options: [
+        "Esperar que ele pergunte",
+        "Cumprimentar com simpatia e se colocar à disposição",
+        "Falar imediatamente das promoções",
+        "Segui-lo pela loja em silêncio"
+      ],
+      correctAnswerIndex: 1,
+      explanation: "Abordagem empática gera confiança e abertura para a venda."
+    },
+    {
+      questionText: "O que caracteriza um bom atendimento?",
+      options: [
+        "Vender o produto mais caro",
+        "Atender rápido e sem perguntas",
+        "Compreender as necessidades do cliente",
+        "Falar bastante sobre os produtos"
+      ],
+      correctAnswerIndex: 2,
+      explanation: "Ouvir o cliente e entender suas necessidades é essencial."
+    },
+    {
+      questionText: "Qual destes é um exemplo de venda consultiva?",
+      options: [
+        "Empurrar qualquer produto para o cliente",
+        "Entender o que ele busca e sugerir a melhor solução",
+        "Oferecer apenas o que está na promoção",
+        "Vender rápido para atender mais pessoas"
+      ],
+      correctAnswerIndex: 1,
+      explanation: "A venda consultiva foca em resolver o problema do cliente."
+    }
+  ]
+});
+
 const generateQuizFlow = ai.defineFlow(
   {
     name: 'generateQuizFlow',
@@ -68,116 +107,46 @@ const generateQuizFlow = ai.defineFlow(
     outputSchema: GenerateQuizOutputSchema,
   },
   async (input) => {
-    const response = await prompt(input);
-    console.log("🔍 AI raw response:", response);
-
-    // 1. Tenta usar a resposta estruturada (ideal)
-    if (response.output) {
-      return response.output;
-    }
-
-    // 2. Tenta extrair JSON mesmo se vier com código markdown ou misturado
-    const rawText = response.text;
-    if (!rawText) {
-      console.warn("⚠️ IA retornou uma resposta vazia. Usando fallback local.");
-      return {
-        title: "Quiz de Vendas - Básico",
-        questions: [
-          {
-            questionText: "Qual a melhor abordagem inicial com um cliente?",
-            options: [
-              "Esperar que ele pergunte",
-              "Cumprimentar com simpatia e se colocar à disposição",
-              "Falar imediatamente das promoções",
-              "Segui-lo pela loja em silêncio"
-            ],
-            correctAnswerIndex: 1,
-            explanation: "Abordagem empática gera confiança e abertura para a venda."
-          },
-          {
-            questionText: "O que caracteriza um bom atendimento?",
-            options: [
-              "Vender o produto mais caro",
-              "Atender rápido e sem perguntas",
-              "Compreender as necessidades do cliente",
-              "Falar bastante sobre os produtos"
-            ],
-            correctAnswerIndex: 2,
-            explanation: "Ouvir o cliente e entender suas necessidades é essencial."
-          },
-          {
-            questionText: "Qual destes é um exemplo de venda consultiva?",
-            options: [
-              "Empurrar qualquer produto para o cliente",
-              "Entender o que ele busca e sugerir a melhor solução",
-              "Oferecer apenas o que está na promoção",
-              "Vender rápido para atender mais pessoas"
-            ],
-            correctAnswerIndex: 1,
-            explanation: "A venda consultiva foca em resolver o problema do cliente."
-          }
-        ]
-      };
-    }
-
     try {
-      // Regex para encontrar JSON mesmo com ```json ... ``` ou sem
+      const response = await prompt(input);
+
+      if (response.output) {
+        if (response.output.questions.length === 0) {
+          console.warn("⚠️ IA retornou um quiz válido mas sem perguntas. Usando fallback.");
+          return getFallbackQuiz();
+        }
+        return response.output;
+      }
+
+      const rawText = response.text;
+      if (!rawText) {
+        console.warn("⚠️ IA retornou uma resposta vazia. Usando fallback local.");
+        return getFallbackQuiz();
+      }
+      
       const jsonRegex = /```json\n([\s\S]*?)\n```|({[\s\S]*})/;
       const match = rawText.match(jsonRegex);
 
       if (!match) {
-        throw new Error('A IA não retornou dados em formato válido.');
+        throw new Error('A IA não retornou dados em formato JSON válido.');
       }
-
+      
       const jsonString = match[1] || match[2];
       const parsed = JSON.parse(jsonString);
 
-      // 3. Valida com o schema
-      return GenerateQuizOutputSchema.parse(parsed);
+      const validated = GenerateQuizOutputSchema.parse(parsed);
+
+      if (validated.questions.length === 0) {
+        console.warn("⚠️ IA retornou um quiz válido mas sem perguntas (após parse). Usando fallback.");
+        return getFallbackQuiz();
+      }
+
+      return validated;
 
     } catch (error) {
-      console.error('❌ Erro ao analisar ou validar o JSON gerado pela IA:', error);
-      console.error('📄 Resposta bruta da IA:', rawText);
-      
-      console.warn("⚠️ Usando fallback local por falha na IA");
-      return {
-        title: "Quiz de Vendas - Básico",
-        questions: [
-          {
-            questionText: "Qual a melhor abordagem inicial com um cliente?",
-            options: [
-              "Esperar que ele pergunte",
-              "Cumprimentar com simpatia e se colocar à disposição",
-              "Falar imediatamente das promoções",
-              "Segui-lo pela loja em silêncio"
-            ],
-            correctAnswerIndex: 1,
-            explanation: "Abordagem empática gera confiança e abertura para a venda."
-          },
-          {
-            questionText: "O que caracteriza um bom atendimento?",
-            options: [
-              "Vender o produto mais caro",
-              "Atender rápido e sem perguntas",
-              "Compreender as necessidades do cliente",
-              "Falar bastante sobre os produtos"
-            ],
-            correctAnswerIndex: 2,
-            explanation: "Ouvir o cliente e entender suas necessidades é essencial."
-          },
-          {
-            questionText: "Qual destes é um exemplo de venda consultiva?",
-            options: [
-              "Empurrar qualquer produto para o cliente",
-              "Entender o que ele busca e sugerir a melhor solução",
-              "Oferecer apenas o que está na promoção",
-              "Vender rápido para atender mais pessoas"
-            ],
-            correctAnswerIndex: 1,
-            explanation: "A venda consultiva foca em resolver o problema do cliente."
-          }
-        ]
-      };
+      console.error('❌ Erro no fluxo de geração de quiz:', error);
+      console.warn("⚠️ Usando fallback local por falha na IA.");
+      return getFallbackQuiz();
     }
   }
 );

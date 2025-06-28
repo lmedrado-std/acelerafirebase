@@ -63,17 +63,15 @@ export default function Quiz() {
         topic: 'Técnicas de Venda e Conhecimento de Produtos em Lojas de Calçados',
         numberOfQuestions: 5,
       });
-      if (result.questions.length > 0) {
-        setQuiz(result);
-      } else {
-        throw new Error('No questions were generated.');
-      }
+      // The flow now guarantees a valid quiz, so we can set it directly.
+      setQuiz(result);
     } catch (error) {
+      // This catch is a final safety net, but should rarely be hit.
       console.error('Failed to generate quiz:', error);
       toast({
         variant: 'destructive',
-        title: 'Falha ao Gerar Quiz',
-        description: 'A IA não conseguiu gerar o conteúdo. Por favor, tente novamente.',
+        title: 'Ocorreu um Erro Inesperado',
+        description: 'Não foi possível carregar o quiz. Por favor, tente novamente.',
       });
     } finally {
       setIsLoading(false);
@@ -92,8 +90,11 @@ export default function Quiz() {
     const isLastQuestion = currentQuestionIndex === quiz!.questions.length - 1;
 
     if (isLastQuestion) {
+      // Recalculate score to ensure it's up-to-date before finishing
+      const finalScore = selectedAnswer === quiz!.questions[currentQuestionIndex].correctAnswerIndex ? score + 1 : score;
+      
       const finalResult: QuizResult = {
-        score: selectedAnswer === quiz!.questions[currentQuestionIndex].correctAnswerIndex ? score + 1 : score,
+        score: finalScore,
         total: quiz!.questions.length,
         date: new Date().toLocaleDateString('pt-BR'),
       };
