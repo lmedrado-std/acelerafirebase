@@ -4,9 +4,11 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Users, Trophy, DollarSign, LayoutGrid } from "lucide-react";
-import { sellersData, goalsData } from '@/lib/data';
+import { useAdminContext } from '@/app/admin/layout';
 
 export default function DashboardPage() {
+  const { sellers: sellersData, goals: goalsData } = useAdminContext();
+
   const { bestSeller, totalSellers, currentSales, monthlyGoal } = useMemo(() => {
     if (sellersData.length === 0) {
       return {
@@ -31,7 +33,7 @@ export default function DashboardPage() {
       currentSales,
       monthlyGoal,
     };
-  }, []);
+  }, [sellersData, goalsData]);
 
   const progress = monthlyGoal > 0 ? (currentSales / monthlyGoal) * 100 : 0;
 

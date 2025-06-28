@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2, Flag, CalendarRange, CalendarIcon, Star, Loader2, Sparkles } from "lucide-react";
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { sellersData, goalsData } from '@/lib/data';
+import { useAdminContext } from '@/app/admin/layout';
 import type { Seller, Goals, GoalLevels, Course, Mission } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -23,9 +23,8 @@ import ReactMarkdown from 'react-markdown';
 
 
 export default function SettingsPage() {
-  const [sellers, setSellers] = useState<Seller[]>(sellersData);
+  const { sellers, setSellers, goals, setGoals } = useAdminContext();
   const [sellerName, setSellerName] = useState('');
-  const [goals, setGoals] = useState<Goals>(goalsData);
   const { toast } = useToast();
 
   const [periods, setPeriods] = useState([

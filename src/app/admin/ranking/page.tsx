@@ -7,9 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { sellersData, goalsData } from '@/lib/data';
+import { useAdminContext } from '@/app/admin/layout';
 import type { Seller } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa' | 'points';
 type TimePeriod = 'dia' | 'semana' | 'mes';
@@ -23,53 +24,54 @@ const goalLevelConfig: Record<GoalLevel, { label: string; className: string }> =
   'Lendária': { label: 'Lendária', className: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
 };
 
-const getGoalLevel = (value: number, criterion: RankingCriterion): GoalLevel => {
-  const thresholds = {
-    salesValue: [
-      { threshold: goalsData.salesValue.lendaria, level: 'Lendária' as GoalLevel },
-      { threshold: goalsData.salesValue.metona, level: 'Metona' as GoalLevel },
-      { threshold: goalsData.salesValue.meta, level: 'Meta' as GoalLevel },
-      { threshold: goalsData.salesValue.metinha, level: 'Metinha' as GoalLevel },
-    ],
-    ticketAverage: [
-       { threshold: goalsData.ticketAverage.lendaria, level: 'Lendária' as GoalLevel },
-       { threshold: goalsData.ticketAverage.metona, level: 'Metona' as GoalLevel },
-       { threshold: goalsData.ticketAverage.meta, level: 'Meta' as GoalLevel },
-       { threshold: goalsData.ticketAverage.metinha, level: 'Metinha' as GoalLevel },
-    ],
-    pa: [
-       { threshold: goalsData.pa.lendaria, level: 'Lendária' as GoalLevel },
-       { threshold: goalsData.pa.metona, level: 'Metona' as GoalLevel },
-       { threshold: goalsData.pa.meta, level: 'Meta' as GoalLevel },
-       { threshold: goalsData.pa.metinha, level: 'Metinha' as GoalLevel },
-    ],
-    points: [
-      { threshold: goalsData.points.lendaria, level: 'Lendária' as GoalLevel },
-      { threshold: goalsData.points.metona, level: 'Metona' as GoalLevel },
-      { threshold: goalsData.points.meta, level: 'Meta' as GoalLevel },
-      { threshold: goalsData.points.metinha, level: 'Metinha' as GoalLevel },
-    ],
-  };
-
-  const criterionThresholds = thresholds[criterion];
-  for (const item of criterionThresholds) {
-    if (value >= item.threshold) {
-      return item.level;
-    }
-  }
-  return 'Nenhuma';
-};
-
 export default function RankingPage() {
   const [criterion, setCriterion] = useState<RankingCriterion>('salesValue');
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('mes');
+  const { sellers: sellersData, goals: goalsData } = useAdminContext();
 
+  const getGoalLevel = (value: number, criterion: RankingCriterion): GoalLevel => {
+    const thresholds = {
+      salesValue: [
+        { threshold: goalsData.salesValue.lendaria, level: 'Lendária' as GoalLevel },
+        { threshold: goalsData.salesValue.metona, level: 'Metona' as GoalLevel },
+        { threshold: goalsData.salesValue.meta, level: 'Meta' as GoalLevel },
+        { threshold: goalsData.salesValue.metinha, level: 'Metinha' as GoalLevel },
+      ],
+      ticketAverage: [
+         { threshold: goalsData.ticketAverage.lendaria, level: 'Lendária' as GoalLevel },
+         { threshold: goalsData.ticketAverage.metona, level: 'Metona' as GoalLevel },
+         { threshold: goalsData.ticketAverage.meta, level: 'Meta' as GoalLevel },
+         { threshold: goalsData.ticketAverage.metinha, level: 'Metinha' as GoalLevel },
+      ],
+      pa: [
+         { threshold: goalsData.pa.lendaria, level: 'Lendária' as GoalLevel },
+         { threshold: goalsData.pa.metona, level: 'Metona' as GoalLevel },
+         { threshold: goalsData.pa.meta, level: 'Meta' as GoalLevel },
+         { threshold: goalsData.pa.metinha, level: 'Metinha' as GoalLevel },
+      ],
+      points: [
+        { threshold: goalsData.points.lendaria, level: 'Lendária' as GoalLevel },
+        { threshold: goalsData.points.metona, level: 'Metona' as GoalLevel },
+        { threshold: goalsData.points.meta, level: 'Meta' as GoalLevel },
+        { threshold: goalsData.points.metinha, level: 'Metinha' as GoalLevel },
+      ],
+    };
+
+    const criterionThresholds = thresholds[criterion];
+    for (const item of criterionThresholds) {
+      if (value >= item.threshold) {
+        return item.level;
+      }
+    }
+    return 'Nenhuma';
+  };
+  
   const sortedSellers = useMemo(() => {
     // NOTE: The time period filtering is mocked for now. In a real app, this would involve
     // fetching and processing data based on the selected 'timePeriod' before sorting.
     const data = [...sellersData];
     return data.sort((a, b) => b[criterion] - a[criterion]);
-  }, [criterion, timePeriod]);
+  }, [sellersData, criterion, timePeriod]);
   
   const getCriterionLabel = (currentCriterion: RankingCriterion) => {
     switch (currentCriterion) {
@@ -98,25 +100,40 @@ export default function RankingPage() {
 
   const getGoalProgress = (value: number, criterion: RankingCriterion) => {
     const goals = goalsData[criterion];
-    
+    let nextGoal, currentGoalBase, nextGoalLabel, progress;
+
     if (value >= goals.lendaria) {
-        return { percent: 100, label: `Lendária! (${formatValue(value, criterion)})` };
+      return { percent: 100, label: `Nível Lendário Atingido!`, details: `${formatValue(value, criterion)}` };
     }
     if (value >= goals.metona) {
-        const progress = ((value - goals.metona) / (goals.lendaria - goals.metona)) * 100;
-        return { percent: progress, label: `Rumo à Lendária: ${formatValue(value, criterion)} / ${formatValue(goals.lendaria, criterion)}` };
+      nextGoal = goals.lendaria;
+      currentGoalBase = goals.metona;
+      nextGoalLabel = 'Lendária';
+    } else if (value >= goals.meta) {
+      nextGoal = goals.metona;
+      currentGoalBase = goals.meta;
+      nextGoalLabel = 'Metona';
+    } else if (value >= goals.metinha) {
+      nextGoal = goals.meta;
+      currentGoalBase = goals.metinha;
+      nextGoalLabel = 'Meta';
+    } else {
+      nextGoal = goals.metinha;
+      currentGoalBase = 0;
+      nextGoalLabel = 'Metinha';
     }
-    if (value >= goals.meta) {
-        const progress = ((value - goals.meta) / (goals.metona - goals.meta)) * 100;
-        return { percent: progress, label: `Rumo à Metona: ${formatValue(value, criterion)} / ${formatValue(goals.metona, criterion)}` };
-    }
-    if (value >= goals.metinha) {
-        const progress = ((value - goals.metinha) / (goals.meta - goals.metinha)) * 100;
-        return { percent: progress, label: `Rumo à Meta: ${formatValue(value, criterion)} / ${formatValue(goals.meta, criterion)}` };
+
+    if (nextGoal - currentGoalBase <= 0) {
+      progress = 100;
+    } else {
+      progress = Math.min(100, ((value - currentGoalBase) / (nextGoal - currentGoalBase)) * 100);
     }
     
-    const progress = (value / goals.metinha) * 100;
-    return { percent: progress, label: `Rumo à Metinha: ${formatValue(value, criterion)} / ${formatValue(goals.metinha, criterion)}` };
+    return { 
+      percent: progress, 
+      label: `Próximo Nível: ${nextGoalLabel}`,
+      details: `${formatValue(value, criterion)} / ${formatValue(nextGoal, criterion)}`
+    };
   };
   
   const getRankIndicator = (index: number) => {
@@ -203,7 +220,7 @@ export default function RankingPage() {
                     {sortedSellers.map((seller, index) => {
                       const goalLevel = getGoalLevel(seller[criterion], criterion);
                       const config = goalLevelConfig[goalLevel];
-                      const { percent, label } = getGoalProgress(seller[criterion], criterion);
+                      const { percent, label, details } = getGoalProgress(seller[criterion], criterion);
                       return (
                         <TableRow key={seller.id} className={index < 3 ? 'bg-card-foreground/5' : ''}>
                           <TableCell className="font-bold text-lg flex justify-center items-center h-full py-4">
@@ -213,11 +230,23 @@ export default function RankingPage() {
                           <TableCell className="text-center">
                             <Badge className={config.className}>{config.label}</Badge>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col gap-1">
-                                <Progress value={percent} className="h-2" />
-                                <span className="text-xs text-muted-foreground">{label}</span>
-                            </div>
+                           <TableCell>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex flex-col gap-1.5 text-left w-full">
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-sm font-medium">{label}</span>
+                                      <span className="text-sm font-bold">{percent.toFixed(0)}%</span>
+                                    </div>
+                                    <Progress value={percent} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-purple-500" />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{details}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </TableCell>
                         </TableRow>
                       );
