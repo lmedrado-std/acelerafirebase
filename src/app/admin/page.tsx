@@ -26,9 +26,6 @@ export default function AdminPage() {
   ]);
 
   const [sellerName, setSellerName] = useState('');
-  const [salesValue, setSalesValue] = useState('');
-  const [ticketAverage, setTicketAverage] = useState('');
-  const [ppa, setPpa] = useState('');
 
   const handleAddSeller = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,16 +34,12 @@ export default function AdminPage() {
     const newSeller: Seller = {
       id: new Date().getTime().toString(),
       name: sellerName,
-      salesValue: parseFloat(salesValue) || 0,
-      ticketAverage: parseFloat(ticketAverage) || 0,
-      ppa: parseFloat(ppa) || 0,
+      salesValue: 0,
+      ticketAverage: 0,
+      ppa: 0,
     };
     setSellers(prevSellers => [...prevSellers, newSeller]);
-
     setSellerName('');
-    setSalesValue('');
-    setTicketAverage('');
-    setPpa('');
   };
 
   const handleSellerUpdate = (id: string, field: keyof Omit<Seller, 'id' | 'name'>, value: string) => {
@@ -136,11 +129,11 @@ export default function AdminPage() {
            <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-xl">Adicionar Novo Vendedor</CardTitle>
-              <CardDescription>Preencha os dados para cadastrar um novo vendedor na plataforma.</CardDescription>
+              <CardDescription>Digite o nome do vendedor para adicioná-lo à lista.</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleAddSeller} className="space-y-4">
-                <div className="space-y-2">
+              <form onSubmit={handleAddSeller} className="flex items-end gap-4">
+                <div className="space-y-2 flex-grow">
                   <Label htmlFor="sellerName">Nome do Vendedor</Label>
                   <Input 
                     id="sellerName" 
@@ -150,44 +143,6 @@ export default function AdminPage() {
                     onChange={(e) => setSellerName(e.target.value)}
                     required
                   />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="salesValue">Valor de Venda (R$)</Label>
-                        <Input 
-                            id="salesValue" 
-                            placeholder="2500,00" 
-                            type="number" 
-                            step="0.01" 
-                            className="bg-input"
-                            value={salesValue}
-                            onChange={(e) => setSalesValue(e.target.value)}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="ticketAverage">Ticket Médio (R$)</Label>
-                        <Input 
-                            id="ticketAverage" 
-                            placeholder="150,50" 
-                            type="number" 
-                            step="0.01" 
-                            className="bg-input" 
-                            value={ticketAverage}
-                            onChange={(e) => setTicketAverage(e.target.value)}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="ppa">Produtos por Atendimento (PPA)</Label>
-                        <Input 
-                            id="ppa" 
-                            placeholder="2.5" 
-                            type="number" 
-                            step="0.1" 
-                            className="bg-input" 
-                            value={ppa}
-                            onChange={(e) => setPpa(e.target.value)}
-                        />
-                    </div>
                 </div>
                 <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
                     Adicionar Vendedor
