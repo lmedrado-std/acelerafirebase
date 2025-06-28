@@ -79,7 +79,45 @@ const generateQuizFlow = ai.defineFlow(
     // 2. Tenta extrair JSON mesmo se vier com código markdown ou misturado
     const rawText = response.text;
     if (!rawText) {
-      throw new Error('A IA retornou uma resposta vazia.');
+      console.warn("⚠️ IA retornou uma resposta vazia. Usando fallback local.");
+      return {
+        title: "Quiz de Vendas - Básico",
+        questions: [
+          {
+            questionText: "Qual a melhor abordagem inicial com um cliente?",
+            options: [
+              "Esperar que ele pergunte",
+              "Cumprimentar com simpatia e se colocar à disposição",
+              "Falar imediatamente das promoções",
+              "Segui-lo pela loja em silêncio"
+            ],
+            correctAnswerIndex: 1,
+            explanation: "Abordagem empática gera confiança e abertura para a venda."
+          },
+          {
+            questionText: "O que caracteriza um bom atendimento?",
+            options: [
+              "Vender o produto mais caro",
+              "Atender rápido e sem perguntas",
+              "Compreender as necessidades do cliente",
+              "Falar bastante sobre os produtos"
+            ],
+            correctAnswerIndex: 2,
+            explanation: "Ouvir o cliente e entender suas necessidades é essencial."
+          },
+          {
+            questionText: "Qual destes é um exemplo de venda consultiva?",
+            options: [
+              "Empurrar qualquer produto para o cliente",
+              "Entender o que ele busca e sugerir a melhor solução",
+              "Oferecer apenas o que está na promoção",
+              "Vender rápido para atender mais pessoas"
+            ],
+            correctAnswerIndex: 1,
+            explanation: "A venda consultiva foca em resolver o problema do cliente."
+          }
+        ]
+      };
     }
 
     try {
@@ -88,7 +126,6 @@ const generateQuizFlow = ai.defineFlow(
       const match = rawText.match(jsonRegex);
 
       if (!match) {
-        console.error('❌ Não foi possível identificar JSON na resposta:', rawText);
         throw new Error('A IA não retornou dados em formato válido.');
       }
 
@@ -101,7 +138,46 @@ const generateQuizFlow = ai.defineFlow(
     } catch (error) {
       console.error('❌ Erro ao analisar ou validar o JSON gerado pela IA:', error);
       console.error('📄 Resposta bruta da IA:', rawText);
-      throw new Error('Erro ao interpretar a resposta da IA. Tente novamente ou revise o prompt.');
+      
+      console.warn("⚠️ Usando fallback local por falha na IA");
+      return {
+        title: "Quiz de Vendas - Básico",
+        questions: [
+          {
+            questionText: "Qual a melhor abordagem inicial com um cliente?",
+            options: [
+              "Esperar que ele pergunte",
+              "Cumprimentar com simpatia e se colocar à disposição",
+              "Falar imediatamente das promoções",
+              "Segui-lo pela loja em silêncio"
+            ],
+            correctAnswerIndex: 1,
+            explanation: "Abordagem empática gera confiança e abertura para a venda."
+          },
+          {
+            questionText: "O que caracteriza um bom atendimento?",
+            options: [
+              "Vender o produto mais caro",
+              "Atender rápido e sem perguntas",
+              "Compreender as necessidades do cliente",
+              "Falar bastante sobre os produtos"
+            ],
+            correctAnswerIndex: 2,
+            explanation: "Ouvir o cliente e entender suas necessidades é essencial."
+          },
+          {
+            questionText: "Qual destes é um exemplo de venda consultiva?",
+            options: [
+              "Empurrar qualquer produto para o cliente",
+              "Entender o que ele busca e sugerir a melhor solução",
+              "Oferecer apenas o que está na promoção",
+              "Vender rápido para atender mais pessoas"
+            ],
+            correctAnswerIndex: 1,
+            explanation: "A venda consultiva foca em resolver o problema do cliente."
+          }
+        ]
+      };
     }
   }
 );
