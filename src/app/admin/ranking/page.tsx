@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { sellersData, goalsData } from '@/lib/data';
 import type { Seller } from '@/lib/types';
+import { Progress } from '@/components/ui/progress';
 
 type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa' | 'points';
 type TimePeriod = 'dia' | 'semana' | 'mes';
@@ -94,6 +95,29 @@ export default function RankingPage() {
     }
     return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
+
+  const getGoalProgress = (value: number, criterion: RankingCriterion) => {
+    const goals = goalsData[criterion];
+    
+    if (value >= goals.lendaria) {
+        return { percent: 100, label: `Lendária! (${formatValue(value, criterion)})` };
+    }
+    if (value >= goals.metona) {
+        const progress = ((value - goals.metona) / (goals.lendaria - goals.metona)) * 100;
+        return { percent: progress, label: `Rumo à Lendária: ${formatValue(value, criterion)} / ${formatValue(goals.lendaria, criterion)}` };
+    }
+    if (value >= goals.meta) {
+        const progress = ((value - goals.meta) / (goals.metona - goals.meta)) * 100;
+        return { percent: progress, label: `Rumo à Metona: ${formatValue(value, criterion)} / ${formatValue(goals.metona, criterion)}` };
+    }
+    if (value >= goals.metinha) {
+        const progress = ((value - goals.metinha) / (goals.meta - goals.metinha)) * 100;
+        return { percent: progress, label: `Rumo à Meta: ${formatValue(value, criterion)} / ${formatValue(goals.meta, criterion)}` };
+    }
+    
+    const progress = (value / goals.metinha) * 100;
+    return { percent: progress, label: `Rumo à Metinha: ${formatValue(value, criterion)} / ${formatValue(goals.metinha, criterion)}` };
+  };
   
   const getRankIndicator = (index: number) => {
     if (index === 0) return <Trophy className="h-6 w-6 text-yellow-400" />;
@@ -172,13 +196,14 @@ export default function RankingPage() {
                       <TableHead className="w-[100px] text-center">Posição</TableHead>
                       <TableHead>Vendedor</TableHead>
                       <TableHead className="text-center">Nível da Meta</TableHead>
-                      <TableHead className="text-right">{getCriterionLabel(criterion)}</TableHead>
+                      <TableHead className="w-[300px]">Progresso da Meta</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sortedSellers.map((seller, index) => {
                       const goalLevel = getGoalLevel(seller[criterion], criterion);
                       const config = goalLevelConfig[goalLevel];
+                      const { percent, label } = getGoalProgress(seller[criterion], criterion);
                       return (
                         <TableRow key={seller.id} className={index < 3 ? 'bg-card-foreground/5' : ''}>
                           <TableCell className="font-bold text-lg flex justify-center items-center h-full py-4">
@@ -188,7 +213,12 @@ export default function RankingPage() {
                           <TableCell className="text-center">
                             <Badge className={config.className}>{config.label}</Badge>
                           </TableCell>
-                          <TableCell className="text-right font-semibold text-lg">{formatValue(seller[criterion], criterion)}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-1">
+                                <Progress value={percent} className="h-2" />
+                                <span className="text-xs text-muted-foreground">{label}</span>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
