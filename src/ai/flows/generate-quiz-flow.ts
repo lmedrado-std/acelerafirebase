@@ -20,36 +20,37 @@ export async function generateQuiz(input: GenerateQuizInput): Promise<GenerateQu
 
 const prompt = ai.definePrompt({
   name: 'generateQuizPrompt',
-  input: {schema: GenerateQuizInputSchema},
-  output: {schema: GenerateQuizOutputSchema},
-  prompt: `You are an expert in creating training materials for retail employees. Your task is to generate a quiz about "{{topic}}" for shoe store salespeople.
+  input: { schema: GenerateQuizInputSchema },
+  output: { schema: GenerateQuizOutputSchema },
+  prompt: `
+Você é especialista em treinamentos para vendedores de lojas de calçados. Crie um QUIZ com base no tema "{{topic}}".
 
-The quiz must contain:
-- A relevant title.
-- Exactly {{numberOfQuestions}} multiple-choice questions.
+💡 Regras obrigatórias:
+- Gere exatamente {{numberOfQuestions}} perguntas.
+- Cada pergunta deve ter:
+  - Um enunciado claro.
+  - 4 alternativas diferentes.
+  - O índice da resposta correta (de 0 a 3).
+  - Uma explicação curta sobre a resposta correta.
 
-For each question, provide:
-- The question text.
-- Exactly four distinct answer options.
-- The index of the correct answer (from 0 to 3).
-- A brief explanation for the correct answer.
-
-The quiz should be challenging but fair.
-
-You MUST respond with a valid JSON object that strictly adheres to the provided output schema. Do not include any text, formatting, or code fences (like \`\`\`json) outside of the JSON object.
-
-Example of the expected JSON structure:
+🧪 Exemplo de estrutura esperada (em JSON):
 {
-  "title": "Quiz Title Example",
+  "title": "Título do Quiz",
   "questions": [
     {
-      "questionText": "What is the best material for running shoes?",
-      "options": ["Leather", "Mesh", "Suede", "Canvas"],
-      "correctAnswerIndex": 1,
-      "explanation": "Mesh is lightweight, breathable, and flexible, making it ideal for running shoes."
+      "questionText": "Qual material é mais indicado para tênis de corrida?",
+      "options": ["Couro", "Lona", "Mesh", "Camurça"],
+      "correctAnswerIndex": 2,
+      "explanation": "O mesh é leve, flexível e respirável — ideal para tênis de corrida."
     }
   ]
-}`,
+}
+
+🛑 IMPORTANTE:
+- Responda SOMENTE com o JSON.
+- NÃO use blocos \`\`\`, comentários ou texto adicional.
+- A resposta **deve ser 100% compatível** com o exemplo acima.
+`,
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
