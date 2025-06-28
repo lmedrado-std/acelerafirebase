@@ -3,26 +3,28 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Users, Trophy, DollarSign, LayoutGrid } from "lucide-react";
+import { Users, Trophy, DollarSign, LayoutGrid, Star } from "lucide-react";
 import { useAdminContext } from '@/app/admin/layout';
 
 export default function DashboardPage() {
   const { sellers: sellersData, goals: goalsData } = useAdminContext();
 
-  const { bestSeller, totalSellers, currentSales, monthlyGoal } = useMemo(() => {
+  const { bestSeller, totalSellers, currentSales, monthlyGoal, totalPoints } = useMemo(() => {
     if (sellersData.length === 0) {
       return {
         bestSeller: { name: "Nenhum", value: 0 },
         totalSellers: 0,
         currentSales: 0,
         monthlyGoal: 0,
+        totalPoints: 0,
       };
     }
 
     const totalSellers = sellersData.length;
     const currentSales = sellersData.reduce((acc, seller) => acc + seller.salesValue, 0);
     const monthlyGoal = goalsData.salesValue.meta * totalSellers;
-    
+    const totalPoints = sellersData.reduce((acc, seller) => acc + seller.points, 0);
+
     const bestSellerData = sellersData.reduce((prev, current) => 
       (prev.salesValue > current.salesValue) ? prev : current
     );
@@ -32,6 +34,7 @@ export default function DashboardPage() {
       totalSellers,
       currentSales,
       monthlyGoal,
+      totalPoints,
     };
   }, [sellersData, goalsData]);
 
@@ -43,7 +46,7 @@ export default function DashboardPage() {
         <LayoutGrid className="size-8 text-primary" />
         <h1 className="text-3xl font-bold">Dashboard</h1>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -83,6 +86,20 @@ export default function DashboardPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               Total de vendas realizadas no período
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pontos Totais da Equipe</CardTitle>
+            <Star className="h-4 w-4 text-yellow-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {totalPoints.toLocaleString('pt-BR')}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Soma de todos os pontos ganhos
             </p>
           </CardContent>
         </Card>

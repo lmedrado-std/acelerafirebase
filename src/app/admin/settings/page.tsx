@@ -23,7 +23,7 @@ import ReactMarkdown from 'react-markdown';
 
 
 export default function SettingsPage() {
-  const { sellers, setSellers, goals, setGoals } = useAdminContext();
+  const { sellers, setSellers, goals, setGoals, missions, setMissions } = useAdminContext();
   const [sellerName, setSellerName] = useState('');
   const { toast } = useToast();
 
@@ -38,7 +38,6 @@ export default function SettingsPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isGeneratingCourse, setIsGeneratingCourse] = useState(false);
   
-  const [missions, setMissions] = useState<Mission[]>([]);
   const [missionName, setMissionName] = useState('');
   const [missionDescription, setMissionDescription] = useState('');
   const [missionPoints, setMissionPoints] = useState('');

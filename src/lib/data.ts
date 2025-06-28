@@ -1,4 +1,4 @@
-import type { Seller, Goals } from './types';
+import type { Seller, Goals, Mission } from './types';
 
 export const sellersData: Seller[] = [
   { id: '1', name: 'Rian Breston', salesValue: 5240.75, ticketAverage: 150.25, pa: 2.1, points: 1200 },
@@ -14,3 +14,30 @@ export const goalsData: Goals = {
   pa: { metinha: 2.0, meta: 2.5, metona: 2.8, lendaria: 3.0 },
   points: { metinha: 800, meta: 1000, metona: 1500, lendaria: 2000 },
 };
+
+export const missionsData: Mission[] = [
+  {
+    id: '1',
+    name: 'Vendedor do Mês',
+    description: 'Atingir o topo do ranking de vendas no final do mês.',
+    points: 500,
+    startDate: new Date(2024, 6, 1),
+    endDate: new Date(2024, 6, 31),
+  },
+  {
+    id: '2',
+    name: 'Especialista em PA',
+    description: 'Manter um PA (Produtos por Atendimento) acima de 2.8 por uma semana.',
+    points: 250,
+    startDate: new Date(2024, 6, 15),
+    endDate: new Date(2024, 6, 22),
+  },
+   {
+    id: '3',
+    name: 'Mestre dos Quizzes',
+    description: 'Completar 3 quizzes com uma pontuação perfeita.',
+    points: 150,
+    startDate: new Date(2024, 6, 1),
+    endDate: new Date(2024, 7, 31),
+  },
+];

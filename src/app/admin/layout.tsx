@@ -32,14 +32,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/icons/logo';
 import { cn } from '@/lib/utils';
-import { sellersData as initialSellers, goalsData as initialGoals } from '@/lib/data';
-import type { Seller, Goals } from '@/lib/types';
+import { sellersData as initialSellers, goalsData as initialGoals, missionsData as initialMissions } from '@/lib/data';
+import type { Seller, Goals, Mission } from '@/lib/types';
 
 interface AdminContextType {
   sellers: Seller[];
   setSellers: React.Dispatch<React.SetStateAction<Seller[]>>;
   goals: Goals;
   setGoals: React.Dispatch<React.SetStateAction<Goals>>;
+  missions: Mission[];
+  setMissions: React.Dispatch<React.SetStateAction<Mission[]>>;
 }
 
 const AdminContext = React.createContext<AdminContextType | null>(null);
@@ -55,7 +57,7 @@ export const useAdminContext = () => {
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { href: '/admin/ranking', label: 'Ranking', icon: Trophy },
-  { href: '#', label: 'Missões', icon: Target },
+  { href: '/admin/missions', label: 'Missões', icon: Target },
   { href: '#', label: 'Academia', icon: GraduationCap },
   { href: '#', label: 'Quiz', icon: Puzzle },
   { href: '#', label: 'Loja', icon: ShoppingBag },
@@ -67,9 +69,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [sellers, setSellers] = React.useState<Seller[]>(initialSellers);
   const [goals, setGoals] = React.useState<Goals>(initialGoals);
+  const [missions, setMissions] = React.useState<Mission[]>(initialMissions);
 
   return (
-    <AdminContext.Provider value={{ sellers, setSellers, goals, setGoals }}>
+    <AdminContext.Provider value={{ sellers, setSellers, goals, setGoals, missions, setMissions }}>
       <SidebarProvider>
         <div className="flex min-h-screen">
           <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
