@@ -34,8 +34,8 @@ import { Logo } from '@/components/icons/logo';
 import { cn } from '@/lib/utils';
 
 const menuItems = [
-  { href: '#', label: 'Dashboard', icon: LayoutGrid },
-  { href: '#', label: 'Ranking', icon: Trophy },
+  { href: '/admin', label: 'Dashboard', icon: LayoutGrid },
+  { href: '/admin/ranking', label: 'Ranking', icon: Trophy },
   { href: '#', label: 'Missões', icon: Target },
   { href: '#', label: 'Academia', icon: GraduationCap },
   { href: '#', label: 'Quiz', icon: Puzzle },
