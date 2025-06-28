@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import Quiz from "@/components/quiz";
 
 
 export default function SettingsPage() {
@@ -160,7 +161,9 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
         <TabsContent value="quizzes">
-           <Card className="bg-card mt-4 border-border"><CardContent className="p-6 text-center text-muted-foreground">Funcionalidade de Quizzes em breve...</CardContent></Card>
+           <Card className="bg-card mt-4 border-border">
+              <Quiz />
+           </Card>
         </TabsContent>
         <TabsContent value="missoes">
            <Card className="bg-card mt-4 border-border"><CardContent className="p-6 text-center text-muted-foreground">Funcionalidade de Missões em breve...</CardContent></Card>
