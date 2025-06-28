@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Trash2, Flag, CalendarRange, CalendarIcon, Shield, Info } from "lucide-react";
+import { Users, Trash2, Flag, CalendarRange, CalendarIcon, Shield, Info, ClipboardList } from "lucide-react";
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminContext } from '@/app/admin/layout';
@@ -104,23 +104,26 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold">Configurações Gerais</h1>
       </div>
 
-      <Tabs defaultValue="vendedores" className="w-full">
+      <Tabs defaultValue="lancamentos" className="w-full">
         <div className="flex items-center gap-4">
           <TabsList className="bg-card p-1 h-auto">
-            <TabsTrigger value="vendedores" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
-              <Users className="mr-2 size-5" /> Vendedores
+            <TabsTrigger value="lancamentos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+              <ClipboardList className="mr-2 size-5" /> Lançamentos
             </TabsTrigger>
              <TabsTrigger value="metas" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
               <Flag className="mr-2 size-5" /> Metas
             </TabsTrigger>
+            <TabsTrigger value="periodos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+              <CalendarRange className="mr-2 size-5" /> Períodos
+            </TabsTrigger>
           </TabsList>
         </div>
         
-        <TabsContent value="vendedores" className="space-y-6 mt-4">
+        <TabsContent value="lancamentos" className="space-y-6 mt-4">
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-xl">Vendedores Cadastrados</CardTitle>
-              <CardDescription>Gerencie os dados de vendas diárias e pontos dos vendedores.</CardDescription>
+              <CardTitle className="text-xl">Lançamento Diário de Vendas</CardTitle>
+              <CardDescription>Insira aqui os dados de vendas diários para cada vendedor. O dashboard e o ranking serão atualizados com os valores inseridos aqui.</CardDescription>
             </CardHeader>
             <CardContent>
                  {sellers.length > 0 ? (
@@ -221,7 +224,6 @@ export default function SettingsPage() {
                 )}
             </CardContent>
           </Card>
-
            <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-xl">Adicionar Novo Vendedor</CardTitle>
@@ -347,8 +349,9 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-
-          <Card className="bg-card border-border">
+        </TabsContent>
+        <TabsContent value="periodos" className="space-y-6 mt-4">
+           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle>Gerenciar Períodos de Duração</CardTitle>
               <CardDescription>
