@@ -4,13 +4,13 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trophy, Medal, Award, DollarSign, Ticket, Box } from 'lucide-react';
+import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { sellersData, goalsData } from '@/lib/data';
 import type { Seller } from '@/lib/types';
 
-type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa';
+type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa' | 'points';
 type TimePeriod = 'dia' | 'semana' | 'mes';
 type GoalLevel = 'Nenhuma' | 'Metinha' | 'Meta' | 'Metona' | 'Lendária';
 
@@ -42,6 +42,12 @@ const getGoalLevel = (value: number, criterion: RankingCriterion): GoalLevel => 
        { threshold: goalsData.pa.meta, level: 'Meta' as GoalLevel },
        { threshold: goalsData.pa.metinha, level: 'Metinha' as GoalLevel },
     ],
+    points: [
+      { threshold: goalsData.points.lendaria, level: 'Lendária' as GoalLevel },
+      { threshold: goalsData.points.metona, level: 'Metona' as GoalLevel },
+      { threshold: goalsData.points.meta, level: 'Meta' as GoalLevel },
+      { threshold: goalsData.points.metinha, level: 'Metinha' as GoalLevel },
+    ],
   };
 
   const criterionThresholds = thresholds[criterion];
@@ -72,6 +78,8 @@ export default function RankingPage() {
         return 'Ticket Médio';
       case 'pa':
         return 'PA';
+      case 'points':
+        return 'Pontos';
       default:
         return '';
     }
@@ -80,6 +88,9 @@ export default function RankingPage() {
   const formatValue = (value: number, currentCriterion: RankingCriterion) => {
     if (currentCriterion === 'pa') {
         return value.toFixed(1);
+    }
+    if (currentCriterion === 'points') {
+        return value.toLocaleString('pt-BR');
     }
     return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
@@ -116,7 +127,7 @@ export default function RankingPage() {
                  <div>
                     <Label className="text-sm font-medium mb-2 block">Critério de Classificação</Label>
                     <Tabs value={criterion} onValueChange={(value) => setCriterion(value as RankingCriterion)}>
-                        <TabsList className="grid w-full grid-cols-3 bg-input p-1 h-auto">
+                        <TabsList className="grid w-full grid-cols-4 bg-input p-1 h-auto">
                             <TabsTrigger value="salesValue" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
                                 <DollarSign className="mr-2 size-4" /> Vendas
                             </TabsTrigger>
@@ -125,6 +136,9 @@ export default function RankingPage() {
                             </TabsTrigger>
                             <TabsTrigger value="pa" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
                                 <Box className="mr-2 size-4" /> PA
+                            </TabsTrigger>
+                             <TabsTrigger value="points" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+                                <Star className="mr-2 size-4" /> Pontos
                             </TabsTrigger>
                         </TabsList>
                     </Tabs>

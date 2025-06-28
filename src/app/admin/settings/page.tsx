@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2, Flag, CalendarRange, CalendarIcon } from "lucide-react";
+import { GraduationCap, Puzzle, Target, Shield, BookCopy, ShoppingBag, Users, Trash2, Flag, CalendarRange, CalendarIcon, Star } from "lucide-react";
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { sellersData, goalsData } from '@/lib/data';
-import type { Seller, Goals, GoalLevels } from '@/lib/types';
+import type { Seller, Goals, GoalLevels, Course } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,6 @@ import Quiz from "@/components/quiz";
 
 export default function SettingsPage() {
   const [sellers, setSellers] = useState<Seller[]>(sellersData);
-
   const [sellerName, setSellerName] = useState('');
 
   const [goals, setGoals] = useState<Goals>(goalsData);
@@ -32,6 +31,30 @@ export default function SettingsPage() {
   const [periodName, setPeriodName] = useState('');
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+  
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [courseTitle, setCourseTitle] = useState('');
+  const [courseDescription, setCourseDescription] = useState('');
+  const [coursePoints, setCoursePoints] = useState('');
+  
+  const handleAddCourse = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!courseTitle.trim() || !courseDescription.trim() || !coursePoints) return;
+    const newCourse: Course = {
+      id: new Date().getTime().toString(),
+      title: courseTitle,
+      description: courseDescription,
+      points: parseInt(coursePoints, 10),
+    };
+    setCourses(prev => [...prev, newCourse]);
+    setCourseTitle('');
+    setCourseDescription('');
+    setCoursePoints('');
+  };
+  
+  const handleDeleteCourse = (id: string) => {
+    setCourses(prev => prev.filter(c => c.id !== id));
+  }
 
   const handleGoalChange = (
     criterion: keyof Goals,
@@ -57,6 +80,7 @@ export default function SettingsPage() {
       salesValue: 0,
       ticketAverage: 0,
       pa: 0,
+      points: 0,
     };
     setSellers(prevSellers => [...prevSellers, newSeller]);
     setSellerName('');
@@ -129,33 +153,64 @@ export default function SettingsPage() {
           <Card className="bg-card mt-4 border-border">
             <CardHeader>
               <CardTitle className="text-xl">Gerenciar Cursos da Academia</CardTitle>
+              <CardDescription>Crie e gerencie os cursos de treinamento para os vendedores.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <form className="space-y-4">
+              <form onSubmit={handleAddCourse} className="space-y-4 p-6 border rounded-lg border-border">
+                <h3 className="text-lg font-semibold">Criar Novo Curso</h3>
                 <div className="space-y-2">
                   <Label htmlFor="title">Título do Curso</Label>
-                  <Input id="title" placeholder="Título do Curso" className="bg-input" />
+                  <Input id="title" placeholder="Ex: Técnicas de Vendas Avançadas" className="bg-input" value={courseTitle} onChange={(e) => setCourseTitle(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Descrição do Curso</Label>
-                  <Textarea id="description" placeholder="Descrição do Curso" className="bg-input" rows={4} />
+                  <Textarea id="description" placeholder="Descreva o conteúdo e os objetivos do curso." className="bg-input" rows={3} value={courseDescription} onChange={(e) => setCourseDescription(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="points">Pontos de Recompensa</Label>
-                  <Input id="points" placeholder="Pontos de Recompensa" type="number" className="bg-input" />
+                  <Input id="points" placeholder="Ex: 150" type="number" className="bg-input" value={coursePoints} onChange={(e) => setCoursePoints(e.target.value)} required />
                 </div>
-                 <Button className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                 <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
                     Criar Novo Curso
                 </Button>
               </form>
 
               <div className="space-y-4 pt-6 border-t border-border">
                 <h3 className="text-lg font-semibold">Cursos Existentes</h3>
-                <div className="text-center text-muted-foreground border-2 border-dashed border-border rounded-lg p-8">
-                  <BookCopy className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <p className="mt-4 font-semibold">Nenhum curso encontrado</p>
-                  <p className="text-sm">Crie um novo curso para começar a gerenciar.</p>
-                </div>
+                {courses.length > 0 ? (
+                   <div className="rounded-md border border-border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Título</TableHead>
+                          <TableHead>Descrição</TableHead>
+                          <TableHead className="text-center">Pontos</TableHead>
+                          <TableHead className="text-center">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {courses.map((course) => (
+                          <TableRow key={course.id}>
+                            <TableCell className="font-medium">{course.title}</TableCell>
+                            <TableCell className="text-muted-foreground">{course.description}</TableCell>
+                            <TableCell className="text-center font-semibold">{course.points}</TableCell>
+                            <TableCell className="text-center">
+                              <Button variant="ghost" size="icon" onClick={() => handleDeleteCourse(course.id)} aria-label="Remover curso">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground border-2 border-dashed border-border rounded-lg p-8">
+                    <BookCopy className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <p className="mt-4 font-semibold">Nenhum curso encontrado</p>
+                    <p className="text-sm">Crie um novo curso para começar a gerenciar.</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -175,7 +230,7 @@ export default function SettingsPage() {
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-xl">Vendedores Cadastrados</CardTitle>
-              <CardDescription>Gerencie os dados de vendas diárias dos vendedores.</CardDescription>
+              <CardDescription>Gerencie os dados de vendas diárias e pontos dos vendedores.</CardDescription>
             </CardHeader>
             <CardContent>
                  {sellers.length > 0 ? (
@@ -187,6 +242,7 @@ export default function SettingsPage() {
                           <TableHead className="text-right">Valor de Venda (R$)</TableHead>
                           <TableHead className="text-right">Ticket Médio (R$)</TableHead>
                           <TableHead className="text-right">PA</TableHead>
+                          <TableHead className="text-right">Pontos</TableHead>
                           <TableHead className="text-center">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -225,6 +281,14 @@ export default function SettingsPage() {
                                   className="bg-input text-right min-w-[100px]"
                                   value={seller.pa}
                                   onChange={(e) => handleSellerUpdate(seller.id, 'pa', e.target.value)}
+                                />
+                            </TableCell>
+                            <TableCell>
+                                <Input
+                                  type="number"
+                                  className="bg-input text-right min-w-[100px]"
+                                  value={seller.points}
+                                  onChange={(e) => handleSellerUpdate(seller.id, 'points', e.target.value)}
                                 />
                             </TableCell>
                             <TableCell className="text-center">
@@ -341,6 +405,27 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Label htmlFor="pa-lendaria">Lendária</Label>
                     <Input id="pa-lendaria" type="number" step="0.1" value={goals.pa.lendaria} onChange={(e) => handleGoalChange('pa', 'lendaria', e.target.value)} className="bg-input" />
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-border pt-8">
+                <h3 className="text-lg font-medium mb-4">Pontos</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="points-metinha">Metinha</Label>
+                    <Input id="points-metinha" type="number" value={goals.points.metinha} onChange={(e) => handleGoalChange('points', 'metinha', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="points-meta">Meta</Label>
+                    <Input id="points-meta" type="number" value={goals.points.meta} onChange={(e) => handleGoalChange('points', 'meta', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="points-metona">Metona</Label>
+                    <Input id="points-metona" type="number" value={goals.points.metona} onChange={(e) => handleGoalChange('points', 'metona', e.target.value)} className="bg-input" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="points-lendaria">Lendária</Label>
+                    <Input id="points-lendaria" type="number" value={goals.points.lendaria} onChange={(e) => handleGoalChange('points', 'lendaria', e.target.value)} className="bg-input" />
                   </div>
                 </div>
               </div>
