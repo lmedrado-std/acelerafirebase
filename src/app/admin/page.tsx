@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -132,12 +132,13 @@ export default function AdminPage() {
         <TabsContent value="loja">
            <Card className="bg-card mt-4 border-border"><CardContent className="p-6 text-center text-muted-foreground">Funcionalidade da Loja em breve...</CardContent></Card>
         </TabsContent>
-        <TabsContent value="vendedores">
-          <Card className="bg-card mt-4 border-border">
+        <TabsContent value="vendedores" className="space-y-6 mt-4">
+           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-xl">Gerenciar Vendedores</CardTitle>
+              <CardTitle className="text-xl">Adicionar Novo Vendedor</CardTitle>
+              <CardDescription>Preencha os dados para cadastrar um novo vendedor na plataforma.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
               <form onSubmit={handleAddSeller} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="sellerName">Nome do Vendedor</Label>
@@ -192,9 +193,15 @@ export default function AdminPage() {
                     Adicionar Vendedor
                 </Button>
               </form>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-4 pt-6 border-t border-border">
-                <h3 className="text-lg font-semibold">Vendedores Cadastrados</h3>
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-xl">Vendedores Cadastrados</CardTitle>
+              <CardDescription>Gerencie os dados de vendas diárias dos vendedores.</CardDescription>
+            </CardHeader>
+            <CardContent>
                  {sellers.length > 0 ? (
                   <div className="rounded-md border border-border">
                     <Table>
@@ -255,7 +262,6 @@ export default function AdminPage() {
                     <p className="text-sm">Adicione um novo vendedor para começar a gerenciar.</p>
                   </div>
                 )}
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
