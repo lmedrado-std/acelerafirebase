@@ -61,7 +61,7 @@ export default function AdminPage() {
         <h1 className="text-3xl font-bold">Painel de Administração</h1>
       </div>
 
-      <Tabs defaultValue="cursos" className="w-full">
+      <Tabs defaultValue="vendedores" className="w-full">
         <div className="flex items-center gap-4">
           <TabsList className="bg-card p-1 h-auto">
             <TabsTrigger value="cursos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
@@ -149,22 +149,28 @@ export default function AdminPage() {
                           <TableRow key={seller.id}>
                             <TableCell className="font-medium">{seller.name}</TableCell>
                             <TableCell>
-                               <Input
-                                 type="number"
-                                 step="0.01"
-                                 className="bg-input text-right min-w-[120px]"
-                                 value={seller.salesValue}
-                                 onChange={(e) => handleSellerUpdate(seller.id, 'salesValue', e.target.value)}
-                               />
+                              <div className="relative">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-muted-foreground">R$</span>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  className="bg-input pl-10 text-right min-w-[140px]"
+                                  value={seller.salesValue}
+                                  onChange={(e) => handleSellerUpdate(seller.id, 'salesValue', e.target.value)}
+                                />
+                              </div>
                             </TableCell>
                             <TableCell>
-                               <Input
-                                 type="number"
-                                 step="0.01"
-                                 className="bg-input text-right min-w-[120px]"
-                                 value={seller.ticketAverage}
-                                 onChange={(e) => handleSellerUpdate(seller.id, 'ticketAverage', e.target.value)}
-                                />
+                              <div className="relative">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-muted-foreground">R$</span>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  className="bg-input pl-10 text-right min-w-[140px]"
+                                  value={seller.ticketAverage}
+                                  onChange={(e) => handleSellerUpdate(seller.id, 'ticketAverage', e.target.value)}
+                                 />
+                              </div>
                             </TableCell>
                             <TableCell>
                                 <Input
