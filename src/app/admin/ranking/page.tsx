@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trophy, Medal, Award, DollarSign, Ticket, Box } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 type Seller = {
   id: string;
@@ -25,6 +26,46 @@ const sellersData: Seller[] = [
 
 type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa';
 type TimePeriod = 'dia' | 'semana' | 'mes';
+type GoalLevel = 'Nenhuma' | 'Metinha' | 'Meta' | 'Metona' | 'Lendária';
+
+const goalLevelConfig: Record<GoalLevel, { label: string; className: string }> = {
+  'Nenhuma': { label: 'Nenhuma', className: 'bg-muted border-transparent text-muted-foreground hover:bg-muted' },
+  'Metinha': { label: 'Metinha', className: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
+  'Meta': { label: 'Meta', className: 'bg-green-500/10 text-green-500 border-green-500/20' },
+  'Metona': { label: 'Metona', className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  'Lendária': { label: 'Lendária', className: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+};
+
+const getGoalLevel = (value: number, criterion: RankingCriterion): GoalLevel => {
+  const thresholds: Record<RankingCriterion, { threshold: number; level: GoalLevel }[]> = {
+    salesValue: [
+      { threshold: 7000, level: 'Lendária' },
+      { threshold: 6000, level: 'Metona' },
+      { threshold: 5000, level: 'Meta' },
+      { threshold: 4000, level: 'Metinha' },
+    ],
+    ticketAverage: [
+      { threshold: 200, level: 'Lendária' },
+      { threshold: 180, level: 'Metona' },
+      { threshold: 150, level: 'Meta' },
+      { threshold: 130, level: 'Metinha' },
+    ],
+    pa: [
+      { threshold: 3.0, level: 'Lendária' },
+      { threshold: 2.8, level: 'Metona' },
+      { threshold: 2.5, level: 'Meta' },
+      { threshold: 2.0, level: 'Metinha' },
+    ],
+  };
+
+  const criterionThresholds = thresholds[criterion];
+  for (const item of criterionThresholds) {
+    if (value >= item.threshold) {
+      return item.level;
+    }
+  }
+  return 'Nenhuma';
+};
 
 export default function RankingPage() {
   const [criterion, setCriterion] = useState<RankingCriterion>('salesValue');
@@ -130,19 +171,27 @@ export default function RankingPage() {
                     <TableRow>
                       <TableHead className="w-[100px] text-center">Posição</TableHead>
                       <TableHead>Vendedor</TableHead>
+                      <TableHead className="text-center">Nível da Meta</TableHead>
                       <TableHead className="text-right">{getCriterionLabel(criterion)}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sortedSellers.map((seller, index) => (
-                      <TableRow key={seller.id} className={index < 3 ? 'bg-card-foreground/5' : ''}>
-                        <TableCell className="font-bold text-lg flex justify-center items-center h-full py-4">
-                           {getRankIndicator(index)}
-                        </TableCell>
-                        <TableCell className="font-medium">{seller.name}</TableCell>
-                        <TableCell className="text-right font-semibold text-lg">{formatValue(seller[criterion], criterion)}</TableCell>
-                      </TableRow>
-                    ))}
+                    {sortedSellers.map((seller, index) => {
+                      const goalLevel = getGoalLevel(seller[criterion], criterion);
+                      const config = goalLevelConfig[goalLevel];
+                      return (
+                        <TableRow key={seller.id} className={index < 3 ? 'bg-card-foreground/5' : ''}>
+                          <TableCell className="font-bold text-lg flex justify-center items-center h-full py-4">
+                            {getRankIndicator(index)}
+                          </TableCell>
+                          <TableCell className="font-medium">{seller.name}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge className={config.className}>{config.label}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-lg">{formatValue(seller[criterion], criterion)}</TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
             </div>
