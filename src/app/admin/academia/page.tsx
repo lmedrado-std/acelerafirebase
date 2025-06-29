@@ -101,7 +101,8 @@ export default function AcademiaPage() {
     }
     setIsGeneratingCourse(true);
     try {
-      const result = await generateCourse({ topic: selectedTopic });
+      const seed = new Date().getTime().toString();
+      const result = await generateCourse({ topic: selectedTopic, seed });
       
       const newCourse: Course = {
         id: new Date().getTime().toString(),

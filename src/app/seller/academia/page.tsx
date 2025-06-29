@@ -112,7 +112,8 @@ export default function AcademiaPage() {
     setIsGeneratingCourse(true);
     setCourse(null);
     try {
-      const result = await generateCourse({ topic: selectedTopic });
+      const seed = `${new Date().toISOString().split('T')[0]}-${currentSeller.id}-${selectedTopic}`;
+      const result = await generateCourse({ topic: selectedTopic, seed });
       
       const newCourse: Course = {
         id: new Date().getTime().toString(),

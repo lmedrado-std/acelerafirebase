@@ -72,7 +72,7 @@ export default function Quiz() {
 
     const seed = isSellerView && currentSeller
       ? `${new Date().toISOString().split('T')[0]}-${currentSeller.id}`
-      : new Date().toISOString().split('T')[0];
+      : new Date().getTime().toString();
 
     try {
       const result = await generateQuiz({

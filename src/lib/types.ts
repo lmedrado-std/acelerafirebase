@@ -111,6 +111,7 @@ export type GenerateQuizOutput = z.infer<typeof GenerateQuizOutputSchema>;
 // Generate Course (For Academia Page)
 export const GenerateCourseInputSchema = z.object({
   topic: z.string(),
+  seed: z.string().optional().describe('An optional seed for controlling randomness and uniqueness.'),
 });
 export type GenerateCourseInput = z.infer<typeof GenerateCourseInputSchema>;
 
