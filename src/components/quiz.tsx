@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { generateQuiz } from '@/ai/flows/generate-quiz-flow';
-import type { GenerateQuizOutput, QuizResult, QuizQuestion } from '@/lib/types';
+import type { GenerateQuizOutput, QuizResult, QuizQuestion, Goals } from '@/lib/types';
 import { Loader2, Sparkles, Trophy, RotateCcw, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import PerformanceChart from './PerformanceChart';
@@ -31,13 +31,12 @@ const getResultsFromLocalStorage = (): QuizResult[] => {
 };
 
 type Difficulty = 'Fácil' | 'Médio' | 'Difícil';
-const difficultyConfig: Record<Difficulty, { points: number }> = {
-  'Fácil': { points: 10 },
-  'Médio': { points: 20 },
-  'Difícil': { points: 30 },
-};
 
-export default function Quiz() {
+interface QuizProps {
+    goals: Goals;
+}
+
+export default function Quiz({ goals }: QuizProps) {
   const sellerContext = useContext(SellerContext);
   const isSellerView = !!sellerContext;
   const { currentSeller, setSellers } = sellerContext || {};
@@ -52,6 +51,8 @@ export default function Quiz() {
   const [difficulty, setDifficulty] = useState<Difficulty>('Médio');
   const { toast } = useToast();
   const [quizHistory, setQuizHistory] = useState<QuizResult[]>([]);
+
+  const difficultyConfig = goals.gamification.quiz;
 
   useEffect(() => {
     setQuizHistory(getResultsFromLocalStorage());
@@ -70,8 +71,6 @@ export default function Quiz() {
     setShowFeedback(false);
     setIsFinished(false);
 
-    // The seed is composed to ensure uniqueness per seller, per day, and per difficulty level.
-    // For non-sellers (e.g., admin testing), a simple timestamp is used for randomness.
     const seed = isSellerView && currentSeller
       ? `${new Date().toISOString().split('T')[0]}-${currentSeller.id}-${difficulty}`
       : new Date().getTime().toString();
@@ -116,7 +115,7 @@ export default function Quiz() {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       setIsFinished(true);
-      const pointsPerCorrectAnswer = difficultyConfig[difficulty].points;
+      const pointsPerCorrectAnswer = difficultyConfig[difficulty];
       const pointsEarned = score * pointsPerCorrectAnswer;
 
       const finalResult: QuizResult = {
@@ -173,7 +172,8 @@ export default function Quiz() {
   }
 
   if (isFinished) {
-    const pointsPerCorrectAnswer = difficultyConfig[difficulty].points;
+    const pointsPerCorrectAnswer = difficultyConfig[difficulty];
+    const pointsEarned = score * pointsPerCorrectAnswer;
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <Trophy className="h-16 w-16 text-yellow-400" />
@@ -219,7 +219,7 @@ export default function Quiz() {
              <p className="text-xs text-muted-foreground pt-1">
               Pontuação por acerto: 
               <span className="font-bold text-green-400 ml-1">
-                Fácil: 10pts | Médio: 20pts | Difícil: 30pts
+                Fácil: {difficultyConfig['Fácil']}pts | Médio: {difficultyConfig['Médio']}pts | Difícil: {difficultyConfig['Difícil']}pts
               </span>
             </p>
         </div>

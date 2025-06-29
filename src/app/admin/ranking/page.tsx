@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star } from 'lucide-react';
+import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star, Minus } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAdminContext } from '@/app/admin/layout';
@@ -28,37 +28,48 @@ export default function RankingPage() {
   const [criterion, setCriterion] = useState<RankingCriterion>('salesValue');
   const { sellers: sellersData, goals: goalsData } = useAdminContext();
 
+  const isAllPerformanceZero = useMemo(() => 
+    sellersData.every(s => 
+        s.salesValue === 0 && 
+        s.ticketAverage === 0 && 
+        s.pa === 0 && 
+        s.points === 0 && 
+        s.extraPoints === 0
+    )
+  , [sellersData]);
+
   const sortedSellers = useMemo(() => {
     const sellersWithPrizes = sellersData.map(seller => {
-        const prizes: Record<keyof Omit<Goals, 'salesValue'> | 'salesValue', number> = {
+        const prizes: Record<keyof Omit<Goals, 'salesValue' | 'gamification'>, number> = {
             salesValue: 0,
             ticketAverage: 0,
             pa: 0,
             points: 0,
         };
 
-        const allCriteria: Array<keyof Goals> = ['salesValue', 'ticketAverage', 'pa', 'points'];
+        const allCriteria: Array<keyof typeof prizes> = ['salesValue', 'ticketAverage', 'pa', 'points'];
         
         allCriteria.forEach(crit => {
-            const goals = goalsData[crit];
-            const sellerValue = crit === 'points' ? seller.points + seller.extraPoints : seller[crit];
+            if (crit === 'salesValue' || crit === 'ticketAverage' || crit === 'pa' || crit === 'points') {
+                const goals = goalsData[crit];
+                const sellerValue = crit === 'points' ? seller.points + seller.extraPoints : seller[crit];
 
-            let currentPrize = 0;
-            if (sellerValue >= goals.metinha.threshold) currentPrize += goals.metinha.prize;
-            if (sellerValue >= goals.meta.threshold) currentPrize += goals.meta.prize;
-            if (sellerValue >= goals.metona.threshold) currentPrize += goals.metona.prize;
-            if (sellerValue >= goals.lendaria.threshold) currentPrize += goals.lendaria.prize;
+                let currentPrize = 0;
+                if (sellerValue >= goals.metinha.threshold) currentPrize += goals.metinha.prize;
+                if (sellerValue >= goals.meta.threshold) currentPrize += goals.meta.prize;
+                if (sellerValue >= goals.metona.threshold) currentPrize += goals.metona.prize;
+                if (sellerValue >= goals.lendaria.threshold) currentPrize += goals.lendaria.prize;
 
-            // Add performance bonus only if criterion is salesValue
-            if (crit === 'salesValue') {
-                const salesGoals = goals as SalesValueGoals;
-                if (seller.salesValue > salesGoals.lendaria.threshold && salesGoals.performanceBonus && salesGoals.performanceBonus.per > 0) {
-                    const excessSales = seller.salesValue - salesGoals.lendaria.threshold;
-                    const bonusUnits = Math.floor(excessSales / salesGoals.performanceBonus.per);
-                    currentPrize += bonusUnits * salesGoals.performanceBonus.prize;
+                if (crit === 'salesValue') {
+                    const salesGoals = goals as SalesValueGoals;
+                    if (seller.salesValue > salesGoals.lendaria.threshold && salesGoals.performanceBonus && salesGoals.performanceBonus.per > 0) {
+                        const excessSales = seller.salesValue - salesGoals.lendaria.threshold;
+                        const bonusUnits = Math.floor(excessSales / salesGoals.performanceBonus.per);
+                        currentPrize += bonusUnits * salesGoals.performanceBonus.prize;
+                    }
                 }
+                prizes[crit] = currentPrize;
             }
-            prizes[crit] = currentPrize;
         });
 
         const totalPrize = Object.values(prizes).reduce((sum, p) => sum + p, 0);
@@ -66,16 +77,24 @@ export default function RankingPage() {
         return { ...seller, prizes, totalPrize };
     });
 
+    if (isAllPerformanceZero) {
+        return [...sellersWithPrizes].sort((a,b) => a.name.localeCompare(b.name));
+    }
+
     return sellersWithPrizes.sort((a, b) => {
-        if (criterion === 'totalPrize') {
-          return b.totalPrize - a.totalPrize;
+        const valueA = criterion === 'totalPrize' 
+            ? a.totalPrize 
+            : (criterion === 'points' ? a.points + a.extraPoints : a[criterion]);
+        const valueB = criterion === 'totalPrize'
+            ? b.totalPrize
+            : (criterion === 'points' ? b.points + b.extraPoints : b[criterion]);
+
+        if (valueB !== valueA) {
+            return valueB - valueA;
         }
-        if (criterion === 'points') {
-            return (b.points + b.extraPoints) - (a.points + a.extraPoints);
-        }
-        return b[criterion] - a[criterion];
+        return a.name.localeCompare(b.name);
     });
-  }, [sellersData, goalsData, criterion]);
+  }, [sellersData, goalsData, criterion, isAllPerformanceZero]);
   
   const getCriterionLabel = (currentCriterion: RankingCriterion) => {
     switch (currentCriterion) {
@@ -110,44 +129,48 @@ export default function RankingPage() {
 
   const getGoalProgress = (value: number, criterion: RankingCriterion) => {
     if (criterion === 'totalPrize') return { percent: 100, label: 'N/A', details: 'N/A'};
-    const goals = goalsData[criterion];
-    let nextGoal, currentGoalBase, nextGoalLabel, progress;
+    if (criterion === 'points' || criterion === 'pa' || criterion === 'ticketAverage' || criterion === 'salesValue') {
+        const goals = goalsData[criterion];
+        let nextGoal, currentGoalBase, nextGoalLabel, progress;
 
-    if (value >= goals.lendaria.threshold) {
-      return { percent: 100, label: `Nível Lendário Atingido!`, details: `${formatValue(value, criterion)}` };
-    }
-    if (value >= goals.metona.threshold) {
-      nextGoal = goals.lendaria.threshold;
-      currentGoalBase = goals.metona.threshold;
-      nextGoalLabel = 'Lendária';
-    } else if (value >= goals.meta.threshold) {
-      nextGoal = goals.metona.threshold;
-      currentGoalBase = goals.meta.threshold;
-      nextGoalLabel = 'Metona';
-    } else if (value >= goals.metinha.threshold) {
-      nextGoal = goals.meta.threshold;
-      currentGoalBase = goals.metinha.threshold;
-      nextGoalLabel = 'Meta';
-    } else {
-      nextGoal = goals.metinha.threshold;
-      currentGoalBase = 0;
-      nextGoalLabel = 'Metinha';
-    }
+        if (value >= goals.lendaria.threshold) {
+        return { percent: 100, label: `Nível Lendário Atingido!`, details: `${formatValue(value, criterion)}` };
+        }
+        if (value >= goals.metona.threshold) {
+        nextGoal = goals.lendaria.threshold;
+        currentGoalBase = goals.metona.threshold;
+        nextGoalLabel = 'Lendária';
+        } else if (value >= goals.meta.threshold) {
+        nextGoal = goals.metona.threshold;
+        currentGoalBase = goals.meta.threshold;
+        nextGoalLabel = 'Metona';
+        } else if (value >= goals.metinha.threshold) {
+        nextGoal = goals.meta.threshold;
+        currentGoalBase = goals.metinha.threshold;
+        nextGoalLabel = 'Meta';
+        } else {
+        nextGoal = goals.metinha.threshold;
+        currentGoalBase = 0;
+        nextGoalLabel = 'Metinha';
+        }
 
-    if (nextGoal - currentGoalBase <= 0) {
-      progress = 100;
-    } else {
-      progress = Math.min(100, ((value - currentGoalBase) / (nextGoal - currentGoalBase)) * 100);
+        if (nextGoal - currentGoalBase <= 0) {
+        progress = 100;
+        } else {
+        progress = Math.min(100, ((value - currentGoalBase) / (nextGoal - currentGoalBase)) * 100);
+        }
+        
+        return { 
+        percent: progress, 
+        label: `Próximo Nível: ${nextGoalLabel}`,
+        details: `${formatValue(value, criterion)} / ${formatValue(nextGoal, criterion)}`
+        };
     }
-    
-    return { 
-      percent: progress, 
-      label: `Próximo Nível: ${nextGoalLabel}`,
-      details: `${formatValue(value, criterion)} / ${formatValue(nextGoal, criterion)}`
-    };
+    return { percent: 0, label: 'N/A', details: 'N/A' };
   };
   
   const getRankIndicator = (index: number) => {
+    if (isAllPerformanceZero) return <Minus className="h-6 w-6 text-muted-foreground" />
     if (index === 0) return <Trophy className="h-6 w-6 text-yellow-400" />;
     if (index === 1) return <Medal className="h-6 w-6 text-gray-400" />;
     if (index === 2) return <Award className="h-6 w-6 text-orange-400" />;
@@ -196,7 +219,9 @@ export default function RankingPage() {
         <CardHeader>
           <CardTitle>Classificação por {getCriterionLabel(criterion)}</CardTitle>
            <CardDescription>
-              Visualizando a classificação dos vendedores com base nos dados mais recentes.
+              {isAllPerformanceZero
+                ? 'Nenhum dado de performance lançado. A lista está em ordem alfabética.'
+                : 'Visualizando a classificação dos vendedores com base nos dados mais recentes.'}
            </CardDescription>
         </CardHeader>
         <CardContent>
@@ -226,7 +251,7 @@ export default function RankingPage() {
                         ? seller.totalPrize
                         : (criterion === 'points' ? seller.points + seller.extraPoints : seller[criterion]);
 
-                      const criterionGoals = criterion !== 'totalPrize' ? goalsData[criterion] : null;
+                      const criterionGoals = (criterion !== 'totalPrize' && (criterion === 'salesValue' || criterion === 'ticketAverage' || criterion === 'pa' || criterion === 'points')) ? goalsData[criterion] : null;
                       
                       const allGoals: Array<{ name: GoalLevelName; threshold: number; prize: number }> = criterionGoals ? [
                         { name: 'Metinha', ...criterionGoals.metinha },
@@ -242,7 +267,7 @@ export default function RankingPage() {
                         : (seller.prizes[criterion as keyof typeof seller.prizes] || 0);
 
                       return (
-                        <TableRow key={seller.id} className={index < 3 ? 'bg-card-foreground/5' : ''}>
+                        <TableRow key={seller.id} className={!isAllPerformanceZero && index < 3 ? 'bg-card-foreground/5' : ''}>
                           <TableCell className="font-bold text-lg flex justify-center items-center h-full py-4">
                             {getRankIndicator(index)}
                           </TableCell>

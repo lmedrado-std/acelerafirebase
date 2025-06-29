@@ -1,8 +1,11 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Quiz from "@/components/quiz";
 import { Puzzle } from "lucide-react";
+import { useAdminContext } from "../layout";
 
 export default function QuizPage() {
+  const { goals } = useAdminContext();
+
   return (
     <div className="space-y-8">
        <div className="flex items-center gap-4">
@@ -17,7 +20,7 @@ export default function QuizPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <Quiz />
+            <Quiz goals={goals} />
         </CardContent>
       </Card>
     </div>

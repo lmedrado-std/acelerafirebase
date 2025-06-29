@@ -14,13 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-const COURSE_POINTS_CONFIG = {
-  'Fácil': 100,
-  'Médio': 150,
-  'Difícil': 200,
-} as const;
-
-type Dificuldade = keyof typeof COURSE_POINTS_CONFIG;
+type Dificuldade = 'Fácil' | 'Médio' | 'Difícil';
 
 
 // Component for a single course quiz
@@ -82,13 +76,15 @@ const CourseQuiz = ({ course, onComplete }: { course: Course; onComplete: () => 
 
 
 export default function AcademiaPage() {
-  const { sellers, setSellers } = useAdminContext();
+  const { sellers, setSellers, goals } = useAdminContext();
   const [courses, setCourses] = useState<Course[]>([]);
   const [isGeneratingCourse, setIsGeneratingCourse] = useState(false);
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string>('');
   const [dificuldade, setDificuldade] = useState<Dificuldade>('Médio');
   const { toast } = useToast();
+  
+  const coursePointsConfig = goals.gamification.course;
 
   const courseTopics = [
     'Técnicas de Atendimento ao Cliente para Lojas de Calçados',
@@ -111,7 +107,7 @@ export default function AcademiaPage() {
     try {
       const seed = new Date().getTime().toString();
       const result = await generateCourse({ topic: selectedTopic, seed, dificuldade });
-      const points = COURSE_POINTS_CONFIG[dificuldade];
+      const points = coursePointsConfig[dificuldade];
       const newCourse: Course = {
         id: new Date().getTime().toString(),
         ...result,
@@ -189,8 +185,10 @@ export default function AcademiaPage() {
         <CardHeader>
           <CardTitle className="text-xl">Gerador de Cursos</CardTitle>
           <CardDescription>
-            Selecione um tópico e um grau de dificuldade. A pontuação varia conforme o nível:
-            <span className="ml-2 font-bold text-green-400">Fácil: 100pts | Médio: 150pts | Difícil: 200pts</span>
+            Selecione um tópico e um grau de dificuldade. A pontuação é configurável na tela de Metas.
+             <span className="ml-2 font-bold text-green-400">
+                Fácil: {coursePointsConfig['Fácil']}pts | Médio: {coursePointsConfig['Médio']}pts | Difícil: {coursePointsConfig['Difícil']}pts
+            </span>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -215,7 +213,7 @@ export default function AcademiaPage() {
                       <SelectValue placeholder="Dificuldade" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.keys(COURSE_POINTS_CONFIG).map(level => (
+                      {Object.keys(coursePointsConfig).map(level => (
                         <SelectItem key={level} value={level}>{level}</SelectItem>
                       ))}
                     </SelectContent>

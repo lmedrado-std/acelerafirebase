@@ -13,6 +13,7 @@ import {
   Trophy,
   User,
   ShoppingBag,
+  History,
 } from 'lucide-react';
 
 import {
@@ -39,7 +40,7 @@ import {
 import {Button} from '@/components/ui/button';
 import {Logo} from '@/components/icons/logo';
 import {cn} from '@/lib/utils';
-import type {Admin, Goals, Mission, Seller} from '@/lib/types';
+import type {Admin, Goals, Mission, Seller, CycleSnapshot} from '@/lib/types';
 import {dataStore, useStore} from '@/lib/store';
 
 interface AdminContextType {
@@ -53,6 +54,8 @@ interface AdminContextType {
   setAdminUser: (updater: (prev: Admin) => Admin) => void;
   isDirty: boolean;
   setIsDirty: (isDirty: boolean) => void;
+  cycleHistory: CycleSnapshot[];
+  setCycleHistory: (updater: (prev: CycleSnapshot[]) => CycleSnapshot[]) => void;
 }
 
 const AdminContext = React.createContext<AdminContextType | null>(null);
@@ -72,6 +75,7 @@ const menuItems = [
   {href: '/admin/academia', label: 'Academia', icon: GraduationCap},
   {href: '/admin/quiz', label: 'Quiz', icon: Puzzle},
   {href: '/admin/loja', label: 'Loja', icon: ShoppingBag},
+  {href: '/admin/historico', label: 'Histórico', icon: History},
   {href: '/admin/perfil', label: 'Perfil', icon: User},
   {href: '/admin/settings', label: 'Configurações', icon: Shield},
 ];
@@ -98,9 +102,11 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
     setMissions: dataStore.setMissions,
     adminUser: state.adminUser,
     setAdminUser: dataStore.setAdminUser,
+    cycleHistory: state.cycleHistory,
+    setCycleHistory: dataStore.setCycleHistory,
     isDirty,
     setIsDirty,
-  }), [state.sellers, state.goals, state.missions, state.adminUser, isDirty]);
+  }), [state.sellers, state.goals, state.missions, state.adminUser, state.cycleHistory, isDirty]);
 
   const handleNavigate = (path: string) => {
     if (pathname === '/admin/settings' && isDirty) {

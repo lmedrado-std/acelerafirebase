@@ -5,11 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Trash2, Flag, Shield, Info, ClipboardList, Trophy } from "lucide-react";
+import { Users, Trash2, Flag, Shield, Info, ClipboardList, Trophy, RefreshCw, AlertTriangle, History } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminContext } from '@/app/admin/layout';
-import type { Seller, Goals, GoalLevels } from '@/lib/types';
+import type { Seller, Goals, GoalLevels, GamificationPoints } from '@/lib/types';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -25,17 +26,22 @@ const goalLevels: Array<{key: keyof GoalLevels, label: string}> = [
     { key: 'lendaria', label: 'Lendária'},
 ];
 
+const gamificationLevels: Array<{key: keyof GamificationPoints['course'], label: string}> = [
+    { key: 'Fácil', label: 'Fácil'},
+    { key: 'Médio', label: 'Médio'},
+    { key: 'Difícil', label: 'Difícil'},
+];
+
+
 export default function SettingsPage() {
-  const { sellers, setSellers, goals, setGoals, isDirty, setIsDirty } = useAdminContext();
+  const { sellers, setSellers, goals, setGoals, setCycleHistory, isDirty, setIsDirty } = useAdminContext();
   const { toast } = useToast();
   
-  // Local state for editing to avoid applying changes immediately
   const [localSellers, setLocalSellers] = useState<Seller[]>([]);
   const [localGoals, setLocalGoals] = useState<Goals>(goals);
   
   const [newSeller, setNewSeller] = useState({ name: '', nickname: '', password: '' });
   
-  // Sync local state when global state changes
   useEffect(() => {
     setLocalSellers(JSON.parse(JSON.stringify(sellers)));
   }, [sellers]);
@@ -44,29 +50,21 @@ export default function SettingsPage() {
     setLocalGoals(JSON.parse(JSON.stringify(goals)));
   }, [goals]);
 
-  // Check for unsaved changes and update the context
   useEffect(() => {
-    // Deep compare using JSON stringify. It's simple and effective for this data structure.
     const hasUnsavedChanges = JSON.stringify(localSellers) !== JSON.stringify(sellers) || JSON.stringify(localGoals) !== JSON.stringify(goals);
-    
-    // Only update if the state is different to avoid unnecessary re-renders
     if (hasUnsavedChanges !== isDirty) {
         setIsDirty(hasUnsavedChanges);
     }
   }, [localSellers, localGoals, sellers, goals, isDirty, setIsDirty]);
 
-  // Handle browser-level navigation (closing tab, refresh)
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (isDirty) {
         event.preventDefault();
-        // Most browsers require returnValue to be set.
         event.returnValue = '';
       }
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
@@ -75,21 +73,36 @@ export default function SettingsPage() {
 
   const handleGoalChange = (
     criterion: keyof Goals,
-    level: keyof GoalLevels,
-    field: 'threshold' | 'prize',
+    level: keyof GoalLevels | keyof GamificationPoints['course'] | keyof GamificationPoints['quiz'],
+    field: 'threshold' | 'prize' | 'points',
     value: string
   ) => {
-    setLocalGoals(prev => ({
-      ...prev,
-      [criterion]: {
-        ...prev[criterion],
-        [level]: {
-          ...prev[criterion][level],
-          [field]: parseFloat(value) || 0,
-        },
-      },
-    }));
+    setLocalGoals(prev => {
+        const updatedGoals = JSON.parse(JSON.stringify(prev));
+        if (criterion === 'gamification') {
+            if ('course' in updatedGoals.gamification && (level === 'Fácil' || level === 'Médio' || level === 'Difícil')) {
+                 updatedGoals.gamification.course[level] = parseFloat(value) || 0;
+            } else if ('quiz' in updatedGoals.gamification && (level === 'Fácil' || level === 'Médio' || level === 'Difícil')) {
+                 updatedGoals.gamification.quiz[level] = parseFloat(value) || 0;
+            }
+        } else if (criterion !== 'gamification' && (level === 'metinha' || level === 'meta' || level === 'metona' || level === 'lendaria')) {
+             updatedGoals[criterion][level][field as 'threshold' | 'prize'] = parseFloat(value) || 0;
+        }
+        return updatedGoals;
+    });
   };
+
+  const handleGamificationChange = (
+    type: 'course' | 'quiz',
+    level: 'Fácil' | 'Médio' | 'Difícil',
+    value: string
+  ) => {
+     setLocalGoals(prev => {
+        const updatedGoals = JSON.parse(JSON.stringify(prev));
+        updatedGoals.gamification[type][level] = parseFloat(value) || 0;
+        return updatedGoals;
+    });
+  }
 
   const handlePerformanceBonusChange = (
     field: 'per' | 'prize',
@@ -155,7 +168,39 @@ export default function SettingsPage() {
         title: "Alterações Salvas!",
         description: "Suas configurações foram atualizadas com sucesso.",
     });
-  }
+  };
+
+  const handleEndCycle = () => {
+    // 1. Create a snapshot of the current state
+    const snapshot = {
+        id: new Date().toISOString(),
+        endDate: new Date().toISOString(),
+        sellers: JSON.parse(JSON.stringify(sellers)),
+        goals: JSON.parse(JSON.stringify(goals)),
+    };
+
+    // 2. Add snapshot to history
+    setCycleHistory(prev => [...prev, snapshot]);
+
+    // 3. Reset performance data for all sellers
+    setSellers(prevSellers => 
+        prevSellers.map(seller => ({
+            ...seller,
+            salesValue: 0,
+            ticketAverage: 0,
+            pa: 0,
+            points: 0,
+            extraPoints: 0,
+            hasCompletedQuiz: false,
+            lastCourseCompletionDate: undefined,
+        }))
+    );
+
+    toast({
+        title: "Ciclo Finalizado!",
+        description: "Os dados de performance foram zerados e um novo ciclo foi iniciado.",
+    });
+  };
 
   return (
     <div className="space-y-8">
@@ -168,7 +213,7 @@ export default function SettingsPage() {
 
       <Tabs defaultValue="lancamentos" className="w-full">
         <div className="flex items-center gap-4">
-          <TabsList className="bg-card p-1 h-auto">
+          <TabsList className="bg-card p-1 h-auto grid grid-cols-2 md:grid-cols-4">
             <TabsTrigger value="lancamentos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
               <ClipboardList className="mr-2 size-5" /> Lançamentos
             </TabsTrigger>
@@ -177,6 +222,9 @@ export default function SettingsPage() {
             </TabsTrigger>
              <TabsTrigger value="metas" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
               <Flag className="mr-2 size-5" /> Metas
+            </TabsTrigger>
+             <TabsTrigger value="ciclo" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+              <History className="mr-2 size-5" /> Ciclo
             </TabsTrigger>
           </TabsList>
         </div>
@@ -238,7 +286,7 @@ export default function SettingsPage() {
                                   type="number"
                                   className="bg-input text-right min-w-[100px]"
                                   value={seller.points}
-                                  disabled
+                                  onChange={(e) => handleSellerPerfUpdate(seller.id, 'points', e.target.value)}
                                 />
                                 <TooltipProvider>
                                   <Tooltip>
@@ -246,7 +294,7 @@ export default function SettingsPage() {
                                       <Info className="size-4 text-muted-foreground" />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>Pontos de missões, cursos e quizzes.</p>
+                                      <p className="max-w-xs">Pontos de missões, cursos e quizzes. Modifique com cuidado.</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -448,6 +496,33 @@ export default function SettingsPage() {
                     ))}
                 </div>
               </div>
+               <div className="border-t border-border pt-8">
+                <h3 className="text-lg font-medium mb-4">Pontuação de Gamificação</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div>
+                        <h4 className="font-semibold mb-2">Pontos por Curso</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {gamificationLevels.map(level => (
+                                <div key={`course-${level.key}`} className="space-y-1.5">
+                                    <Label htmlFor={`course-points-${level.key}`}>{level.label}</Label>
+                                    <Input id={`course-points-${level.key}`} type="number" placeholder="Pontos" value={localGoals.gamification.course[level.key]} onChange={(e) => handleGamificationChange('course', level.key, e.target.value)} className="bg-input" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                     <div>
+                        <h4 className="font-semibold mb-2">Pontos por Quiz</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {gamificationLevels.map(level => (
+                                <div key={`quiz-${level.key}`} className="space-y-1.5">
+                                    <Label htmlFor={`quiz-points-${level.key}`}>{level.label}</Label>
+                                    <Input id={`quiz-points-${level.key}`} type="number" placeholder="Pontos" value={localGoals.gamification.quiz[level.key]} onChange={(e) => handleGamificationChange('quiz', level.key, e.target.value)} className="bg-input" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+              </div>
               <div className="flex justify-end pt-6 border-t border-border">
                  <Button onClick={handleSaveChanges} className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
                   Salvar Metas
@@ -455,6 +530,47 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="ciclo" className="space-y-6 mt-4">
+             <Card className="bg-card border-border">
+                <CardHeader>
+                    <CardTitle className="text-xl">Gerenciamento de Ciclo</CardTitle>
+                    <CardDescription>Finalize o período atual para arquivar os resultados e iniciar um novo ciclo de premiação para a equipe.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+                        <div className="flex items-start gap-4">
+                            <AlertTriangle className="size-6 text-destructive mt-1" />
+                            <div>
+                                <h4 className="font-semibold text-destructive">Atenção: Ação Irreversível</h4>
+                                <p className="text-sm text-destructive/80 mt-1">
+                                    Ao finalizar o ciclo, todos os dados de performance (vendas, pontos, P.A., etc.) dos vendedores serão zerados para dar início a um novo período. Os dados do ciclo atual serão salvos no histórico para consulta.
+                                </p>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" className="mt-4">
+                                            <RefreshCw className="mr-2" />
+                                            Finalizar Ciclo e Iniciar Novo
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Esta ação não pode ser desfeita. Isso finalizará o ciclo de premiação atual, salvará um registro no histórico e zerará os dados de performance de todos os vendedores.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleEndCycle}>Sim, finalizar ciclo</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
         </TabsContent>
       </Tabs>
     </div>

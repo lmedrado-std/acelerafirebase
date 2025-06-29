@@ -12,6 +12,7 @@ import {
   Trophy,
   User,
   ShoppingBag,
+  History,
 } from 'lucide-react';
 
 import {
@@ -59,6 +60,7 @@ const menuItems = [
   {href: '/seller/academia', label: 'Academia', icon: GraduationCap},
   {href: '/seller/quiz', label: 'Quiz', icon: Puzzle},
   {href: '/seller/loja', label: 'Loja', icon: ShoppingBag},
+  {href: '/seller/historico', label: 'Histórico', icon: History},
   {href: '/seller/perfil', label: 'Meu Perfil', icon: User},
 ];
 

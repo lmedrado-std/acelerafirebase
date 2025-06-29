@@ -48,11 +48,25 @@ export type SalesValueGoals = GoalLevels & {
   };
 };
 
+export type GamificationPoints = {
+  course: {
+    Fácil: number;
+    Médio: number;
+    Difícil: number;
+  };
+  quiz: {
+    Fácil: number;
+    Médio: number;
+    Difícil: number;
+  };
+};
+
 export type Goals = {
   salesValue: SalesValueGoals;
   ticketAverage: GoalLevels;
   pa: GoalLevels;
   points: GoalLevels;
+  gamification: GamificationPoints;
 };
 
 
@@ -65,6 +79,13 @@ export type Mission = {
   startDate: Date;
   endDate: Date;
 };
+
+export type CycleSnapshot = {
+  id: string;
+  endDate: string;
+  sellers: Seller[];
+  goals: Goals;
+}
 
 // AI Flow Schemas
 

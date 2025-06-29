@@ -34,6 +34,10 @@ export const goalsData: Goals = {
     metona: { threshold: 1500, prize: 60 },
     lendaria: { threshold: 2000, prize: 100 },
   },
+  gamification: {
+    course: { 'Fácil': 100, 'Médio': 150, 'Difícil': 200 },
+    quiz: { 'Fácil': 10, 'Médio': 20, 'Difícil': 30 },
+  }
 };
 
 export const missionsData: Mission[] = [

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Seller, Goals, Mission, Admin } from './types';
+import type { Seller, Goals, Mission, Admin, CycleSnapshot } from './types';
 import { sellersData as initialSellers, goalsData as initialGoals, missionsData as initialMissions } from './data';
 
 // This is a simple in-memory store to simulate a database for the prototype.
@@ -13,6 +13,7 @@ type AppState = {
   goals: Goals;
   missions: Mission[];
   adminUser: Admin;
+  cycleHistory: CycleSnapshot[];
 };
 
 // The single source of truth for our application's state.
@@ -26,6 +27,7 @@ let state: AppState = {
     email: 'admin@aceleragtsupermoda.com',
     password: 'admin',
   },
+  cycleHistory: [],
 };
 
 const listeners = new Set<() => void>();
@@ -57,6 +59,11 @@ export const dataStore = {
 
   setAdminUser: (updater: (prev: Admin) => Admin) => {
     state = { ...state, adminUser: updater(state.adminUser) };
+    notifyListeners();
+  },
+  
+  setCycleHistory: (updater: (prev: CycleSnapshot[]) => CycleSnapshot[]) => {
+    state = { ...state, cycleHistory: updater(state.cycleHistory) };
     notifyListeners();
   },
 
