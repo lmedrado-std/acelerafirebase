@@ -5,14 +5,21 @@
  * - sendPasswordReset - A function that simulates sending a password reset email to the admin.
  */
 
-import { dataStore } from '@/lib/store';
-import type { PasswordResetInput, PasswordResetOutput } from '@/lib/types';
+import type { Admin, PasswordResetInput, PasswordResetOutput } from '@/lib/types';
 
 // This is the exported function that the client-side code will call.
 export async function sendPasswordReset(
   input: PasswordResetInput
 ): Promise<PasswordResetOutput> {
-  const { adminUser } = dataStore.getState();
+  // In a real application, this user data would come from a secure database.
+  // For this prototype, we are hardcoding it on the server to avoid calling
+  // a client-side store from a server action.
+  const adminUser: Admin = {
+    nickname: 'admin',
+    email: 'admin@aceleragtsupermoda.com',
+    password: 'admin',
+  };
+
   const identifier = input.identifier.toLowerCase().trim();
 
   if (
