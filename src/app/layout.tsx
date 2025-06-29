@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Acelera GT',
+  title: 'Acelera GT Supermoda',
   description: 'Plataforma de gamificação para aceleração de conhecimento.',
 };
 

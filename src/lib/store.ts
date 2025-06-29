@@ -23,7 +23,7 @@ let state: AppState = {
   missions: initialMissions,
   adminUser: {
     nickname: 'admin',
-    email: 'admin@aceleragt.com',
+    email: 'admin@aceleragtsupermoda.com',
     password: 'admin',
   },
 };

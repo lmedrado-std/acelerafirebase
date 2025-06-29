@@ -148,7 +148,7 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
               <div className="flex items-center gap-3">
                 <Logo />
                 <h1 className="text-xl font-semibold text-white group-data-[collapsible=icon]:hidden">
-                  Acelera GT
+                  Acelera GT Supermoda
                 </h1>
               </div>
             </SidebarHeader>
@@ -193,7 +193,7 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
                     variant="secondary"
                     className="group-data-[collapsible=icon]:hidden bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
                   >
-                    <LogOut className="mr-2 size-4" /> Sair
+                    Sair
                   </Button>
                 )}
               </div>
@@ -203,7 +203,7 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
             <header className="md:hidden flex items-center justify-between p-4 border-b">
               <div className="flex items-center gap-2">
                 <Logo />
-                <h1 className="text-lg font-semibold text-white">Acelera GT</h1>
+                <h1 className="text-lg font-semibold text-white">Acelera GT Supermoda</h1>
               </div>
               <SidebarTrigger />
             </header>
