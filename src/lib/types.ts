@@ -41,12 +41,21 @@ export type GoalLevels = {
   lendaria: GoalLevel;
 };
 
+// Add a specific type for SalesValue goals to include the performance bonus
+export type SalesValueGoals = GoalLevels & {
+  performanceBonus?: {
+    per: number;
+    prize: number;
+  };
+};
+
 export type Goals = {
-  salesValue: GoalLevels;
+  salesValue: SalesValueGoals; // Use the new type
   ticketAverage: GoalLevels;
   pa: GoalLevels;
   points: GoalLevels;
 };
+
 
 export type Mission = {
   id: string;

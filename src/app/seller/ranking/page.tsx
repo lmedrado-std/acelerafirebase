@@ -43,6 +43,14 @@ export default function RankingPage() {
             if (sellerValue >= goals.lendaria.threshold) totalPrize += goals.lendaria.prize;
         });
 
+        // Performance Bonus Calculation (only for salesValue)
+        const salesGoals = goalsData.salesValue;
+        if (seller.salesValue > salesGoals.lendaria.threshold && salesGoals.performanceBonus && salesGoals.performanceBonus.per > 0) {
+             const excessSales = seller.salesValue - salesGoals.lendaria.threshold;
+             const bonusUnits = Math.floor(excessSales / salesGoals.performanceBonus.per);
+             totalPrize += bonusUnits * salesGoals.performanceBonus.prize;
+        }
+
         return { ...seller, totalPrize };
     });
 
@@ -236,6 +244,11 @@ export default function RankingPage() {
                                           <p className="font-semibold">{goal.name}</p>
                                           <p>Meta: {formatValue(goal.threshold, criterion)}</p>
                                           <p>Prêmio: <span className="font-bold text-green-400">{formatPrize(goal.prize)}</span></p>
+                                           {criterion === 'salesValue' && goal.name === 'Lendária' && goalsData.salesValue.performanceBonus && (
+                                            <p className="text-xs italic text-primary/80 pt-1 border-t border-border/20 mt-1">
+                                                Bônus: +{formatPrize(goalsData.salesValue.performanceBonus.prize)} a cada {formatPrize(goalsData.salesValue.performanceBonus.per)} extra
+                                            </p>
+                                          )}
                                           <p>Seu valor: {formatValue(sellerValue, criterion)}</p>
                                           <p className={cn("font-bold", isAchieved ? 'text-green-400' : 'text-yellow-400')}>
                                             {isAchieved ? 'Atingida!' : 'Pendente'}

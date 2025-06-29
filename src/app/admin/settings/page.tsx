@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Trash2, Flag, Shield, Info, ClipboardList } from "lucide-react";
+import { Users, Trash2, Flag, Shield, Info, ClipboardList, Trophy } from "lucide-react";
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminContext } from '@/app/admin/layout';
@@ -40,6 +40,22 @@ export default function SettingsPage() {
         ...prev[criterion],
         [level]: {
           ...prev[criterion][level],
+          [field]: parseFloat(value) || 0,
+        },
+      },
+    }));
+  };
+
+  const handlePerformanceBonusChange = (
+    field: 'per' | 'prize',
+    value: string
+  ) => {
+    setGoals(prev => ({
+      ...prev,
+      salesValue: {
+        ...prev.salesValue,
+        performanceBonus: {
+          ...(prev.salesValue.performanceBonus ?? { per: 0, prize: 0 }),
           [field]: parseFloat(value) || 0,
         },
       },
@@ -263,6 +279,25 @@ export default function SettingsPage() {
                             </div>
                         </div>
                     ))}
+                </div>
+                <div className="mt-6 border-t pt-6">
+                    <h4 className="text-base font-medium mb-2 flex items-center gap-2">
+                        <Trophy className="size-5 text-yellow-400" />
+                        Bônus de Performance
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                        Prêmio adicional para vendas que excederem a meta Lendária.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="performance-bonus-prize">Bônus (R$)</Label>
+                            <Input id="performance-bonus-prize" type="number" placeholder="Ex: 50" value={goals.salesValue.performanceBonus?.prize ?? ''} onChange={(e) => handlePerformanceBonusChange('prize', e.target.value)} className="bg-input" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="performance-bonus-per">A cada (R$)</Label>
+                            <Input id="performance-bonus-per" type="number" placeholder="Ex: 1000" value={goals.salesValue.performanceBonus?.per ?? ''} onChange={(e) => handlePerformanceBonusChange('per', e.target.value)} className="bg-input" />
+                        </div>
+                    </div>
                 </div>
               </div>
                <div className="border-t border-border pt-8">
