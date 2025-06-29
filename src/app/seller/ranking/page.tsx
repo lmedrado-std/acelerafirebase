@@ -10,16 +10,7 @@ import {
 } from '@/components/ui/card';
 import {Tabs, TabsList, TabsTrigger} from '@/components/ui/tabs';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   Trophy,
-  Medal,
   Award,
   DollarSign,
   Ticket,
@@ -29,7 +20,7 @@ import {
 import {Label} from '@/components/ui/label';
 import {Badge} from '@/components/ui/badge';
 import {useSellerContext} from '@/app/seller/layout';
-import type {GoalLevel as GoalLevelType, Seller, Goals, SalesValueGoals} from '@/lib/types';
+import type {Goals, SalesValueGoals} from '@/lib/types';
 import {Progress} from '@/components/ui/progress';
 import {
   Tooltip,
@@ -232,28 +223,62 @@ export default function RankingPage() {
       details: `${formatValue(value, criterion)} / ${formatValue(nextGoal, criterion)}`,
     };
   };
+  
+  const sellerData = sortedSellers.find(s => s.id === currentSeller.id);
 
-  const getRankIndicator = (index: number) => {
-    if (index === 0) return <Trophy className="h-6 w-6 text-yellow-400" />;
-    if (index === 1) return <Medal className="h-6 w-6 text-gray-400" />;
-    if (index === 2) return <Award className="h-6 w-6 text-orange-400" />;
+  if (!sellerData) {
     return (
-      <span className="font-bold text-lg text-muted-foreground">
-        {index + 1}
-      </span>
-    );
-  };
+        <div className="flex items-center justify-center min-h-[400px]">
+            <p>Carregando seus dados de performance...</p>
+        </div>
+    )
+  }
+  
+  const sellerValue =
+    criterion === 'totalPrize'
+      ? sellerData.totalPrize
+      : criterion === 'points'
+      ? sellerData.points + sellerData.extraPoints
+      : sellerData[criterion];
+
+  const criterionGoals =
+    criterion !== 'totalPrize' ? goalsData[criterion] : null;
+
+  const allGoals: Array<{
+    name: GoalLevelName;
+    threshold: number;
+    prize: number;
+  }> = criterionGoals
+    ? [
+        {name: 'Metinha', ...criterionGoals.metinha},
+        {name: 'Meta', ...criterionGoals.meta},
+        {name: 'Metona', ...criterionGoals.metona},
+        {name: 'Lendária', ...criterionGoals.lendaria},
+      ]
+    : [];
+
+  const {percent, label, details} = getGoalProgress(
+    sellerValue,
+    criterion
+  );
+
+  const prizeToDisplay =
+    criterion === 'totalPrize'
+      ? sellerData.totalPrize
+      : sellerData.prizes[criterion as keyof typeof sellerData.prizes] ||
+        0;
+
 
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
         <Trophy className="size-8 text-primary" />
-        <h1 className="text-3xl font-bold">Ranking de Vendedores</h1>
+        <h1 className="text-3xl font-bold">Meu Desempenho</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Sua Posição no Ranking</CardTitle>
+          <CardTitle>Sua Posição no Ranking Geral</CardTitle>
           <CardDescription>
             Sua classificação atual com base no critério:{' '}
             <span className="font-bold text-primary">
@@ -278,15 +303,15 @@ export default function RankingPage() {
 
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle>Filtros do Ranking</CardTitle>
+          <CardTitle>Filtros de Desempenho</CardTitle>
           <CardDescription>
-            Selecione o critério para visualizar a classificação dos vendedores.
+            Selecione um critério para visualizar seus resultados em detalhes.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div>
             <Label className="text-sm font-medium mb-2 block">
-              Critério de Classificação
+              Critério de Análise
             </Label>
             <Tabs
               value={criterion}
@@ -331,203 +356,135 @@ export default function RankingPage() {
 
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle>Classificação por {getCriterionLabel(criterion)}</CardTitle>
+          <CardTitle>Detalhes por {getCriterionLabel(criterion)}</CardTitle>
           <CardDescription>
-            Visualizando a classificação dos vendedores com base nos dados mais
-            recentes.
+            Seu resultado detalhado para o critério selecionado.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px] text-center">Posição</TableHead>
-                  <TableHead>Vendedor</TableHead>
-                  <TableHead className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <span>Prêmios (R$)</span>
-                      <Award className="size-4 text-green-400" />
-                    </div>
-                  </TableHead>
-                  {criterion !== 'totalPrize' && (
-                    <>
-                      <TableHead className="w-[320px] text-center">
-                        Nível da Meta
-                      </TableHead>
-                      <TableHead className="w-[300px]">
-                        Progresso da Meta
-                      </TableHead>
-                    </>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedSellers.map((seller, index) => {
-                  const sellerValue =
-                    criterion === 'totalPrize'
-                      ? seller.totalPrize
-                      : criterion === 'points'
-                        ? seller.points + seller.extraPoints
-                        : seller[criterion];
+        <CardContent className="space-y-8">
+            <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col space-y-1 rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground">Seu Resultado</p>
+                    <p className="text-3xl font-bold">{formatValue(sellerValue, criterion)}</p>
+                </div>
+                 <div className="flex flex-col space-y-1 rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground">Prêmio Recebido</p>
+                    <p className="text-3xl font-bold text-green-400">{formatPrize(prizeToDisplay)}</p>
+                </div>
+            </div>
 
-                  const criterionGoals =
-                    criterion !== 'totalPrize' ? goalsData[criterion] : null;
-
-                  const allGoals: Array<{
-                    name: GoalLevelName;
-                    threshold: number;
-                    prize: number;
-                  }> = criterionGoals
-                    ? [
-                        {name: 'Metinha', ...criterionGoals.metinha},
-                        {name: 'Meta', ...criterionGoals.meta},
-                        {name: 'Metona', ...criterionGoals.metona},
-                        {name: 'Lendária', ...criterionGoals.lendaria},
-                      ]
-                    : [];
-
-                  const {percent, label, details} = getGoalProgress(
-                    sellerValue,
-                    criterion
-                  );
-
-                  const prizeToDisplay =
-                    criterion === 'totalPrize'
-                      ? seller.totalPrize
-                      : seller.prizes[criterion as keyof typeof seller.prizes] ||
-                        0;
-
-                  return (
-                    <TableRow
-                      key={seller.id}
-                      className={cn(
-                        seller.id === currentSeller.id && 'bg-primary/10',
-                        index < 3 && 'bg-card-foreground/5'
-                      )}
-                    >
-                      <TableCell className="font-bold text-lg flex justify-center items-center h-full py-4">
-                        {getRankIndicator(index)}
-                      </TableCell>
-                      <TableCell className="font-medium">{seller.name}</TableCell>
-                      <TableCell className="text-right font-semibold text-green-400">
-                        {formatPrize(prizeToDisplay)}
-                      </TableCell>
-                      {criterion !== 'totalPrize' && criterionGoals && (
-                        <>
-                          <TableCell className="text-center">
-                            <div className="flex justify-center items-center gap-1.5 flex-wrap">
-                              {allGoals.map(goal => {
-                                const isAchieved = sellerValue >= goal.threshold;
-                                const config = goalLevelConfig[goal.name];
-                                return (
-                                  <TooltipProvider key={goal.name}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Badge
-                                          className={cn(
-                                            'transition-all duration-300 ease-in-out',
-                                            isAchieved
-                                              ? `${config.className} scale-110 border-2 border-current shadow-lg`
-                                              : 'bg-muted border-transparent text-muted-foreground opacity-60 hover:bg-muted'
-                                          )}
-                                        >
-                                          {goal.name}
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <div className="space-y-1 text-xs text-left">
-                                          <p className="font-semibold">
-                                            {goal.name}
-                                          </p>
-                                          <p>
-                                            Meta:{' '}
-                                            {formatValue(
-                                              goal.threshold,
-                                              criterion
-                                            )}
-                                          </p>
-                                          <p>
-                                            Prêmio:{' '}
-                                            <span className="font-bold text-green-400">
-                                              {formatPrize(goal.prize)}
-                                            </span>
-                                          </p>
-                                          {criterion === 'salesValue' &&
-                                            goal.name === 'Lendária' &&
-                                            goalsData.salesValue
-                                              .performanceBonus && (
-                                              <p className="text-xs italic text-primary/80 pt-1 border-t border-border/20 mt-1">
-                                                Bônus: +
-                                                {formatPrize(
-                                                  goalsData.salesValue
-                                                    .performanceBonus.prize
-                                                )}{' '}
-                                                a cada{' '}
-                                                {formatPrize(
-                                                  goalsData.salesValue
-                                                    .performanceBonus.per
-                                                )}{' '}
-                                                extra
-                                              </p>
-                                            )}
-                                          <p>
-                                            Seu valor:{' '}
-                                            {formatValue(sellerValue, criterion)}
-                                          </p>
-                                          <p
-                                            className={cn(
-                                              'font-bold',
-                                              isAchieved
-                                                ? 'text-green-400'
-                                                : 'text-yellow-400'
-                                            )}
-                                          >
-                                            {isAchieved
-                                              ? 'Atingida!'
-                                              : 'Pendente'}
-                                          </p>
-                                        </div>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                );
-                              })}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <TooltipProvider>
-                              <Tooltip>
+            {criterion !== 'totalPrize' && criterionGoals && (
+            <>
+                <div>
+                    <h4 className="font-semibold mb-3">Níveis de Meta Atingidos</h4>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        {allGoals.map((goal) => {
+                        const isAchieved = sellerValue >= goal.threshold;
+                        const config = goalLevelConfig[goal.name];
+                        return (
+                            <TooltipProvider key={goal.name}>
+                            <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex flex-col gap-1.5 text-left w-full">
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-sm font-medium">
-                                        {label}
-                                      </span>
-                                      <span className="text-sm font-bold">
-                                        {percent.toFixed(0)}%
-                                      </span>
-                                    </div>
-                                    <Progress
-                                      value={percent}
-                                      className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-purple-500"
-                                    />
-                                  </div>
+                                <Badge
+                                    className={cn(
+                                    'transition-all duration-300 ease-in-out',
+                                    isAchieved
+                                        ? `${config.className} scale-110 border-2 border-current shadow-lg`
+                                        : 'bg-muted border-transparent text-muted-foreground opacity-60 hover:bg-muted'
+                                    )}
+                                >
+                                    {goal.name}
+                                </Badge>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>{details}</p>
+                                <div className="space-y-1 text-xs text-left">
+                                    <p className="font-semibold">
+                                    {goal.name}
+                                    </p>
+                                    <p>
+                                    Meta:{' '}
+                                    {formatValue(
+                                        goal.threshold,
+                                        criterion
+                                    )}
+                                    </p>
+                                    <p>
+                                    Prêmio:{' '}
+                                    <span className="font-bold text-green-400">
+                                        {formatPrize(goal.prize)}
+                                    </span>
+                                    </p>
+                                    {criterion === 'salesValue' &&
+                                    goal.name === 'Lendária' &&
+                                    goalsData.salesValue
+                                        .performanceBonus && (
+                                        <p className="text-xs italic text-primary/80 pt-1 border-t border-border/20 mt-1">
+                                        Bônus: +
+                                        {formatPrize(
+                                            goalsData.salesValue
+                                            .performanceBonus.prize
+                                        )}{' '}
+                                        a cada{' '}
+                                        {formatPrize(
+                                            goalsData.salesValue
+                                            .performanceBonus.per
+                                        )}{' '}
+                                        extra
+                                        </p>
+                                    )}
+                                    <p>
+                                    Seu valor:{' '}
+                                    {formatValue(sellerValue, criterion)}
+                                    </p>
+                                    <p
+                                    className={cn(
+                                        'font-bold',
+                                        isAchieved
+                                        ? 'text-green-400'
+                                        : 'text-yellow-400'
+                                    )}
+                                    >
+                                    {isAchieved
+                                        ? 'Atingida!'
+                                        : 'Pendente'}
+                                    </p>
+                                </div>
                                 </TooltipContent>
-                              </Tooltip>
+                            </Tooltip>
                             </TooltipProvider>
-                          </TableCell>
-                        </>
-                      )}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+                        );
+                        })}
+                    </div>
+                </div>
+
+                <div>
+                    <h4 className="font-semibold mb-3">Progresso para Próxima Meta</h4>
+                    <TooltipProvider>
+                        <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="flex flex-col gap-1.5 text-left w-full">
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium">
+                                {label}
+                                </span>
+                                <span className="text-sm font-bold">
+                                {percent.toFixed(0)}%
+                                </span>
+                            </div>
+                            <Progress
+                                value={percent}
+                                className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-purple-500"
+                            />
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{details}</p>
+                        </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
+            </>
+            )}
         </CardContent>
       </Card>
     </div>

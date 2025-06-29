@@ -28,15 +28,6 @@ export default function PerfilPage() {
             return;
         }
 
-        if (password && password.length < 6) {
-             toast({
-                variant: 'destructive',
-                title: 'Senha Muito Curta',
-                description: 'A nova senha deve ter pelo menos 6 caracteres.',
-            });
-            return;
-        }
-
         // In a real app, you would handle the update logic here.
         // For this prototype, we'll just show a success message.
         console.log({
