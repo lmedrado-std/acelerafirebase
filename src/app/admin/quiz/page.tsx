@@ -12,7 +12,9 @@ export default function QuizPage() {
       <Card className="bg-card border-border">
          <CardHeader>
           <CardTitle className="text-xl">Teste seus Conhecimentos</CardTitle>
-          <CardDescription>Gere quizzes aleatórios para treinar e acumular pontos.</CardDescription>
+          <CardDescription>
+            Gere quizzes aleatórios sobre técnicas de venda e conhecimento de produtos em lojas de calçados.
+          </CardDescription>
         </CardHeader>
         <CardContent>
             <Quiz />

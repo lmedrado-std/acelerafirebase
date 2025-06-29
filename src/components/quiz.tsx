@@ -49,6 +49,18 @@ export default function Quiz() {
     setBestResults(getResultsFromLocalStorage());
   }, []);
 
+  useEffect(() => {
+    if (isFinished && quiz) {
+      const finalResult: QuizResult = {
+        score: score,
+        total: quiz.questions.length,
+        date: new Date().toLocaleDateString('pt-BR'),
+      };
+      saveResultToLocalStorage(finalResult);
+      setBestResults(getResultsFromLocalStorage());
+    }
+  }, [isFinished, quiz, score]);
+
   const handleStartQuiz = async () => {
     setIsLoading(true);
     setQuiz(null);
@@ -90,16 +102,6 @@ export default function Quiz() {
     const isLastQuestion = currentQuestionIndex === quiz!.questions.length - 1;
 
     if (isLastQuestion) {
-      // Recalculate score to ensure it's up-to-date before finishing
-      const finalScore = selectedAnswer === quiz!.questions[currentQuestionIndex].correctAnswerIndex ? score + 1 : score;
-      
-      const finalResult: QuizResult = {
-        score: finalScore,
-        total: quiz!.questions.length,
-        date: new Date().toLocaleDateString('pt-BR'),
-      };
-      saveResultToLocalStorage(finalResult);
-      setBestResults(getResultsFromLocalStorage());
       setIsFinished(true);
     } else {
       setShowFeedback(false);
