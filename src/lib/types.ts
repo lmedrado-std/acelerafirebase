@@ -11,6 +11,7 @@ export type SalesEntry = {
 export type Seller = {
   id: string;
   name: string;
+  email?: string;
   salesValue: number;
   ticketAverage: number;
   pa: number;

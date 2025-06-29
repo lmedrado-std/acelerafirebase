@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
-import { DollarSign, Star, Target, Ticket, Box, LayoutGrid } from 'lucide-react';
+import { Star, Ticket, Box } from 'lucide-react';
 
 export default function SellerDashboardPage() {
   const { currentSeller, missions, goals } = useSellerContext();
@@ -27,7 +27,7 @@ export default function SellerDashboardPage() {
         <p className="text-muted-foreground">Bem-vindo(a) de volta ao seu painel. Aqui está o seu desempenho.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Pontos</CardTitle>
@@ -37,17 +37,6 @@ export default function SellerDashboardPage() {
             <div className="text-2xl font-bold">{totalPoints.toLocaleString('pt-BR')}</div>
             <p className="text-xs text-muted-foreground">Progresso para a próxima meta</p>
             <Progress value={getGoalProgress(totalPoints, 'points')} className="mt-2 h-2" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas (Mês)</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{currentSeller.salesValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
-            <p className="text-xs text-muted-foreground">Progresso para a próxima meta</p>
-            <Progress value={getGoalProgress(currentSeller.salesValue, 'salesValue')} className="mt-2 h-2" />
           </CardContent>
         </Card>
         <Card>

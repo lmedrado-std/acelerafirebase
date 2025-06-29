@@ -36,6 +36,7 @@ import type { Seller, Goals, Mission } from '@/lib/types';
 
 interface SellerContextType {
   sellers: Seller[];
+  setSellers: React.Dispatch<React.SetStateAction<Seller[]>>;
   goals: Goals;
   missions: Mission[];
   currentSeller: Seller;
@@ -63,13 +64,13 @@ const menuItems = [
 
 export default function SellerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [sellers] = React.useState<Seller[]>(sellersData);
+  const [sellers, setSellers] = React.useState<Seller[]>(sellersData);
   const [goals] = React.useState<Goals>(goalsData);
   const [missions] = React.useState<Mission[]>(missionsData);
   // In a real app, this would come from an authentication context
-  const [currentSeller] = React.useState<Seller>(sellersData[0]);
+  const currentSeller = sellers.find(s => s.id === '1')!;
 
-  const value = { sellers, goals, missions, currentSeller };
+  const value = { sellers, setSellers, goals, missions, currentSeller };
 
   return (
     <SellerContext.Provider value={value}>

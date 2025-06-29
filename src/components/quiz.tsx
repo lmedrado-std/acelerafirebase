@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -8,12 +8,12 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { generateQuiz } from '@/ai/flows/generate-quiz-flow';
 import type { GenerateQuizOutput, QuizResult, QuizQuestion } from '@/lib/types';
-import { Loader2, Sparkles, Trophy, RotateCcw } from 'lucide-react';
+import { Loader2, Sparkles, Trophy, RotateCcw, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import PerformanceChart from './PerformanceChart';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useAdminContext } from '@/app/admin/layout';
+import { useSellerContext } from '@/app/seller/layout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const saveResultToLocalStorage = (result: QuizResult) => {
@@ -38,7 +38,7 @@ const difficultyConfig: Record<Difficulty, { points: number }> = {
 };
 
 export default function Quiz() {
-  const { sellers, setSellers } = useAdminContext();
+  const { currentSeller, setSellers } = useSellerContext();
   const [quiz, setQuiz] = useState<GenerateQuizOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -46,16 +46,17 @@ export default function Quiz() {
   const [score, setScore] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
-  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>('Médio');
   const { toast } = useToast();
+  const [quizHistory, setQuizHistory] = useState<QuizResult[]>([]);
 
-  const availableSellers = sellers.filter(s => !s.hasCompletedQuiz);
-  const selectedSeller = sellers.find(s => s.id === selectedSellerId);
+  useEffect(() => {
+    setQuizHistory(getResultsFromLocalStorage());
+  }, [isFinished]);
 
   const handleStartQuiz = async () => {
-    if (!selectedSellerId) {
-        toast({ variant: 'destructive', title: 'Selecione um vendedor' });
+    if (currentSeller.hasCompletedQuiz) {
+        toast({ variant: 'destructive', title: 'Quiz já realizado', description: 'Você pode realizar o quiz apenas uma vez.' });
         return;
     }
     setIsLoading(true);
@@ -114,29 +115,36 @@ export default function Quiz() {
         date: new Date().toLocaleDateString('pt-BR'),
       };
       
-      if (selectedSellerId) {
-        setSellers(prevSellers =>
-            prevSellers.map(seller =>
-                seller.id === selectedSellerId
-                ? { ...seller, points: seller.points + pointsEarned, hasCompletedQuiz: true }
-                : seller
-            )
-        );
-        toast({
-            title: "Pontuação Registrada!",
-            description: `${selectedSeller?.name} ganhou ${pointsEarned} pontos.`,
-        });
-      }
+      setSellers(prevSellers =>
+          prevSellers.map(seller =>
+              seller.id === currentSeller.id
+              ? { ...seller, points: seller.points + pointsEarned, hasCompletedQuiz: true }
+              : seller
+          )
+      );
+      toast({
+          title: "Pontuação Registrada!",
+          description: `${currentSeller?.name} ganhou ${pointsEarned} pontos.`,
+      });
 
       saveResultToLocalStorage(finalResult);
       try {
-        await addDoc(collection(db, 'quiz-results'), {...finalResult, sellerId: selectedSellerId, sellerName: selectedSeller?.name, difficulty: difficulty });
+        await addDoc(collection(db, 'quiz-results'), {...finalResult, sellerId: currentSeller.id, sellerName: currentSeller?.name, difficulty: difficulty });
         console.log('🔥 Resultado salvo no Firestore!');
       } catch (err) {
         console.error('❌ Erro ao salvar no Firestore:', err);
       }
     }
   };
+
+  const handleReset = () => {
+    setQuiz(null);
+    setIsFinished(false);
+    setCurrentQuestionIndex(0);
+    setScore(0);
+    setSelectedAnswer(null);
+    setShowFeedback(false);
+  }
 
   const currentQuestion: QuizQuestion | null = quiz ? quiz.questions[currentQuestionIndex] : null;
 
@@ -151,24 +159,19 @@ export default function Quiz() {
   }
 
   if (isFinished) {
-    const results = getResultsFromLocalStorage();
     const pointsEarned = score * difficultyConfig[difficulty].points;
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <Trophy className="h-16 w-16 text-yellow-400" />
         <h2 className="mt-4 text-2xl font-bold">Quiz Finalizado!</h2>
         <p className="text-muted-foreground mt-2">
-          {selectedSeller?.name} acertou {score} de {quiz!.questions.length} perguntas e ganhou {pointsEarned} pontos!
+          {currentSeller?.name} acertou {score} de {quiz!.questions.length} perguntas e ganhou {pointsEarned} pontos!
         </p>
 
-        <PerformanceChart data={results} />
+        <PerformanceChart data={quizHistory} />
 
-        <Button onClick={() => {
-            setIsFinished(false);
-            setQuiz(null);
-            setSelectedSellerId(null);
-        }} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
-          <RotateCcw className="mr-2" /> Fazer Quiz com Outro Vendedor
+        <Button onClick={handleReset} className="mt-6">
+          <ArrowLeft className="mr-2" /> Voltar ao Início
         </Button>
       </div>
     );
@@ -177,32 +180,15 @@ export default function Quiz() {
   if (!quiz || !currentQuestion) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
-        <h2 className="text-xl font-bold">Teste seus Conhecimentos</h2>
+        <h2 className="text-xl font-bold">Pronto para o Desafio?</h2>
         <p className="text-muted-foreground mt-2 max-w-md">
-          Selecione um vendedor, escolha a dificuldade e clique no botão para gerar um quiz. Cada vendedor pode fazer o quiz apenas uma vez.
+          Escolha a dificuldade e clique no botão para gerar seu quiz. Você pode fazer o quiz apenas uma vez.
         </p>
 
         <div className="space-y-4 my-6 w-full max-w-sm">
-            <div className="space-y-2">
-                <Label htmlFor="seller-select-quiz">Selecione o Vendedor</Label>
-                <Select onValueChange={setSelectedSellerId} value={selectedSellerId || ''}>
-                    <SelectTrigger id="seller-select-quiz">
-                        <SelectValue placeholder="Selecione um vendedor para fazer o quiz..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {availableSellers.length > 0 ? (
-                            availableSellers.map(seller => (
-                                <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>
-                            ))
-                        ) : (
-                            <div className="p-4 text-sm text-center text-muted-foreground">Todos os vendedores já fizeram o quiz.</div>
-                        )}
-                    </SelectContent>
-                </Select>
-            </div>
              <div className="space-y-2">
                 <Label htmlFor="difficulty-select">Nível de Dificuldade</Label>
-                <Select value={difficulty} onValueChange={(val) => setDifficulty(val as Difficulty)}>
+                <Select value={difficulty} onValueChange={(val) => setDifficulty(val as Difficulty)} disabled={currentSeller?.hasCompletedQuiz}>
                     <SelectTrigger id="difficulty-select">
                         <SelectValue placeholder="Selecione o nível..." />
                     </SelectTrigger>
@@ -215,9 +201,10 @@ export default function Quiz() {
             </div>
         </div>
 
-        <Button onClick={handleStartQuiz} disabled={isLoading || !selectedSellerId} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
-          <Sparkles className="mr-2" /> Iniciar Quiz
+        <Button onClick={handleStartQuiz} disabled={isLoading || currentSeller?.hasCompletedQuiz} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+          {currentSeller?.hasCompletedQuiz ? <><Trophy className="mr-2"/> Quiz Concluído</> : <><Sparkles className="mr-2" /> Iniciar Quiz</>}
         </Button>
+        {currentSeller?.hasCompletedQuiz && <p className="text-xs text-muted-foreground mt-2">Você já ganhou seus pontos neste desafio.</p>}
       </div>
     );
   }
@@ -233,7 +220,7 @@ export default function Quiz() {
         <h3 className="text-lg font-semibold">{currentQuestion.questionText}</h3>
         <RadioGroup
           value={selectedAnswer?.toString()}
-          onValueChange={(value) => setSelectedAnswer(parseInt(value))}
+          onValueChange={(value) => setSelectedAnswer(parseInt(value, 10))}
           disabled={showFeedback}
           className="mt-4 space-y-3"
         >
