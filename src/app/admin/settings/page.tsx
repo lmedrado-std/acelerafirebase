@@ -26,7 +26,7 @@ const goalLevels: Array<{key: keyof GoalLevels, label: string}> = [
 ];
 
 export default function SettingsPage() {
-  const { sellers, setSellers, goals, setGoals } = useAdminContext();
+  const { sellers, setSellers, goals, setGoals, isDirty, setIsDirty } = useAdminContext();
   const { toast } = useToast();
   
   // Local state for editing to avoid applying changes immediately
@@ -43,6 +43,35 @@ export default function SettingsPage() {
   useEffect(() => {
     setLocalGoals(JSON.parse(JSON.stringify(goals)));
   }, [goals]);
+
+  // Check for unsaved changes and update the context
+  useEffect(() => {
+    // Deep compare using JSON stringify. It's simple and effective for this data structure.
+    const hasUnsavedChanges = JSON.stringify(localSellers) !== JSON.stringify(sellers) || JSON.stringify(localGoals) !== JSON.stringify(goals);
+    
+    // Only update if the state is different to avoid unnecessary re-renders
+    if (hasUnsavedChanges !== isDirty) {
+        setIsDirty(hasUnsavedChanges);
+    }
+  }, [localSellers, localGoals, sellers, goals, isDirty, setIsDirty]);
+
+  // Handle browser-level navigation (closing tab, refresh)
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isDirty) {
+        event.preventDefault();
+        // Most browsers require returnValue to be set.
+        event.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isDirty]);
+
 
   const handleGoalChange = (
     criterion: keyof Goals,

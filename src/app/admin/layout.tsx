@@ -28,6 +28,16 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {Button} from '@/components/ui/button';
 import {Badge} from '@/components/ui/badge';
 import {Logo} from '@/components/icons/logo';
@@ -44,6 +54,8 @@ interface AdminContextType {
   setMissions: (updater: (prev: Mission[]) => Mission[]) => void;
   adminUser: Admin;
   setAdminUser: (updater: (prev: Admin) => Admin) => void;
+  isDirty: boolean;
+  setIsDirty: (isDirty: boolean) => void;
 }
 
 const AdminContext = React.createContext<AdminContextType | null>(null);
@@ -73,6 +85,9 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
   const state = useStore(s => s);
   const [isClient, setIsClient] = React.useState(false);
 
+  const [isDirty, setIsDirty] = React.useState(false);
+  const [pendingPath, setPendingPath] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     setIsClient(true);
   }, []);
@@ -86,15 +101,39 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
     setMissions: dataStore.setMissions,
     adminUser: state.adminUser,
     setAdminUser: dataStore.setAdminUser,
+    isDirty,
+    setIsDirty,
+  };
+
+  const handleNavigate = (path: string) => {
+    if (pathname === '/admin/settings' && isDirty) {
+      setPendingPath(path);
+    } else {
+      router.push(path);
+    }
   };
 
   const handleLogout = () => {
-    // In a real app, this would also clear auth tokens.
-    // For the prototype, we can also clear the seller ID from local storage.
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('loggedInSellerId');
+    const logoutPath = '/login';
+    if (pathname === '/admin/settings' && isDirty) {
+      setPendingPath(logoutPath);
+    } else {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('loggedInSellerId');
+      }
+      router.push(logoutPath);
     }
-    router.push('/login');
+  };
+
+  const handleConfirmNavigation = () => {
+    if (pendingPath) {
+      setIsDirty(false); // Acknowledge leaving without saving
+      if (pendingPath === '/login' && typeof window !== 'undefined') {
+        localStorage.removeItem('loggedInSellerId');
+      }
+      router.push(pendingPath);
+      setPendingPath(null);
+    }
   };
 
   return (
@@ -118,19 +157,17 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
                 {menuItems.map(item => (
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton
-                      asChild
+                      onClick={() => handleNavigate(item.href)}
                       isActive={pathname === item.href}
                       className={cn(
                         'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:font-semibold',
                         'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                       )}
                     >
-                      <Link href={item.href}>
-                        <item.icon className="size-5" />
-                        <span className="group-data-[collapsible=icon]:hidden">
-                          {item.label}
-                        </span>
-                      </Link>
+                      <item.icon className="size-5" />
+                      <span className="group-data-[collapsible=icon]:hidden">
+                        {item.label}
+                      </span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -188,6 +225,25 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
           </div>
         </div>
       </SidebarProvider>
+      <AlertDialog
+        open={!!pendingPath}
+        onOpenChange={() => setPendingPath(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem alterações não salvas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza de que deseja sair? Suas alterações serão perdidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmNavigation}>
+              Sair
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminContext.Provider>
   );
 }
