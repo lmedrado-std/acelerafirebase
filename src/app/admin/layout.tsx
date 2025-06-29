@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
 import {usePathname, useRouter} from 'next/navigation';
 import {
   GraduationCap,
@@ -14,6 +13,7 @@ import {
   User,
   ShoppingBag,
   History,
+  Loader2,
 } from 'lucide-react';
 
 import {
@@ -26,6 +26,7 @@ import {
   SidebarMenuButton,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   AlertDialog,
@@ -80,6 +81,84 @@ const menuItems = [
   {href: '/admin/settings', label: 'Configurações', icon: Shield},
 ];
 
+const AdminSidebarContent = ({
+  isDirty,
+  setPendingPath,
+  performLogout,
+}: {
+  isDirty: boolean;
+  setPendingPath: (path: string | null) => void;
+  performLogout: () => void;
+}) => {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleNavigate = (path: string) => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+    if (pathname === '/admin/settings' && isDirty) {
+      setPendingPath(path);
+    } else {
+      router.push(path);
+    }
+  };
+  
+  const handleLogoutClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+    performLogout();
+  }
+
+  return (
+    <>
+      <SidebarHeader className="p-4">
+        <div className="flex items-center gap-3">
+          <Logo />
+          <h1 className="text-xl font-semibold text-white group-data-[collapsible=icon]:hidden">
+            Acelera GT Supermoda
+          </h1>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          {menuItems.map(item => (
+            <SidebarMenuItem key={item.label}>
+              <SidebarMenuButton
+                onClick={() => handleNavigate(item.href)}
+                isActive={pathname === item.href}
+                className={cn(
+                  'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:font-semibold',
+                  'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                )}
+              >
+                <item.icon className="size-5" />
+                <span className="group-data-[collapsible=icon]:hidden">
+                  {item.label}
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter className="p-4 space-y-4">
+        <div className="flex items-center justify-end group-data-[collapsible=icon]:justify-center">
+            <Button
+              onClick={handleLogoutClick}
+              variant="secondary"
+              className="w-full bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
+            >
+              <LogOut className="mr-2" />
+              <span className="group-data-[collapsible=icon]:hidden">Sair</span>
+            </Button>
+        </div>
+      </SidebarFooter>
+    </>
+  )
+}
+
 export default function AdminLayout({children}: {children: React.ReactNode}) {
   const pathname = usePathname();
   const router = useRouter();
@@ -108,14 +187,6 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
     setIsDirty,
   }), [state.sellers, state.goals, state.missions, state.adminUser, state.cycleHistory, isDirty]);
 
-  const handleNavigate = (path: string) => {
-    if (pathname === '/admin/settings' && isDirty) {
-      setPendingPath(path);
-    } else {
-      router.push(path);
-    }
-  };
-
   const handleLogout = () => {
     const logoutPath = '/login';
     if (pathname === '/admin/settings' && isDirty) {
@@ -139,6 +210,15 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
     }
   };
 
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
+          <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+          Carregando...
+      </div>
+    );
+  }
+
   return (
     <AdminContext.Provider value={contextValue}>
       <SidebarProvider>
@@ -147,52 +227,14 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
             collapsible="icon"
             className="border-r border-sidebar-border bg-sidebar"
           >
-            <SidebarHeader className="p-4">
-              <div className="flex items-center gap-3">
-                <Logo />
-                <h1 className="text-xl font-semibold text-white group-data-[collapsible=icon]:hidden">
-                  Acelera GT Supermoda
-                </h1>
-              </div>
-            </SidebarHeader>
-            <SidebarContent>
-              <SidebarMenu>
-                {menuItems.map(item => (
-                  <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton
-                      onClick={() => handleNavigate(item.href)}
-                      isActive={pathname === item.href}
-                      className={cn(
-                        'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:font-semibold',
-                        'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                      )}
-                    >
-                      <item.icon className="size-5" />
-                      <span className="group-data-[collapsible=icon]:hidden">
-                        {item.label}
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarContent>
-            <SidebarFooter className="p-4 space-y-4">
-              <div className="flex items-center justify-end group-data-[collapsible=icon]:justify-center">
-                {isClient && (
-                  <Button
-                    onClick={handleLogout}
-                    variant="secondary"
-                    className="group-data-[collapsible=icon]:hidden bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
-                  >
-                    <LogOut />
-                    Sair
-                  </Button>
-                )}
-              </div>
-            </SidebarFooter>
+            <AdminSidebarContent 
+              isDirty={isDirty} 
+              setPendingPath={setPendingPath} 
+              performLogout={handleLogout}
+            />
           </Sidebar>
           <div className="flex flex-col flex-1">
-            <header className="md:hidden flex items-center justify-between p-4 border-b">
+            <header className="sticky top-0 z-10 md:hidden flex items-center justify-between p-4 border-b bg-background">
               <div className="flex items-center gap-2">
                 <Logo />
                 <h1 className="text-lg font-semibold text-white">Acelera GT Supermoda</h1>
