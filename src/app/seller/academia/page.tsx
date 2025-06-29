@@ -112,6 +112,8 @@ export default function AcademiaPage() {
     setIsGeneratingCourse(true);
     setCourse(null);
     try {
+      // The seed is composed of the date, seller ID, and selected topic to ensure a unique,
+      // yet consistent, course per seller per day for a specific topic.
       const seed = `${new Date().toISOString().split('T')[0]}-${currentSeller.id}-${selectedTopic}`;
       const result = await generateCourse({ topic: selectedTopic, seed });
       

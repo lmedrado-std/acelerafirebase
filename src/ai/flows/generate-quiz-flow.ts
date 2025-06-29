@@ -57,6 +57,34 @@ Formato:
   },
 });
 
+const fallbackQuizzes: GenerateQuizOutput[] = [
+  {
+    title: "Quiz de Técnicas de Venda - Básico",
+    questions: [
+      { questionText: "Qual a melhor forma de abordar um cliente?", options: ["Esperar que ele fale primeiro", "Cumprimentar com simpatia e oferecer ajuda", "Segui-lo silenciosamente", "Falar das promoções imediatamente"], correctAnswerIndex: 1, explanation: "Uma abordagem simpática cria conexão e confiança." },
+      { questionText: "O que caracteriza uma boa venda consultiva?", options: ["Oferecer o item mais caro", "Entender a necessidade do cliente", "Focar apenas na comissão", "Falar sobre todos os produtos da loja"], correctAnswerIndex: 1, explanation: "Na venda consultiva, você ajuda o cliente com a melhor solução." },
+      { questionText: "Para um cliente que busca conforto, qual tipo de palmilha você recomenda?", options: ["Plana e dura", "Com espuma de memória (Memory Foam)", "De borracha simples", "Nenhuma"], correctAnswerIndex: 1, explanation: "A espuma de memória se molda ao pé, oferecendo máximo conforto e absorção de impacto." },
+      { questionText: "Um cliente reclama que o sapato de couro está apertado. O que você diz?", options: ["Que ele vai lacear com o tempo", "Que ele pegou o número errado", "Oferece um produto para lacear o couro e explica o processo", "Sugere um modelo sintético"], correctAnswerIndex: 2, explanation: "Oferecer uma solução proativa demonstra conhecimento e cuidado com o cliente, agregando valor." },
+      { questionText: "O que é 'PA' em vendas de varejo?", options: ["Produto por Atendimento", "Pagamento Aprovado", "Preço de Atacado", "Promoção Ativa"], correctAnswerIndex: 0, explanation: "PA (Peças por Atendimento) é um indicador que mede a quantidade de produtos vendidos por cliente atendido." }
+    ]
+  },
+  {
+    title: "Quiz de Objeções de Clientes - Intermediário",
+    questions: [
+        { questionText: "Se um cliente diz 'Vou pensar', qual é a melhor atitude?", options: ["Deixá-lo ir embora", "Perguntar 'O que te impede de decidir agora?' para entender a dúvida.", "Oferecer um desconto para fechar na hora", "Anotar o contato dele"], correctAnswerIndex: 1, explanation: "Entender a objeção real por trás do 'vou pensar' é a chave para contorná-la." },
+        { questionText: "Um cliente achou o mesmo produto mais barato online. O que você destaca?", options: ["O preço da concorrência", "A garantia, o atendimento pessoal e a possibilidade de troca fácil na loja física.", "Que comprar online é arriscado", "Que você pode cobrir a oferta"], correctAnswerIndex: 1, explanation: "Agregar valor ao serviço da loja física justifica a diferença de preço." },
+        { questionText: "O que fazer se um cliente está indeciso entre dois modelos?", options: ["Escolher pelo cliente", "Deixá-lo sozinho para não pressionar", "Resumir os prós e contras de cada um com base no que ele precisa.", "Mostrar um terceiro modelo"], correctAnswerIndex: 2, explanation: "Ajudar o cliente a organizar as ideias com base em suas próprias necessidades facilita a decisão." },
+        { questionText: "Qual indicador de performance (KPI) mede a eficiência em vender mais de um item por vez?", options: ["Ticket Médio", "Taxa de Conversão", "PA (Peças por Atendimento)", "Margem de Lucro"], correctAnswerIndex: 2, explanation: "O PA (Peças por Atendimento) mede exatamente a quantidade de produtos vendidos por cliente." },
+        { questionText: "O cliente diz 'Não conheço essa marca'. Qual o seu primeiro passo?", options: ["Mostrar uma marca famosa", "Falar da história da marca e seus diferenciais de qualidade.", "Dizer que é uma marca nova", "Oferecer um desconto por ser desconhecida"], correctAnswerIndex: 1, explanation: "Apresentar a marca e seus pontos fortes constrói confiança no produto." }
+    ]
+  }
+];
+
+const getFallbackQuiz = (): GenerateQuizOutput => {
+  const randomIndex = Math.floor(Math.random() * fallbackQuizzes.length);
+  return fallbackQuizzes[randomIndex];
+};
+
 const generateQuizFlow = ai.defineFlow(
   {
     name: 'generateQuizFlow',
@@ -93,63 +121,7 @@ const generateQuizFlow = ai.defineFlow(
     } catch (error) {
       console.warn('⚠️ Erro ao gerar quiz com a IA:', error);
       console.warn('📄 Retornando fallback local');
-
-      // Fallback local garantido
-      return {
-        title: "Quiz de Técnicas de Venda - Básico",
-        questions: [
-          {
-            questionText: "Qual a melhor forma de abordar um cliente?",
-            options: [
-              "Esperar que ele fale primeiro",
-              "Cumprimentar com simpatia e oferecer ajuda",
-              "Segui-lo silenciosamente",
-              "Falar das promoções imediatamente"
-            ],
-            correctAnswerIndex: 1,
-            explanation: "Uma abordagem simpática cria conexão e confiança."
-          },
-          {
-            questionText: "O que caracteriza uma boa venda consultiva?",
-            options: [
-              "Oferecer o item mais caro",
-              "Entender a necessidade do cliente",
-              "Focar apenas na comissão",
-              "Falar sobre todos os produtos da loja"
-            ],
-            correctAnswerIndex: 1,
-            explanation: "Na venda consultiva, você ajuda o cliente com a melhor solução."
-          },
-          {
-            questionText: "Para um cliente que busca conforto, qual tipo de palmilha você recomenda?",
-            options: ["Plana e dura", "Com espuma de memória (Memory Foam)", "De borracha simples", "Nenhuma"],
-            correctAnswerIndex: 1,
-            explanation: "A espuma de memória se molda ao pé, oferecendo máximo conforto e absorção de impacto."
-          },
-          {
-            questionText: "Um cliente reclama que o sapato de couro está apertado. O que você diz?",
-            options: [
-              "Que ele vai lacear com o tempo",
-              "Que ele pegou o número errado",
-              "Oferece um produto para lacear o couro e explica o processo",
-              "Sugere um modelo sintético"
-            ],
-            correctAnswerIndex: 2,
-            explanation: "Oferecer uma solução proativa demonstra conhecimento e cuidado com o cliente, agregando valor."
-          },
-          {
-            questionText: "O que é 'PA' em vendas de varejo?",
-            options: [
-              "Produto por Atendimento",
-              "Pagamento Aprovado",
-              "Preço de Atacado",
-              "Promoção Ativa"
-            ],
-            correctAnswerIndex: 0,
-            explanation: "PA (Peças por Atendimento) é um indicador que mede a quantidade de produtos vendidos por cliente atendido."
-          }
-        ]
-      };
+      return getFallbackQuiz();
     }
   }
 );

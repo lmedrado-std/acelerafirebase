@@ -101,6 +101,7 @@ export default function AcademiaPage() {
     }
     setIsGeneratingCourse(true);
     try {
+      // Use a timestamp-based seed for admins to ensure a new course is generated each time
       const seed = new Date().getTime().toString();
       const result = await generateCourse({ topic: selectedTopic, seed });
       

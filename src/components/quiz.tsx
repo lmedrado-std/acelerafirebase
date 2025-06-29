@@ -59,7 +59,7 @@ export default function Quiz() {
 
   const handleStartQuiz = async () => {
     if (isSellerView && currentSeller?.hasCompletedQuiz) {
-        toast({ variant: 'destructive', title: 'Quiz já realizado', description: 'Você pode realizar o quiz apenas uma vez.' });
+        toast({ variant: 'destructive', title: 'Quiz já realizado', description: 'Você pode realizar o quiz apenas uma vez por dia.' });
         return;
     }
     setIsLoading(true);
@@ -70,8 +70,10 @@ export default function Quiz() {
     setShowFeedback(false);
     setIsFinished(false);
 
+    // The seed is composed to ensure uniqueness per seller, per day, and per difficulty level.
+    // For non-sellers (e.g., admin testing), a simple timestamp is used for randomness.
     const seed = isSellerView && currentSeller
-      ? `${new Date().toISOString().split('T')[0]}-${currentSeller.id}`
+      ? `${new Date().toISOString().split('T')[0]}-${currentSeller.id}-${difficulty}`
       : new Date().getTime().toString();
 
     try {
@@ -124,6 +126,7 @@ export default function Quiz() {
       };
       
       if (isSellerView && setSellers && currentSeller) {
+        const today = new Date().toISOString().split('T')[0];
         setSellers(prevSellers =>
             prevSellers.map(seller =>
                 seller.id === currentSeller.id
@@ -190,6 +193,7 @@ export default function Quiz() {
   }
 
   if (!quiz || !currentQuestion) {
+    const today = new Date().toISOString().split('T')[0];
     const hasCompleted = isSellerView && currentSeller?.hasCompletedQuiz;
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -217,9 +221,9 @@ export default function Quiz() {
         </div>
 
         <Button onClick={handleStartQuiz} disabled={isLoading || hasCompleted} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
-          {hasCompleted ? <><Trophy className="mr-2"/> Quiz Concluído</> : <><Sparkles className="mr-2" /> Iniciar Quiz</>}
+          {hasCompleted ? <><Trophy className="mr-2"/> Quiz do Dia Concluído</> : <><Sparkles className="mr-2" /> Iniciar Quiz</>}
         </Button>
-        {hasCompleted && <p className="text-xs text-muted-foreground mt-2">Você já ganhou seus pontos neste desafio.</p>}
+        {hasCompleted && <p className="text-xs text-muted-foreground mt-2">Você já ganhou seus pontos neste desafio hoje.</p>}
       </div>
     );
   }
