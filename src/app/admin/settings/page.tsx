@@ -113,7 +113,6 @@ export default function SettingsPage() {
                           <TableHead className="text-right">Valor de Venda (R$)</TableHead>
                           <TableHead className="text-right">Ticket Médio (R$)</TableHead>
                           <TableHead className="text-right">PA</TableHead>
-                          <TableHead>Senha</TableHead>
                           <TableHead className="text-right">Pontos</TableHead>
                           <TableHead className="text-right">Pontos Extras</TableHead>
                           <TableHead className="text-center">Ações</TableHead>
@@ -154,15 +153,6 @@ export default function SettingsPage() {
                                   className="bg-input text-right min-w-[100px]"
                                   value={seller.pa}
                                   onChange={(e) => handleSellerUpdate(seller.id, 'pa', e.target.value)}
-                                />
-                            </TableCell>
-                            <TableCell>
-                                <Input
-                                  type="password"
-                                  className="bg-input min-w-[140px]"
-                                  placeholder="Definir..."
-                                  value={seller.password || ''}
-                                  onChange={(e) => handleSellerUpdate(seller.id, 'password', e.target.value)}
                                 />
                             </TableCell>
                             <TableCell>
