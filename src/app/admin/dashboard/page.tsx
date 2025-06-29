@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Trophy, DollarSign, LayoutGrid, Star, Ticket, Box } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Users, Trophy, DollarSign, LayoutGrid, Star, Ticket, Box, Crown } from "lucide-react";
 import { useAdminContext } from '@/app/admin/layout';
 import SalesOverviewChart from '@/components/SalesOverviewChart';
 
@@ -15,7 +15,8 @@ export default function DashboardPage() {
     currentSales,
     totalPoints,
     averageTicket,
-    averagePA
+    averagePA,
+    pointsLeaders
   } = useMemo(() => {
     const totalSellers = sellersData.length;
     
@@ -27,6 +28,7 @@ export default function DashboardPage() {
         totalPoints: 0,
         averageTicket: 0,
         averagePA: 0,
+        pointsLeaders: []
       };
     }
 
@@ -39,6 +41,12 @@ export default function DashboardPage() {
       (prev.salesValue > current.salesValue) ? prev : current
     );
 
+    const sellersSortedByPoints = [...sellersData]
+      .map(s => ({ ...s, totalPoints: s.points + s.extraPoints }))
+      .sort((a, b) => b.totalPoints - a.totalPoints);
+    
+    const pointsLeaders = sellersSortedByPoints.slice(0, 3);
+
     return { 
       bestSeller: { name: bestSellerData.name, value: bestSellerData.salesValue },
       totalSellers,
@@ -46,6 +54,7 @@ export default function DashboardPage() {
       totalPoints,
       averageTicket: totalSellers > 0 ? totalTicket / totalSellers : 0,
       averagePA: totalSellers > 0 ? totalPA / totalSellers : 0,
+      pointsLeaders
     };
   }, [sellersData]);
 
@@ -147,8 +156,52 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid grid-cols-1 gap-4">
-        <SalesOverviewChart sellers={sellersData} />
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
+          <SalesOverviewChart sellers={sellersData} />
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Crown className="text-yellow-400" />
+              <span>Destaque do Mês</span>
+            </CardTitle>
+            <CardDescription>
+              O vendedor com mais pontos ao final do mês ganha um prêmio de R$ 100,00.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {pointsLeaders.length > 0 ? (
+              <div>
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/10 border border-primary/20">
+                  <div className="flex items-center justify-center rounded-full bg-primary text-primary-foreground font-bold size-8">1º</div>
+                  <div>
+                    <div className="font-semibold">{pointsLeaders[0].name}</div>
+                    <div className="text-sm text-primary/80">{pointsLeaders[0].totalPoints.toLocaleString('pt-BR')} pontos</div>
+                  </div>
+                </div>
+
+                {pointsLeaders.length > 1 && (
+                  <div className="mt-4">
+                    <h4 className="mb-2 text-sm font-semibold text-muted-foreground">Na disputa pelo pódio:</h4>
+                    <ul className="space-y-3">
+                      {pointsLeaders.slice(1).map((seller, index) => (
+                         <li key={seller.id} className="flex items-center gap-3 text-sm">
+                           <div className="flex items-center justify-center rounded-full bg-muted text-muted-foreground font-bold size-7">{index + 2}º</div>
+                           <div className="font-medium">{seller.name}</div>
+                           <div className="ml-auto font-semibold text-muted-foreground">{seller.totalPoints.toLocaleString('pt-BR')} pts</div>
+                         </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+               <p className="text-sm text-center text-muted-foreground pt-8">Não há vendedores suficientes para a disputa.</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
