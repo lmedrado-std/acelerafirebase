@@ -29,7 +29,7 @@ import {
 import {Button} from '@/components/ui/button';
 import {Logo} from '@/components/icons/logo';
 import {cn} from '@/lib/utils';
-import type {Seller, Goals, Mission} from '@/lib/types';
+import type {Seller, Goals, Mission, CycleSnapshot} from '@/lib/types';
 import {dataStore, useStore} from '@/lib/store';
 import {Loader2} from 'lucide-react';
 
@@ -39,6 +39,7 @@ interface SellerContextType {
   goals: Goals;
   missions: Mission[];
   currentSeller: Seller;
+  cycleHistory: CycleSnapshot[];
 }
 
 export const SellerContext = React.createContext<SellerContextType | null>(
@@ -101,7 +102,8 @@ export default function SellerLayout({children}: {children: React.ReactNode}) {
     goals: state.goals,
     missions: state.missions,
     currentSeller: currentSeller!,
-  }), [state.sellers, state.goals, state.missions, currentSeller]);
+    cycleHistory: state.cycleHistory,
+  }), [state.sellers, state.goals, state.missions, currentSeller, state.cycleHistory]);
 
   if (!currentSeller) {
     return (
