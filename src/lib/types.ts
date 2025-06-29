@@ -140,6 +140,19 @@ export const GenerateCourseOutputSchema = z.object({
 export type GenerateCourseOutput = z.infer<typeof GenerateCourseOutputSchema>;
 
 
+// Password Reset
+export const PasswordResetInputSchema = z.object({
+  identifier: z.string().describe('The admin nickname or email to send the reset link to.'),
+});
+export type PasswordResetInput = z.infer<typeof PasswordResetInputSchema>;
+
+export const PasswordResetOutputSchema = z.object({
+    success: z.boolean(),
+    message: z.string(),
+});
+export type PasswordResetOutput = z.infer<typeof PasswordResetOutputSchema>;
+
+
 // Component-specific types
 export type Course = GenerateCourseOutput & {
   id: string;

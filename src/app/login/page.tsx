@@ -18,13 +18,14 @@ import {dataStore} from '@/lib/store';
 import {Loader2} from 'lucide-react';
 import {
   AlertDialog,
-  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { sendPasswordReset } from '@/ai/flows/send-password-reset-flow';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,6 +34,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotDialog, setShowForgotDialog] = useState(false);
+  const [resetIdentifier, setResetIdentifier] = useState('');
+  const [isSendingReset, setIsSendingReset] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +72,47 @@ export default function LoginPage() {
         description: 'Login ou senha inválidos. Por favor, tente novamente.',
       });
       setIsLoading(false);
+    }
+  };
+  
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetIdentifier.trim()) {
+        toast({
+            variant: 'destructive',
+            title: 'Campo Obrigatório',
+            description: 'Por favor, insira seu login ou email.',
+        });
+        return;
+    }
+
+    setIsSendingReset(true);
+
+    try {
+        const result = await sendPasswordReset({ identifier: resetIdentifier });
+        if (result.success) {
+            toast({
+                title: 'Verifique seu Email',
+                description: 'Se o usuário for um administrador, um email de recuperação foi enviado.',
+            });
+            setShowForgotDialog(false);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Falha na Recuperação',
+                description: result.message,
+            });
+        }
+    } catch (error) {
+        console.error('Password reset error:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Erro no Sistema',
+            description: 'Não foi possível processar sua solicitação. Tente novamente mais tarde.',
+        });
+    } finally {
+        setIsSendingReset(false);
+        setResetIdentifier('');
     }
   };
 
@@ -109,7 +153,7 @@ export default function LoginPage() {
                       onClick={() => setShowForgotDialog(true)}
                       className="ml-auto inline-block text-sm underline text-muted-foreground hover:text-primary"
                     >
-                      Esqueceu sua senha?
+                      Esqueci minha senha
                     </button>
                   </div>
                   <Input
@@ -140,17 +184,34 @@ export default function LoginPage() {
       </div>
       <AlertDialog open={showForgotDialog} onOpenChange={setShowForgotDialog}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Recuperação de Senha</AlertDialogTitle>
-            <AlertDialogDescription>
-              Para redefinir sua senha, por favor, entre em contato com o administrador do sistema.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setShowForgotDialog(false)}>
-              Entendi
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          <form onSubmit={handlePasswordReset}>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Redefinir Senha</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      Para redefinir a senha de administrador, insira o login ou e-mail associado. As instruções serão enviadas de <span className="font-medium">super.moda@yahoo.com.br</span>.
+                      <br/>
+                      <span className='italic'>Vendedores devem contatar o administrador diretamente.</span>
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="py-4">
+                  <Label htmlFor="reset-identifier">Login ou Email do Administrador</Label>
+                  <Input
+                      id="reset-identifier"
+                      placeholder="admin ou admin@email.com"
+                      value={resetIdentifier}
+                      onChange={(e) => setResetIdentifier(e.target.value)}
+                      disabled={isSendingReset}
+                      className="mt-2"
+                  />
+              </div>
+              <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isSendingReset}>Cancelar</AlertDialogCancel>
+                  <Button type="submit" disabled={isSendingReset}>
+                      {isSendingReset && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Enviar
+                  </Button>
+              </AlertDialogFooter>
+          </form>
         </AlertDialogContent>
       </AlertDialog>
     </>
