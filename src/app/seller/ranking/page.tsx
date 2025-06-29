@@ -8,7 +8,7 @@ import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star } from 'lucide-reac
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useSellerContext } from '@/app/seller/layout';
-import type { GoalLevel as GoalLevelType, Seller } from '@/lib/types';
+import type { GoalLevel as GoalLevelType, Seller, Goals } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -29,14 +29,30 @@ export default function RankingPage() {
   const { sellers: sellersData, goals: goalsData, currentSeller } = useSellerContext();
 
   const sortedSellers = useMemo(() => {
-    const data = [...sellersData];
-    return data.sort((a, b) => {
+     const sellersWithPrizes = sellersData.map(seller => {
+        let totalPrize = 0;
+        const criteria: Array<keyof Goals> = ['salesValue', 'ticketAverage', 'pa', 'points'];
+        
+        criteria.forEach(crit => {
+            const goals = goalsData[crit];
+            const sellerValue = crit === 'points' ? seller.points + seller.extraPoints : seller[crit];
+
+            if (sellerValue >= goals.metinha.threshold) totalPrize += goals.metinha.prize;
+            if (sellerValue >= goals.meta.threshold) totalPrize += goals.meta.prize;
+            if (sellerValue >= goals.metona.threshold) totalPrize += goals.metona.prize;
+            if (sellerValue >= goals.lendaria.threshold) totalPrize += goals.lendaria.prize;
+        });
+
+        return { ...seller, totalPrize };
+    });
+
+    return sellersWithPrizes.sort((a, b) => {
         if (criterion === 'points') {
             return (b.points + b.extraPoints) - (a.points + a.extraPoints);
         }
         return b[criterion] - a[criterion];
     });
-  }, [sellersData, criterion]);
+  }, [sellersData, goalsData, criterion]);
   
   const getCriterionLabel = (currentCriterion: RankingCriterion) => {
     switch (currentCriterion) {
@@ -161,6 +177,12 @@ export default function RankingPage() {
                     <TableRow>
                       <TableHead className="w-[100px] text-center">Posição</TableHead>
                       <TableHead>Vendedor</TableHead>
+                      <TableHead className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                            <span>Prêmios (R$)</span>
+                            <Award className="size-4 text-green-400" />
+                        </div>
+                      </TableHead>
                       <TableHead className="w-[320px] text-center">Nível da Meta</TableHead>
                       <TableHead className="w-[300px]">Progresso da Meta</TableHead>
                     </TableRow>
@@ -186,6 +208,9 @@ export default function RankingPage() {
                             {getRankIndicator(index)}
                           </TableCell>
                           <TableCell className="font-medium">{seller.name}</TableCell>
+                           <TableCell className="text-right font-semibold text-green-400">
+                             {formatPrize((seller as any).totalPrize)}
+                          </TableCell>
                           <TableCell className="text-center">
                             <div className="flex justify-center items-center gap-1.5 flex-wrap">
                               {allGoals.map((goal) => {
