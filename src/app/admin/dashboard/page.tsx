@@ -10,7 +10,10 @@ export default function DashboardPage() {
   const { sellers: sellersData } = useAdminContext();
 
   const { 
-    bestSeller,
+    bestSellerByValue,
+    bestSellerByTicket,
+    bestSellerByPA,
+    bestSellerByPoints,
     totalSellers,
     currentSales,
     totalPoints,
@@ -22,7 +25,10 @@ export default function DashboardPage() {
     
     if (totalSellers === 0) {
       return {
-        bestSeller: { name: "Nenhum", value: 0 },
+        bestSellerByValue: { name: "Nenhum", salesValue: 0 },
+        bestSellerByTicket: { name: "Nenhum", ticketAverage: 0 },
+        bestSellerByPA: { name: "Nenhum", pa: 0 },
+        bestSellerByPoints: { name: "Nenhum", points: 0, extraPoints: 0, totalPoints: 0 },
         totalSellers: 0,
         currentSales: 0,
         totalPoints: 0,
@@ -37,24 +43,19 @@ export default function DashboardPage() {
     const totalTicket = sellersData.reduce((acc, seller) => acc + seller.ticketAverage, 0);
     const totalPA = sellersData.reduce((acc, seller) => acc + seller.pa, 0);
 
-    const bestSellerData = sellersData.reduce((prev, current) => 
-      (prev.salesValue > current.salesValue) ? prev : current
-    );
-
-    const sellersSortedByPoints = [...sellersData]
-      .map(s => ({ ...s, totalPoints: s.points + s.extraPoints }))
-      .sort((a, b) => b.totalPoints - a.totalPoints);
-    
-    const pointsLeaders = sellersSortedByPoints.slice(0, 3);
+    const sellersWithTotalPoints = sellersData.map(s => ({ ...s, totalPoints: s.points + s.extraPoints }));
 
     return { 
-      bestSeller: { name: bestSellerData.name, value: bestSellerData.salesValue },
+      bestSellerByValue: sellersData.reduce((prev, current) => (prev.salesValue > current.salesValue) ? prev : current),
+      bestSellerByTicket: sellersData.reduce((prev, current) => (prev.ticketAverage > current.ticketAverage) ? prev : current),
+      bestSellerByPA: sellersData.reduce((prev, current) => (prev.pa > current.pa) ? prev : current),
+      bestSellerByPoints: sellersWithTotalPoints.reduce((prev, current) => (prev.totalPoints > current.totalPoints) ? prev : current),
       totalSellers,
       currentSales,
       totalPoints,
       averageTicket: totalSellers > 0 ? totalTicket / totalSellers : 0,
       averagePA: totalSellers > 0 ? totalPA / totalSellers : 0,
-      pointsLeaders
+      pointsLeaders: [...sellersWithTotalPoints].sort((a, b) => b.totalPoints - a.totalPoints).slice(0, 3)
     };
   }, [sellersData]);
 
@@ -127,21 +128,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-         <Card className="bg-card border-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Melhor Vendedor (Mês)
-            </CardTitle>
-            <Trophy className="h-4 w-4 text-yellow-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{bestSeller.name}</div>
-            <p className="text-xs text-muted-foreground">
-              {bestSeller.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} em vendas
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border col-span-1 md:col-span-2 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Vendedores Ativos
@@ -156,6 +143,61 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+       <div className="space-y-4">
+        <h2 className="text-2xl font-bold tracking-tight">Destaques Individuais</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Melhor Vendedor (Vendas)</CardTitle>
+                    <Trophy className="h-4 w-4 text-yellow-400" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{bestSellerByValue.name}</div>
+                    <p className="text-xs text-muted-foreground">
+                        {bestSellerByValue.salesValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} em vendas
+                    </p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Melhor Ticket Médio</CardTitle>
+                    <Ticket className="h-4 w-4 text-blue-400" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{bestSellerByTicket.name}</div>
+                    <p className="text-xs text-muted-foreground">
+                        {bestSellerByTicket.ticketAverage.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Melhor PA</CardTitle>
+                    <Box className="h-4 w-4 text-green-400" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{bestSellerByPA.name}</div>
+                    <p className="text-xs text-muted-foreground">
+                        {bestSellerByPA.pa.toFixed(2)} produtos por atendimento
+                    </p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Campeão de Pontos</CardTitle>
+                    <Star className="h-4 w-4 text-purple-400" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{bestSellerByPoints.name}</div>
+                    <p className="text-xs text-muted-foreground">
+                        {bestSellerByPoints.totalPoints.toLocaleString('pt-BR')} pontos acumulados
+                    </p>
+                </CardContent>
+            </Card>
+        </div>
+      </div>
+
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           <SalesOverviewChart sellers={sellersData} />
