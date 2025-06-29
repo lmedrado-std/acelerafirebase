@@ -33,21 +33,20 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-2xl text-center">Acessar Painel</CardTitle>
           <CardDescription className="text-center">
-            Entre com seu e-mail e senha para acessar a área do vendedor.
+            Entre com seu e-mail ou nickname para acessar a área do vendedor.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="login">Email ou Nickname</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="vendedor@exemplo.com"
+                  id="login"
+                  type="text"
+                  placeholder="seu@email.com ou nickname"
                   required
                   className="bg-input"
-                  defaultValue="rian@aceleragt.com"
                 />
               </div>
               <div className="grid gap-2">
