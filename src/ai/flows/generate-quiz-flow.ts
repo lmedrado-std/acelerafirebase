@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -17,19 +18,39 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateQuizInputSchema },
   output: { schema: GenerateQuizOutputSchema },
   prompt: `
-Você é um coach de vendas criativo e exigente. Crie um QUIZ desafiador com base no tema "{{topic}}".
+Você é um coach de vendas criativo e exigente, especializado em calçados. Crie um QUIZ desafiador e diversificado com base no tema "{{topic}}".
 
-- Gere EXATAMENTE {{numberOfQuestions}} perguntas com nível de dificuldade "{{difficulty}}".
-- Use o identificador único de geração (seed): {{#if seed}}{{seed}}{{else}}geral{{/if}}
+- Gere EXATAMENTE {{numberOfQuestions}} perguntas.
+- O nível de dificuldade é "{{difficulty}}". Adapte as perguntas e as opções de resposta para este nível.
+- Use o identificador único de geração (seed): {{#if seed}}{{seed}}{{else}}geral{{/if}} para garantir a unicidade.
 
 Regras RÍGIDAS:
 1. Gere perguntas únicas e variadas com base no seed.
 2. Evite repetir qualquer pergunta feita para outros vendedores no mesmo dia.
 3. Não use estrutura semelhante entre as perguntas (ex: todas começando com "Qual é...").
-4. Cubra áreas distintas do tema (ex: produto, abordagem, objeções, KPIs).
+4. Cubra áreas distintas do tema (ex: produto, abordagem, objeções, KPIs, psicologia do cliente, tendências de mercado).
 5. Responda APENAS com JSON. Não inclua blocos de código ou explicações externas.
 
-Formato:
+Instruções por Nível de Dificuldade:
+
+**Nível "Fácil":**
+- Perguntas devem ser diretas, focadas em conceitos básicos e fundamentais de vendas e produtos de calçados.
+- As opções de resposta devem ter uma alternativa claramente correta e as demais devem ser obviamente incorretas ou distantes do tema.
+- Exemplo: "Qual a principal função de um bom atendimento ao cliente?"
+
+**Nível "Médio":**
+- Perguntas devem exigir um pouco mais de raciocínio e aplicação de conceitos.
+- Inclua cenários comuns do dia a dia de vendas de calçados.
+- As opções de resposta devem ser mais plausíveis, exigindo um conhecimento mais aprofundado para identificar a correta.
+- Exemplo: "Um cliente está indeciso entre dois modelos de tênis. Qual a melhor estratégia para ajudá-lo a decidir, focando em suas necessidades?"
+
+**Nível "Difícil":**
+- Perguntas devem ser complexas, envolvendo análise crítica, resolução de problemas e aplicação de estratégias avançadas.
+- Inclua cenários desafiadores, objeções difíceis ou situações que exigem conhecimento de mercado e psicologia do consumidor.
+- As opções de resposta devem ser muito próximas, exigindo um entendimento nuances e experiência prática para escolher a melhor.
+- Exemplo: "Em um cenário de baixa sazonalidade, como um vendedor de calçados pode utilizar técnicas de cross-selling e up-selling para maximizar o ticket médio, sem parecer agressivo, e qual KPI seria mais impactado por essa estratégia?"
+
+Formato da resposta:
 {
   "title": "Quiz Exclusivo - Nível {{difficulty}}",
   "questions": [
