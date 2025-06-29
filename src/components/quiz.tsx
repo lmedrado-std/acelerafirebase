@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -25,7 +25,7 @@ const saveResultToLocalStorage = (result: QuizResult) => {
   const results: QuizResult[] = stored ? JSON.parse(stored) : [];
   results.push(result);
   results.sort((a, b) => b.score - a.score);
-  localStorage.setItem('quizResults', JSON.stringify(results.slice(0, 5)));
+  localStorage.setItem('quizResults', JSON.stringify(results.slice(0, 5))); // top 5
 };
 
 const getResultsFromLocalStorage = (): QuizResult[] => {
@@ -42,24 +42,7 @@ export default function Quiz() {
   const [score, setScore] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
-  const [bestResults, setBestResults] = useState<QuizResult[]>([]);
   const { toast } = useToast();
-
-  useEffect(() => {
-    setBestResults(getResultsFromLocalStorage());
-  }, []);
-
-  useEffect(() => {
-    if (isFinished && quiz) {
-      const finalResult: QuizResult = {
-        score: score,
-        total: quiz.questions.length,
-        date: new Date().toLocaleDateString('pt-BR'),
-      };
-      saveResultToLocalStorage(finalResult);
-      setBestResults(getResultsFromLocalStorage());
-    }
-  }, [isFinished, quiz, score]);
 
   const handleStartQuiz = async () => {
     setIsLoading(true);
@@ -75,15 +58,18 @@ export default function Quiz() {
         topic: 'Técnicas de Venda e Conhecimento de Produtos em Lojas de Calçados',
         numberOfQuestions: 5,
       });
-      // The flow now guarantees a valid quiz, so we can set it directly.
-      setQuiz(result);
+
+      if (result.questions.length > 0) {
+        setQuiz(result);
+      } else {
+        throw new Error('Quiz vazio');
+      }
     } catch (error) {
-      // This catch is a final safety net, but should rarely be hit.
-      console.error('Failed to generate quiz:', error);
+      console.error('❌ Erro ao gerar quiz:', error);
       toast({
         variant: 'destructive',
-        title: 'Ocorreu um Erro Inesperado',
-        description: 'Não foi possível carregar o quiz. Por favor, tente novamente.',
+        title: 'Falha ao Gerar Quiz',
+        description: 'A IA não conseguiu gerar o conteúdo. Por favor, tente novamente.',
       });
     } finally {
       setIsLoading(false);
@@ -99,14 +85,18 @@ export default function Quiz() {
   };
 
   const handleNextQuestion = () => {
-    const isLastQuestion = currentQuestionIndex === quiz!.questions.length - 1;
-
-    if (isLastQuestion) {
-      setIsFinished(true);
-    } else {
-      setShowFeedback(false);
-      setSelectedAnswer(null);
+    setShowFeedback(false);
+    setSelectedAnswer(null);
+    if (currentQuestionIndex < quiz!.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      setIsFinished(true);
+      const finalResult: QuizResult = {
+        score: score,
+        total: quiz!.questions.length,
+        date: new Date().toLocaleDateString('pt-BR'),
+      };
+      saveResultToLocalStorage(finalResult);
     }
   };
 
@@ -123,6 +113,7 @@ export default function Quiz() {
   }
 
   if (isFinished) {
+    const results = getResultsFromLocalStorage();
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <Trophy className="h-16 w-16 text-yellow-400" />
@@ -131,18 +122,14 @@ export default function Quiz() {
           Você acertou {score} de {quiz!.questions.length} perguntas.
         </p>
 
-        {bestResults.length > 0 && (
-          <>
-            <h3 className="mt-6 text-lg font-semibold">Seus Melhores Resultados</h3>
-            <ul className="mt-2 space-y-1 text-muted-foreground text-sm">
-              {bestResults.map((res, index) => (
-                <li key={index}>
-                  {index + 1}. {res.score} de {res.total} – {res.date}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        <h3 className="mt-6 text-lg font-semibold">Seus Melhores Resultados</h3>
+        <ul className="mt-2 space-y-1 text-muted-foreground text-sm">
+          {results.map((res, index) => (
+            <li key={index}>
+              {index + 1}. {res.score} de {res.total} – {res.date}
+            </li>
+          ))}
+        </ul>
 
         <Button onClick={handleStartQuiz} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
           <RotateCcw className="mr-2" /> Tentar Novamente
@@ -158,25 +145,6 @@ export default function Quiz() {
         <p className="text-muted-foreground mt-2 max-w-md">
           Clique no botão abaixo para gerar um quiz aleatório sobre técnicas de vendas e produtos de calçados.
         </p>
-        
-        {bestResults.length > 0 && (
-          <Card className="mt-6 w-full max-w-md bg-background/50">
-            <CardHeader>
-              <CardTitle className="text-lg">Melhores Resultados</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-1 text-muted-foreground text-sm text-left">
-                {bestResults.map((res, index) => (
-                  <li key={index} className="flex justify-between">
-                    <span>{index + 1}. Em {res.date}</span>
-                    <span className="font-bold">{res.score} / {res.total}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        )}
-
         <Button onClick={handleStartQuiz} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
           <Sparkles className="mr-2" /> Iniciar Quiz
         </Button>
