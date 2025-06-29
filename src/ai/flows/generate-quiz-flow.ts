@@ -42,45 +42,6 @@ Responda somente com o JSON no formato:
   `,
 });
 
-const getFallbackQuiz = (): GenerateQuizOutput => ({
-  title: "Quiz de Técnicas de Venda",
-  questions: [
-    {
-      questionText: "Qual a melhor abordagem com um cliente em loja?",
-      options: [
-        "Ficar em silêncio até que ele fale",
-        "Falar rapidamente sobre promoções",
-        "Cumprimentar e se colocar à disposição",
-        "Oferecer o produto mais caro primeiro"
-      ],
-      correctAnswerIndex: 2,
-      explanation: "Abordar com simpatia e abertura gera confiança."
-    },
-    {
-      questionText: "O que caracteriza uma venda consultiva?",
-      options: [
-        "Focar só no valor da venda",
-        "Empurrar estoque parado",
-        "Entender a real necessidade do cliente",
-        "Vender o que dá mais comissão"
-      ],
-      correctAnswerIndex: 2,
-      explanation: "Na venda consultiva, o foco é resolver o problema do cliente."
-    },
-     {
-      questionText: "Qual destes é um exemplo de venda adicional (cross-sell)?",
-      options: [
-        "Sugerir um modelo mais caro",
-        "Oferecer meias junto com o tênis",
-        "Dar um grande desconto",
-        "Vender apenas o que o cliente pediu"
-      ],
-      correctAnswerIndex: 1,
-      explanation: "Oferecer produtos complementares (meias, produtos de limpeza) aumenta o valor da venda."
-    }
-  ]
-});
-
 const generateQuizFlow = ai.defineFlow(
   {
     name: 'generateQuizFlow',
@@ -90,44 +51,53 @@ const generateQuizFlow = ai.defineFlow(
   async (input) => {
     try {
       const response = await prompt(input);
-      
+      console.log("📤 Resposta da IA:", response);
+
       if (response.output) {
-        if (response.output.questions.length === 0) {
-          console.warn("⚠️ IA retornou um quiz válido mas sem perguntas. Usando fallback.");
-          return getFallbackQuiz();
-        }
         return response.output;
       }
-      
-      const rawText = response.text;
-      if (!rawText) {
-        console.warn("⚠️ IA retornou uma resposta vazia. Usando fallback local.");
-        return getFallbackQuiz();
-      }
 
+      const rawText = response.text || '';
       const jsonRegex = /```json\n([\s\S]*?)\n```|({[\s\S]*})/;
       const match = rawText.match(jsonRegex);
+      const jsonString = match?.[1] || match?.[2];
 
-      if (!match) {
-        throw new Error('A IA não retornou dados em formato JSON válido.');
-      }
-      
-      const jsonString = match[1] || match[2];
+      if (!jsonString) throw new Error('JSON inválido ou ausente');
+
       const parsed = JSON.parse(jsonString);
-      
-      const validated = GenerateQuizOutputSchema.parse(parsed);
-
-      if (validated.questions.length === 0) {
-        console.warn("⚠️ IA retornou um quiz válido mas sem perguntas (após parse). Usando fallback.");
-        return getFallbackQuiz();
-      }
-      
-      return validated;
-
+      return GenerateQuizOutputSchema.parse(parsed);
     } catch (error) {
-      console.error('❌ Erro no fluxo de geração de quiz:', error);
-      console.warn("⚠️ Usando fallback local por falha na IA.");
-      return getFallbackQuiz();
+      console.warn('⚠️ Erro ao gerar quiz com a IA:', error);
+      console.warn('📄 Retornando fallback local');
+
+      // Fallback local garantido
+      return {
+        title: "Quiz de Técnicas de Venda - Básico",
+        questions: [
+          {
+            questionText: "Qual a melhor forma de abordar um cliente?",
+            options: [
+              "Esperar que ele fale primeiro",
+              "Cumprimentar com simpatia e oferecer ajuda",
+              "Segui-lo silenciosamente",
+              "Falar das promoções imediatamente"
+            ],
+            correctAnswerIndex: 1,
+            explanation: "Uma abordagem simpática cria conexão e confiança."
+          },
+          {
+            questionText: "O que caracteriza uma boa venda consultiva?",
+            options: [
+              "Oferecer o item mais caro",
+              "Entender a necessidade do cliente",
+              "Focar apenas na comissão",
+              "Falar sobre todos os produtos da loja"
+            ],
+            correctAnswerIndex: 1,
+            explanation: "Na venda consultiva, você ajuda o cliente com a melhor solução."
+          }
+        ]
+      };
     }
   }
 );
