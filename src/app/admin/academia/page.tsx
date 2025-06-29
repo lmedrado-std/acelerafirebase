@@ -19,6 +19,7 @@ export default function AcademiaPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isGeneratingCourse, setIsGeneratingCourse] = useState(false);
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string>('');
   const { toast } = useToast();
 
   const courseTopics = [
@@ -30,10 +31,17 @@ export default function AcademiaPage() {
   ];
 
   const handleGenerateCourse = async () => {
+     if (!selectedTopic) {
+        toast({
+            variant: 'destructive',
+            title: 'Selecione um tópico',
+            description: 'Você precisa escolher um tópico para gerar o curso.',
+        });
+        return;
+    }
     setIsGeneratingCourse(true);
     try {
-      const randomTopic = courseTopics[Math.floor(Math.random() * courseTopics.length)];
-      const result = await generateCourse({ topic: randomTopic });
+      const result = await generateCourse({ topic: selectedTopic });
       
       const newCourse: Course = {
         id: new Date().getTime().toString(),
@@ -49,7 +57,7 @@ export default function AcademiaPage() {
       toast({
         variant: 'destructive',
         title: 'Falha ao Gerar Curso',
-        description: 'A IA não conseguiu gerar o conteúdo. Por favor, tente novamente.',
+        description: 'A IA não conseguiu gerar o conteúdo. Um curso padrão foi carregado.',
       });
     } finally {
       setIsGeneratingCourse(false);
@@ -111,15 +119,30 @@ export default function AcademiaPage() {
         <CardContent className="space-y-6">
           <div className="p-6 border rounded-lg border-border">
             <h3 className="text-lg font-semibold">Gerador de Cursos</h3>
-            <p className="text-muted-foreground mb-4">Clique no botão para gerar um curso completo com um tópico aleatório sobre vendas de calçados.</p>
-            <Button onClick={handleGenerateCourse} disabled={isGeneratingCourse} className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
-              {isGeneratingCourse ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="mr-2 h-4 w-4" />
-              )}
-              Gerar Curso com IA
-            </Button>
+            <p className="text-muted-foreground mb-4">Selecione um tópico e clique no botão para gerar um curso completo usando IA.</p>
+            <div className="flex items-end gap-4">
+                <div className="space-y-2 flex-grow">
+                    <Label htmlFor="course-topic-select">Tópico do Curso</Label>
+                    <Select onValueChange={setSelectedTopic} value={selectedTopic}>
+                        <SelectTrigger id="course-topic-select">
+                            <SelectValue placeholder="Escolha um tópico..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {courseTopics.map((topic, index) => (
+                                <SelectItem key={index} value={topic}>{topic}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <Button onClick={handleGenerateCourse} disabled={isGeneratingCourse || !selectedTopic} className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                  {isGeneratingCourse ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
+                  )}
+                  Gerar Curso com IA
+                </Button>
+            </div>
           </div>
 
           <div className="space-y-4 pt-6 border-t border-border">

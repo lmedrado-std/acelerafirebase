@@ -81,6 +81,7 @@ export const QuizQuestionSchema = z.object({
 export const GenerateQuizInputSchema = z.object({
   topic: z.string().describe('The topic for the quiz.'),
   numberOfQuestions: z.number().min(1).max(10).describe('The number of questions to generate.'),
+  difficulty: z.enum(['Fácil', 'Médio', 'Difícil']).describe('The difficulty level for the quiz.'),
 });
 export type GenerateQuizInput = z.infer<typeof GenerateQuizInputSchema>;
 
@@ -117,9 +118,15 @@ export const GenerateCourseOutputSchema = z.object({
 export type GenerateCourseOutput = z.infer<typeof GenerateCourseOutputSchema>;
 
 
-// Component-specific types that use AI schemas
+// Component-specific types
 export type Course = GenerateCourseOutput & {
   id: string;
 };
 
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
+
+export type QuizResult = {
+  score: number;
+  total: number;
+  date: string;
+};

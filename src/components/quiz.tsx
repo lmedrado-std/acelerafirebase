@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { generateQuiz } from '@/ai/flows/generate-quiz-flow';
-import type { GenerateQuizOutput } from '@/lib/types';
+import type { GenerateQuizOutput, QuizResult, QuizQuestion } from '@/lib/types';
 import { Loader2, Sparkles, Trophy, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import PerformanceChart from './PerformanceChart';
@@ -16,27 +16,25 @@ import { db } from '@/lib/firebase';
 import { useAdminContext } from '@/app/admin/layout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type Question = GenerateQuizOutput['questions'][0];
-
-type QuizResult = {
-  score: number;
-  total: number;
-  date: string;
-};
-
 const saveResultToLocalStorage = (result: QuizResult) => {
   if (typeof window === 'undefined') return;
   const stored = localStorage.getItem('quizResults');
   const results: QuizResult[] = stored ? JSON.parse(stored) : [];
-  results.push(result);
-  results.sort((a, b) => b.score - a.score);
-  localStorage.setItem('quizResults', JSON.stringify(results.slice(0, 5))); // top 5
+  results.unshift(result);
+  localStorage.setItem('quizResults', JSON.stringify(results.slice(0, 5)));
 };
 
 const getResultsFromLocalStorage = (): QuizResult[] => {
   if (typeof window === 'undefined') return [];
   const stored = localStorage.getItem('quizResults');
   return stored ? JSON.parse(stored) : [];
+};
+
+type Difficulty = 'Fácil' | 'Médio' | 'Difícil';
+const difficultyConfig: Record<Difficulty, { points: number }> = {
+  'Fácil': { points: 10 },
+  'Médio': { points: 20 },
+  'Difícil': { points: 30 },
 };
 
 export default function Quiz() {
@@ -49,6 +47,7 @@ export default function Quiz() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState<Difficulty>('Médio');
   const { toast } = useToast();
 
   const availableSellers = sellers.filter(s => !s.hasCompletedQuiz);
@@ -71,19 +70,20 @@ export default function Quiz() {
       const result = await generateQuiz({
         topic: 'Técnicas de Venda e Conhecimento de Produtos em Lojas de Calçados',
         numberOfQuestions: 5,
+        difficulty: difficulty,
       });
 
       if (result.questions.length > 0) {
         setQuiz(result);
       } else {
-        throw new Error('Quiz vazio');
+        throw new Error('Quiz vazio retornado pelo fallback.');
       }
     } catch (error) {
       console.error('❌ Erro ao gerar quiz:', error);
       toast({
         variant: 'destructive',
         title: 'Falha ao Gerar Quiz',
-        description: 'A IA não conseguiu gerar o conteúdo. Por favor, tente novamente.',
+        description: 'A IA não conseguiu gerar o conteúdo. Um quiz de emergência foi carregado.',
       });
     } finally {
       setIsLoading(false);
@@ -105,15 +105,15 @@ export default function Quiz() {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       setIsFinished(true);
+      const pointsPerCorrectAnswer = difficultyConfig[difficulty].points;
+      const pointsEarned = score * pointsPerCorrectAnswer;
+
       const finalResult: QuizResult = {
         score: score,
         total: quiz!.questions.length,
         date: new Date().toLocaleDateString('pt-BR'),
       };
-
-      const pointsPerCorrectAnswer = 20;
-      const pointsEarned = score * pointsPerCorrectAnswer;
-
+      
       if (selectedSellerId) {
         setSellers(prevSellers =>
             prevSellers.map(seller =>
@@ -130,7 +130,7 @@ export default function Quiz() {
 
       saveResultToLocalStorage(finalResult);
       try {
-        await addDoc(collection(db, 'quiz-results'), {...finalResult, sellerId: selectedSellerId, sellerName: selectedSeller?.name });
+        await addDoc(collection(db, 'quiz-results'), {...finalResult, sellerId: selectedSellerId, sellerName: selectedSeller?.name, difficulty: difficulty });
         console.log('🔥 Resultado salvo no Firestore!');
       } catch (err) {
         console.error('❌ Erro ao salvar no Firestore:', err);
@@ -138,7 +138,7 @@ export default function Quiz() {
     }
   };
 
-  const currentQuestion: Question | null = quiz ? quiz.questions[currentQuestionIndex] : null;
+  const currentQuestion: QuizQuestion | null = quiz ? quiz.questions[currentQuestionIndex] : null;
 
   if (isLoading) {
     return (
@@ -152,7 +152,7 @@ export default function Quiz() {
 
   if (isFinished) {
     const results = getResultsFromLocalStorage();
-    const pointsEarned = score * 20;
+    const pointsEarned = score * difficultyConfig[difficulty].points;
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <Trophy className="h-16 w-16 text-yellow-400" />
@@ -160,15 +160,6 @@ export default function Quiz() {
         <p className="text-muted-foreground mt-2">
           {selectedSeller?.name} acertou {score} de {quiz!.questions.length} perguntas e ganhou {pointsEarned} pontos!
         </p>
-
-        <h3 className="mt-6 text-lg font-semibold">Melhores Resultados Recentes</h3>
-        <ul className="mt-2 space-y-1 text-muted-foreground text-sm">
-          {results.map((res, index) => (
-            <li key={index}>
-              {index + 1}. {res.score} de {res.total} – {res.date}
-            </li>
-          ))}
-        </ul>
 
         <PerformanceChart data={results} />
 
@@ -188,25 +179,40 @@ export default function Quiz() {
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <h2 className="text-xl font-bold">Teste seus Conhecimentos</h2>
         <p className="text-muted-foreground mt-2 max-w-md">
-          Selecione um vendedor e clique no botão abaixo para gerar um quiz. Cada vendedor pode fazer o quiz apenas uma vez.
+          Selecione um vendedor, escolha a dificuldade e clique no botão para gerar um quiz. Cada vendedor pode fazer o quiz apenas uma vez.
         </p>
 
-        <div className="space-y-2 my-6 w-full max-w-sm">
-            <Label htmlFor="seller-select-quiz">Selecione o Vendedor</Label>
-            <Select onValueChange={setSelectedSellerId}>
-                <SelectTrigger id="seller-select-quiz">
-                    <SelectValue placeholder="Selecione um vendedor para fazer o quiz..." />
-                </SelectTrigger>
-                <SelectContent>
-                    {availableSellers.length > 0 ? (
-                        availableSellers.map(seller => (
-                            <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>
-                        ))
-                    ) : (
-                        <div className="p-4 text-sm text-center text-muted-foreground">Todos os vendedores já fizeram o quiz.</div>
-                    )}
-                </SelectContent>
-            </Select>
+        <div className="space-y-4 my-6 w-full max-w-sm">
+            <div className="space-y-2">
+                <Label htmlFor="seller-select-quiz">Selecione o Vendedor</Label>
+                <Select onValueChange={setSelectedSellerId} value={selectedSellerId || ''}>
+                    <SelectTrigger id="seller-select-quiz">
+                        <SelectValue placeholder="Selecione um vendedor para fazer o quiz..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {availableSellers.length > 0 ? (
+                            availableSellers.map(seller => (
+                                <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>
+                            ))
+                        ) : (
+                            <div className="p-4 text-sm text-center text-muted-foreground">Todos os vendedores já fizeram o quiz.</div>
+                        )}
+                    </SelectContent>
+                </Select>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="difficulty-select">Nível de Dificuldade</Label>
+                <Select value={difficulty} onValueChange={(val) => setDifficulty(val as Difficulty)}>
+                    <SelectTrigger id="difficulty-select">
+                        <SelectValue placeholder="Selecione o nível..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {Object.keys(difficultyConfig).map(level => (
+                            <SelectItem key={level} value={level}>{level}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
 
         <Button onClick={handleStartQuiz} disabled={isLoading || !selectedSellerId} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
@@ -217,7 +223,7 @@ export default function Quiz() {
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6" key={currentQuestionIndex}>
       <div className="flex justify-between items-center">
         <CardTitle className="text-xl">Quiz: {quiz.title}</CardTitle>
         <div className="text-sm font-medium text-muted-foreground">Pergunta {currentQuestionIndex + 1} de {quiz.questions.length}</div>
@@ -237,7 +243,7 @@ export default function Quiz() {
 
             let variant = '';
             if (showFeedback) {
-              if (isCorrect) variant = 'border-green-500 bg-green-500/10';
+              if (isCorrect) variant = 'border-green-500 bg-green-500/10 text-primary';
               else if (isSelected) variant = 'border-destructive bg-destructive/10';
             }
 

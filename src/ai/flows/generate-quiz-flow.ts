@@ -17,29 +17,43 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateQuizInputSchema },
   output: { schema: GenerateQuizOutputSchema },
   prompt: `
-Você é especialista em treinamentos para vendedores de lojas de calçados. Crie um quiz sobre "{{topic}}".
+Você é especialista em treinamentos para vendedores de lojas de calçados. Crie um QUIZ de nível de dificuldade "{{difficulty}}" sobre o tema "{{topic}}".
 
-Regras:
-- Exatamente {{numberOfQuestions}} perguntas.
-- Cada pergunta com:
-  - Enunciado
-  - 4 opções
-  - Índice da correta (0-3)
-  - Explicação da resposta correta
+💡 Regras obrigatórias:
+- Gere exatamente {{numberOfQuestions}} perguntas.
+- As perguntas devem variar em complexidade de acordo com a dificuldade solicitada.
+- Cada pergunta deve ter:
+  - Um enunciado claro.
+  - 4 alternativas diferentes.
+  - O índice da resposta correta (de 0 a 3).
+  - Uma explicação curta sobre a resposta correta.
 
-Responda somente com o JSON no formato:
+🧪 Exemplo de estrutura esperada (em JSON):
 {
-  "title": "Título",
+  "title": "Quiz sobre {{topic}} - Nível {{difficulty}}",
   "questions": [
     {
-      "questionText": "Pergunta?",
-      "options": ["A", "B", "C", "D"],
-      "correctAnswerIndex": 1,
-      "explanation": "Motivo"
+      "questionText": "Qual material é mais indicado para tênis de corrida?",
+      "options": ["Couro", "Lona", "Mesh", "Camurça"],
+      "correctAnswerIndex": 2,
+      "explanation": "O mesh é leve, flexível e respirável — ideal para tênis de corrida."
     }
   ]
 }
-  `,
+
+🛑 IMPORTANTE:
+- Responda SOMENTE com o JSON.
+- NÃO use blocos \`\`\`, comentários ou texto adicional.
+- A resposta **deve ser 100% compatível** com o exemplo acima.
+`,
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+    ],
+  },
 });
 
 const generateQuizFlow = ai.defineFlow(
@@ -54,6 +68,9 @@ const generateQuizFlow = ai.defineFlow(
       console.log("📤 Resposta da IA:", response);
 
       if (response.output) {
+        if (response.output.questions.length === 0) {
+           throw new Error("AI returned a valid structure but with no questions.");
+        }
         return response.output;
       }
 
@@ -65,7 +82,13 @@ const generateQuizFlow = ai.defineFlow(
       if (!jsonString) throw new Error('JSON inválido ou ausente');
 
       const parsed = JSON.parse(jsonString);
-      return GenerateQuizOutputSchema.parse(parsed);
+      const validated = GenerateQuizOutputSchema.parse(parsed);
+      
+      if (validated.questions.length === 0) {
+        throw new Error("AI returned a valid structure but with no questions after parsing.");
+      }
+      return validated;
+
     } catch (error) {
       console.warn('⚠️ Erro ao gerar quiz com a IA:', error);
       console.warn('📄 Retornando fallback local');
@@ -95,6 +118,34 @@ const generateQuizFlow = ai.defineFlow(
             ],
             correctAnswerIndex: 1,
             explanation: "Na venda consultiva, você ajuda o cliente com a melhor solução."
+          },
+          {
+            questionText: "Para um cliente que busca conforto, qual tipo de palmilha você recomenda?",
+            options: ["Plana e dura", "Com espuma de memória (Memory Foam)", "De borracha simples", "Nenhuma"],
+            correctAnswerIndex: 1,
+            explanation: "A espuma de memória se molda ao pé, oferecendo máximo conforto e absorção de impacto."
+          },
+          {
+            questionText: "Um cliente reclama que o sapato de couro está apertado. O que você diz?",
+            options: [
+              "Que ele vai lacear com o tempo",
+              "Que ele pegou o número errado",
+              "Oferece um produto para lacear o couro e explica o processo",
+              "Sugere um modelo sintético"
+            ],
+            correctAnswerIndex: 2,
+            explanation: "Oferecer uma solução proativa demonstra conhecimento e cuidado com o cliente, agregando valor."
+          },
+          {
+            questionText: "O que é 'PA' em vendas de varejo?",
+            options: [
+              "Produto por Atendimento",
+              "Pagamento Aprovado",
+              "Preço de Atacado",
+              "Promoção Ativa"
+            ],
+            correctAnswerIndex: 0,
+            explanation: "PA (Peças por Atendimento) é um indicador que mede a quantidade de produtos vendidos por cliente atendido."
           }
         ]
       };
