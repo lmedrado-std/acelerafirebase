@@ -75,7 +75,7 @@ export default function SellerDashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
+        <Card className="shadow-lg rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Pontos</CardTitle>
             <Star className="h-4 w-4 text-yellow-400" />
@@ -93,7 +93,7 @@ export default function SellerDashboardPage() {
             />
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-lg rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
             <Ticket className="h-4 w-4 text-muted-foreground" />
@@ -117,7 +117,7 @@ export default function SellerDashboardPage() {
             />
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-lg rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Produtos por Atendimento (PA)
@@ -139,7 +139,7 @@ export default function SellerDashboardPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="shadow-lg rounded-xl">
         <CardHeader>
           <CardTitle>Missões Ativas</CardTitle>
           <CardDescription>

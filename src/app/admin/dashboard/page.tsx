@@ -66,7 +66,7 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold">Dashboard</h1>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border shadow-lg rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Vendas Totais (Mês)
@@ -82,7 +82,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border shadow-lg rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
              Ticket Médio (Equipe)
@@ -98,7 +98,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border shadow-lg rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               PA Médio (Equipe)
@@ -114,7 +114,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border shadow-lg rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pontos Totais da Equipe</CardTitle>
             <Star className="h-4 w-4 text-yellow-400" />
@@ -128,7 +128,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border col-span-1 md:col-span-2 lg:col-span-1">
+        <Card className="bg-card border-border col-span-1 md:col-span-2 lg:col-span-1 shadow-lg rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Vendedores Ativos
@@ -147,7 +147,7 @@ export default function DashboardPage() {
        <div className="space-y-4">
         <h2 className="text-2xl font-bold tracking-tight">Destaques Individuais</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card className="shadow-lg rounded-xl">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Melhor Vendedor (Vendas)</CardTitle>
                     <Trophy className="h-4 w-4 text-yellow-400" />
@@ -159,7 +159,7 @@ export default function DashboardPage() {
                     </p>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-lg rounded-xl">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Melhor Ticket Médio</CardTitle>
                     <Ticket className="h-4 w-4 text-blue-400" />
@@ -171,7 +171,7 @@ export default function DashboardPage() {
                     </p>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-lg rounded-xl">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Melhor PA</CardTitle>
                     <Box className="h-4 w-4 text-green-400" />
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                     </p>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-lg rounded-xl">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Campeão de Pontos</CardTitle>
                     <Star className="h-4 w-4 text-purple-400" />
@@ -203,7 +203,7 @@ export default function DashboardPage() {
           <SalesOverviewChart sellers={sellersData} />
         </div>
         
-        <Card>
+        <Card className="shadow-lg rounded-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Crown className="text-yellow-400" />
