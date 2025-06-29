@@ -174,19 +174,7 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
               </SidebarMenu>
             </SidebarContent>
             <SidebarFooter className="p-4 space-y-4">
-              <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center">
-                <Button
-                  variant="ghost"
-                  className="relative p-2 h-auto text-sidebar-foreground hover:text-white"
-                >
-                  <Bell />
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 min-w-5 justify-center p-1 text-xs border-2 border-sidebar"
-                  >
-                    524
-                  </Badge>
-                </Button>
+              <div className="flex items-center justify-end group-data-[collapsible=icon]:justify-center">
                 {isClient && (
                   <Button
                     onClick={handleLogout}
