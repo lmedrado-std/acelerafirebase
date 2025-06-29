@@ -67,11 +67,11 @@ export default function PerfilPage() {
 
     const handleAdminSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setAdminUser({
+        setAdminUser(() => ({
             nickname: adminNickname,
             email: adminEmail,
             password: adminPassword,
-        });
+        }));
         toast({
             title: 'Perfil de Administrador Atualizado!',
             description: 'Suas informações de acesso foram salvas com sucesso.',
