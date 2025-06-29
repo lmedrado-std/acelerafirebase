@@ -52,7 +52,8 @@ export type Mission = {
   id: string;
   name: string;
   description: string;
-  points: number;
+  rewardValue: number;
+  rewardType: 'points' | 'cash';
   startDate: Date;
   endDate: Date;
 };

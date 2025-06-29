@@ -14,31 +14,35 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function MissionsPage() {
   const { missions, setMissions } = useAdminContext();
   const [missionName, setMissionName] = useState('');
   const [missionDescription, setMissionDescription] = useState('');
-  const [missionPoints, setMissionPoints] = useState('');
+  const [missionRewardValue, setMissionRewardValue] = useState('');
+  const [missionRewardType, setMissionRewardType] = useState<'points' | 'cash'>('points');
   const [missionStartDate, setMissionStartDate] = useState<Date>();
   const [missionEndDate, setMissionEndDate] = useState<Date>();
 
   const handleAddMission = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!missionName.trim() || !missionPoints || !missionStartDate || !missionEndDate) return;
+    if (!missionName.trim() || !missionRewardValue || !missionStartDate || !missionEndDate) return;
 
     const newMission: Mission = {
       id: new Date().getTime().toString(),
       name: missionName,
       description: missionDescription,
-      points: parseInt(missionPoints, 10),
+      rewardValue: parseInt(missionRewardValue, 10),
+      rewardType: missionRewardType,
       startDate: missionStartDate,
       endDate: missionEndDate,
     };
     setMissions(prev => [...prev, newMission]);
     setMissionName('');
     setMissionDescription('');
-    setMissionPoints('');
+    setMissionRewardValue('');
+    setMissionRewardType('points');
     setMissionStartDate(undefined);
     setMissionEndDate(undefined);
   };
@@ -46,6 +50,13 @@ export default function MissionsPage() {
   const handleDeleteMission = (id: string) => {
     setMissions(prev => prev.filter(m => m.id !== id));
   };
+  
+  const formatReward = (mission: Mission) => {
+    if (mission.rewardType === 'cash') {
+      return mission.rewardValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    return `${mission.rewardValue} pts`;
+  }
 
   return (
     <div className="space-y-8">
@@ -61,19 +72,35 @@ export default function MissionsPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAddMission} className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="missionName">Nome da Missão</Label>
                 <Input id="missionName" placeholder="Ex: Vender 5 Pares do Modelo X" className="bg-input" value={missionName} onChange={(e) => setMissionName(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="missionPoints">Pontos de Recompensa</Label>
-                <Input id="missionPoints" placeholder="Ex: 200" type="number" className="bg-input" value={missionPoints} onChange={(e) => setMissionPoints(e.target.value)} required />
+                <Label htmlFor="missionRewardType">Tipo de Recompensa</Label>
+                 <Select value={missionRewardType} onValueChange={(value) => setMissionRewardType(value as 'points' | 'cash')}>
+                  <SelectTrigger id="missionRewardType">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="points">Pontos</SelectItem>
+                    <SelectItem value="cash">Dinheiro (R$)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="missionDescription">Descrição da Missão</Label>
-              <Textarea id="missionDescription" placeholder="Descreva o objetivo da missão." className="bg-input" rows={2} value={missionDescription} onChange={(e) => setMissionDescription(e.target.value)} />
+             <div className="grid md:grid-cols-2 gap-4">
+               <div className="space-y-2">
+                 <Label htmlFor="missionDescription">Descrição da Missão</Label>
+                 <Textarea id="missionDescription" placeholder="Descreva o objetivo da missão." className="bg-input" rows={2} value={missionDescription} onChange={(e) => setMissionDescription(e.target.value)} />
+               </div>
+                <div className="space-y-2">
+                  <Label htmlFor="missionRewardValue">
+                    {missionRewardType === 'points' ? 'Pontos de Recompensa' : 'Valor do Prêmio (R$)'}
+                  </Label>
+                  <Input id="missionRewardValue" placeholder="Ex: 200" type="number" className="bg-input" value={missionRewardValue} onChange={(e) => setMissionRewardValue(e.target.value)} required />
+                </div>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -123,7 +150,7 @@ export default function MissionsPage() {
                   <TableRow>
                     <TableHead>Missão</TableHead>
                     <TableHead>Período</TableHead>
-                    <TableHead className="text-center">Pontos</TableHead>
+                    <TableHead className="text-center">Recompensa</TableHead>
                     <TableHead className="text-center">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -132,7 +159,7 @@ export default function MissionsPage() {
                     <TableRow key={mission.id}>
                       <TableCell className="font-medium">{mission.name}</TableCell>
                       <TableCell>{format(mission.startDate, 'dd/MM/yy')} - {format(mission.endDate, 'dd/MM/yy')}</TableCell>
-                      <TableCell className="text-center font-semibold">{mission.points}</TableCell>
+                      <TableCell className="text-center font-semibold">{formatReward(mission)}</TableCell>
                       <TableCell className="text-center">
                         <Button variant="ghost" size="icon" onClick={() => handleDeleteMission(mission.id)} aria-label="Remover missão">
                           <Trash2 className="h-4 w-4 text-destructive" />

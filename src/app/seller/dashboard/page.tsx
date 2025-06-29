@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { Star, Ticket, Box } from 'lucide-react';
+import type { Mission } from '@/lib/types';
 
 export default function SellerDashboardPage() {
   const { currentSeller, missions, goals } = useSellerContext();
@@ -13,12 +14,19 @@ export default function SellerDashboardPage() {
 
   const getGoalProgress = (value: number, criterion: 'salesValue' | 'ticketAverage' | 'pa' | 'points') => {
     const goalLevels = goals[criterion];
-    if (value >= goalLevels.lendaria) return 100;
-    if (value >= goalLevels.metona) return 75 + ((value - goalLevels.metona) / (goalLevels.lendaria - goalLevels.metona)) * 25;
-    if (value >= goalLevels.meta) return 50 + ((value - goalLevels.meta) / (goalLevels.metona - goalLevels.meta)) * 25;
-    if (value >= goalLevels.metinha) return 25 + ((value - goalLevels.metinha) / (goalLevels.meta - goalLevels.metinha)) * 25;
-    return (value / goalLevels.metinha) * 25;
+    if (value >= goalLevels.lendaria.threshold) return 100;
+    if (value >= goalLevels.metona.threshold) return 75 + ((value - goalLevels.metona.threshold) / (goalLevels.lendaria.threshold - goalLevels.metona.threshold)) * 25;
+    if (value >= goalLevels.meta.threshold) return 50 + ((value - goalLevels.meta.threshold) / (goalLevels.metona.threshold - goalLevels.meta.threshold)) * 25;
+    if (value >= goalLevels.metinha.threshold) return 25 + ((value - goalLevels.metinha.threshold) / (goalLevels.meta.threshold - goalLevels.metinha.threshold)) * 25;
+    return (value / goalLevels.metinha.threshold) * 25;
   };
+  
+  const formatReward = (mission: Mission) => {
+    if (mission.rewardType === 'cash') {
+      return mission.rewardValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    return `${mission.rewardValue} pts`;
+  }
 
   return (
     <div className="space-y-8">
@@ -85,7 +93,7 @@ export default function SellerDashboardPage() {
                     <TableCell className="font-medium">{mission.name}</TableCell>
                     <TableCell className="text-muted-foreground">{mission.description}</TableCell>
                     <TableCell>{format(mission.startDate, 'dd/MM/yy')} - {format(mission.endDate, 'dd/MM/yy')}</TableCell>
-                    <TableCell className="text-right font-semibold text-primary">{mission.points} pts</TableCell>
+                    <TableCell className="text-right font-semibold text-primary">{formatReward(mission)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
