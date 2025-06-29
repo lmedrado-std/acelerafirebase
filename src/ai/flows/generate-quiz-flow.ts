@@ -17,34 +17,33 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateQuizInputSchema },
   output: { schema: GenerateQuizOutputSchema },
   prompt: `
-Você é especialista em treinamentos para vendedores de lojas de calçados. Crie um QUIZ de nível de dificuldade "{{difficulty}}" sobre o tema "{{topic}}".
+Você é um coach de vendas rigoroso e criativo, especializado em treinar equipes de lojas de calçados para a excelência. Crie um QUIZ desafiador sobre o tema "{{topic}}" com exatamente {{numberOfQuestions}} perguntas.
 
-💡 Regras obrigatórias:
-- Gere exatamente {{numberOfQuestions}} perguntas.
-- As perguntas devem variar em complexidade de acordo com a dificuldade solicitada.
-- Cada pergunta deve ter:
-  - Um enunciado claro.
-  - 4 alternativas diferentes.
-  - O índice da resposta correta (de 0 a 3).
-  - Uma explicação curta sobre a resposta correta.
+O nível de dificuldade deve ser "{{difficulty}}". Siga estas diretrizes para a complexidade das perguntas:
+- **Fácil**: Perguntas sobre conceitos básicos, definições de materiais ou termos comuns.
+- **Médio**: Perguntas situacionais sobre atendimento, melhores práticas e como lidar com clientes típicos.
+- **Difícil**: Perguntas complexas sobre como contornar objeções, cenários de crise, e cálculo de KPIs (Ticket Médio, PA).
 
-🧪 Exemplo de estrutura esperada (em JSON):
+Regras RÍGIDAS:
+1.  Gere perguntas **únicas e variadas**. Evite repetir temas ou estruturas de perguntas.
+2.  A resposta deve ser **SOMENTE o JSON**, sem nenhum texto, comentário ou \`\`\`json\`\`\` antes ou depois.
+3.  O formato do JSON deve ser exatamente:
 {
-  "title": "Quiz sobre {{topic}} - Nível {{difficulty}}",
+  "title": "Quiz Avançado de Vendas - Nível {{difficulty}}",
   "questions": [
     {
-      "questionText": "Qual material é mais indicado para tênis de corrida?",
-      "options": ["Couro", "Lona", "Mesh", "Camurça"],
+      "questionText": "Um cliente diz: 'Achei caro'. Qual a MELHOR resposta para contornar essa objeção sem dar desconto?",
+      "options": [
+        "Concordar e mostrar um mais barato",
+        "Explicar que o preço é justo",
+        "Perguntar 'Caro em relação a quê?' e focar no valor e benefícios do produto",
+        "Dizer que a qualidade tem seu preço"
+      ],
       "correctAnswerIndex": 2,
-      "explanation": "O mesh é leve, flexível e respirável — ideal para tênis de corrida."
+      "explanation": "Focar no valor (durabilidade, conforto, tecnologia) justifica o preço e desvia o foco do custo."
     }
   ]
 }
-
-🛑 IMPORTANTE:
-- Responda SOMENTE com o JSON.
-- NÃO use blocos \`\`\`, comentários ou texto adicional.
-- A resposta **deve ser 100% compatível** com o exemplo acima.
 `,
   config: {
     safetySettings: [

@@ -24,71 +24,75 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateCourseInputSchema},
   output: {schema: GenerateCourseOutputSchema},
   prompt: `
-Você é um instrutor de vendas para vendedores de calçados. Crie um MINI CURSO sobre o tema "{{topic}}".
+Você é um instrutor de vendas especialista e didático, criando materiais para vendedores de calçados. Sua tarefa é criar um MINI CURSO sobre o tema "{{topic}}".
 
-O curso deve conter:
-- Um título envolvente
-- Conteúdo didático curto (3 a 5 parágrafos) em formato Markdown.
-- Um quiz com 3 perguntas de múltipla escolha (4 alternativas cada)
+O mini curso deve ter duas partes, em formato JSON:
+1.  **Conteúdo Didático:** Um texto curto e objetivo (3 a 5 parágrafos) em formato Markdown. O conteúdo deve ser prático e ensinar algo útil sobre o tema.
+2.  **Quiz de Verificação:** Um quiz com EXATAMENTE 3 perguntas de múltipla escolha.
+
+Regras IMPORTANTES:
+- O quiz deve ser **baseado EXCLUSIVAMENTE no conteúdo didático** que você acabou de criar. As respostas devem estar no texto.
+- As perguntas do quiz devem ser **diferentes** das que seriam geradas em um quiz geral de vendas. Elas testam a leitura e compreensão do material apresentado.
+- Responda **APENAS com o JSON**, sem textos adicionais ou blocos de código.
 
 Formato da resposta:
 {
   "title": "Título do curso",
-  "content": "Texto do curso...",
+  "content": "## Título do Módulo\\n\\nPrimeiro parágrafo do conteúdo...\\n\\nSegundo parágrafo com **destaques**...",
   "quiz": [
     {
-      "question": "Pergunta?",
-      "options": ["A", "B", "C", "D"],
+      "question": "De acordo com o texto, qual é o primeiro passo para...?",
+      "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
       "correctAnswerIndex": 1,
-      "explanation": "Explicação curta da resposta"
+      "explanation": "A explicação deve reforçar o que foi ensinado no texto."
     }
   ]
 }
-
-⚠️ Não inclua texto fora do JSON.
 `,
 });
 
 const getFallbackCourse = (): GenerateCourseOutput => ({
   title: 'Curso de Emergência: Atendimento ao Cliente',
   content:
-    'Aprenda o básico para encantar seus clientes. A primeira impressão é a que fica. Um sorriso, uma saudação amigável e uma escuta atenta são as ferramentas mais poderosas de um vendedor. Lembre-se de entender a necessidade do cliente antes de oferecer um produto. Fazer as perguntas certas é mais importante do que ter todas as respostas.',
+    'Aprenda o básico para encantar seus clientes. A primeira impressão é a que fica. Um sorriso, uma saudação amigável e uma escuta atenta são as ferramentas mais poderosas de um vendedor. Lembre-se de entender a necessidade do cliente antes de oferecer um produto. Fazer as perguntas certas é mais importante do que ter todas as respostas. A chave para a venda consultiva é ouvir mais e falar menos.',
   quiz: [
     {
-      question: 'Qual é o primeiro passo para um bom atendimento?',
+      question: 'Segundo o texto, qual é a primeira impressão que fica?',
       options: [
-        'Mostrar as promoções',
-        'Sorrir e cumprimentar',
-        'Perguntar o que o cliente quer',
-        'Falar do produto mais caro',
+        'A do produto mais caro',
+        'A primeira',
+        'A da promoção',
+        'A última',
       ],
       correctAnswerIndex: 1,
       explanation:
-        'Um cumprimento amigável cria um ambiente acolhedor e abre portas para a venda.',
+        'O texto afirma claramente que "A primeira impressão é a que fica".',
     },
     {
-      question: 'O que é mais importante na venda consultiva?',
+      question:
+        'O que o material descreve como as ferramentas mais poderosas de um vendedor?',
       options: [
-        'Falar sem parar',
-        'Decorar o manual',
-        'Ouvir o cliente',
-        'Ter pressa para fechar',
+        'Calculadora e caneta',
+        'Catálogo e tablet',
+        'Sorriso, saudação e escuta atenta',
+        'Argumentos de venda e persuasão',
       ],
       correctAnswerIndex: 2,
       explanation:
-        'Ouvir ativamente para entender a necessidade do cliente é a chave para oferecer a solução certa.',
+        'O curso menciona sorriso, saudação e escuta atenta como as ferramentas mais poderosas.',
     },
     {
-      question: 'Como lidar com um cliente indeciso?',
+      question:
+        'Qual é a chave para a venda consultiva mencionada no conteúdo?',
       options: [
-        'Pressioná-lo a escolher',
-        'Deixá-lo sozinho',
-        'Fazer perguntas para limitar as opções',
-        'Mostrar mais 10 produtos',
+        'Falar sobre a concorrência',
+        'Ouvir mais e falar menos',
+        'Decorar o manual de produtos',
+        'Apressar o fechamento da venda',
       ],
-      correctAnswerIndex: 2,
+      correctAnswerIndex: 1,
       explanation:
-        'Ajudar o cliente a focar, fazendo perguntas-chave, demonstra expertise e cuidado.',
+        'O texto finaliza dizendo que a chave para a venda consultiva é "ouvir mais e falar menos".',
     },
   ],
 });
