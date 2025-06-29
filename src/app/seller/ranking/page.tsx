@@ -362,17 +362,18 @@ export default function RankingPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-            <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col space-y-1 rounded-lg border p-4">
-                    <p className="text-sm text-muted-foreground">Seu Resultado</p>
-                    <p className="text-3xl font-bold">
-                        {criterion === 'salesValue' ? (
-                            <span className="text-lg italic text-muted-foreground">Confidencial</span>
-                        ) : (
-                            formatValue(sellerValue, criterion)
-                        )}
-                    </p>
-                </div>
+            <div className={cn(
+                "grid gap-4",
+                criterion === 'salesValue' ? "grid-cols-1" : "grid-cols-2"
+            )}>
+                {criterion !== 'salesValue' && (
+                  <div className="flex flex-col space-y-1 rounded-lg border p-4">
+                      <p className="text-sm text-muted-foreground">Seu Resultado</p>
+                      <p className="text-3xl font-bold">
+                          {formatValue(sellerValue, criterion)}
+                      </p>
+                  </div>
+                )}
                  <div className="flex flex-col space-y-1 rounded-lg border p-4">
                     <p className="text-sm text-muted-foreground">Prêmio Recebido</p>
                     <p className="text-3xl font-bold text-green-400">{formatPrize(prizeToDisplay)}</p>
@@ -465,32 +466,34 @@ export default function RankingPage() {
                     </div>
                 </div>
 
-                <div>
-                    <h4 className="font-semibold mb-3">Progresso para Próxima Meta</h4>
-                    <TooltipProvider>
-                        <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="flex flex-col gap-1.5 text-left w-full">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm font-medium">
-                                {label}
-                                </span>
-                                <span className="text-sm font-bold">
-                                {percent.toFixed(0)}%
-                                </span>
-                            </div>
-                            <Progress
-                                value={percent}
-                                className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-purple-500"
-                            />
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{criterion === 'salesValue' ? 'Progresso confidencial' : details}</p>
-                        </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </div>
+                {criterion !== 'salesValue' && (
+                  <div>
+                      <h4 className="font-semibold mb-3">Progresso para Próxima Meta</h4>
+                      <TooltipProvider>
+                          <Tooltip>
+                          <TooltipTrigger asChild>
+                              <div className="flex flex-col gap-1.5 text-left w-full">
+                              <div className="flex justify-between items-center">
+                                  <span className="text-sm font-medium">
+                                  {label}
+                                  </span>
+                                  <span className="text-sm font-bold">
+                                  {percent.toFixed(0)}%
+                                  </span>
+                              </div>
+                              <Progress
+                                  value={percent}
+                                  className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-purple-500"
+                              />
+                              </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                              <p>{details}</p>
+                          </TooltipContent>
+                          </Tooltip>
+                      </TooltipProvider>
+                  </div>
+                )}
             </>
             )}
         </CardContent>

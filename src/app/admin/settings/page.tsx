@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Trash2, Flag, Shield, Info, ClipboardList, Trophy } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminContext } from '@/app/admin/layout';
 import type { Seller, Goals, GoalLevels } from '@/lib/types';
@@ -16,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useToast } from "@/hooks/use-toast";
 
 const goalLevels: Array<{key: keyof GoalLevels, label: string}> = [
     { key: 'metinha', label: 'Metinha'},
@@ -26,7 +27,22 @@ const goalLevels: Array<{key: keyof GoalLevels, label: string}> = [
 
 export default function SettingsPage() {
   const { sellers, setSellers, goals, setGoals } = useAdminContext();
+  const { toast } = useToast();
+  
+  // Local state for editing to avoid applying changes immediately
+  const [localSellers, setLocalSellers] = useState<Seller[]>([]);
+  const [localGoals, setLocalGoals] = useState<Goals>(goals);
+  
   const [newSeller, setNewSeller] = useState({ name: '', nickname: '', password: '' });
+  
+  // Sync local state when global state changes
+  useEffect(() => {
+    setLocalSellers(JSON.parse(JSON.stringify(sellers)));
+  }, [sellers]);
+
+  useEffect(() => {
+    setLocalGoals(JSON.parse(JSON.stringify(goals)));
+  }, [goals]);
 
   const handleGoalChange = (
     criterion: keyof Goals,
@@ -34,7 +50,7 @@ export default function SettingsPage() {
     field: 'threshold' | 'prize',
     value: string
   ) => {
-    setGoals(prev => ({
+    setLocalGoals(prev => ({
       ...prev,
       [criterion]: {
         ...prev[criterion],
@@ -50,7 +66,7 @@ export default function SettingsPage() {
     field: 'per' | 'prize',
     value: string
   ) => {
-    setGoals(prev => ({
+    setLocalGoals(prev => ({
       ...prev,
       salesValue: {
         ...prev.salesValue,
@@ -78,12 +94,12 @@ export default function SettingsPage() {
       points: 0,
       extraPoints: 0,
     };
-    setSellers(prevSellers => [...prevSellers, newSellerData]);
+    setLocalSellers(prevSellers => [...prevSellers, newSellerData]);
     setNewSeller({ name: '', nickname: '', password: '' });
   };
   
    const handleSellerCredsUpdate = (id: string, field: 'nickname' | 'password', value: string) => {
-    setSellers(prevSellers =>
+    setLocalSellers(prevSellers =>
       prevSellers.map(seller => 
         seller.id === id ? { ...seller, [field]: value } : seller
       )
@@ -91,7 +107,7 @@ export default function SettingsPage() {
   };
 
   const handleSellerPerfUpdate = (id: string, field: keyof Omit<Seller, 'id' | 'name' | 'nickname' | 'password' | 'email'>, value: string) => {
-    setSellers(prevSellers =>
+    setLocalSellers(prevSellers =>
       prevSellers.map(seller => {
         if (seller.id !== id) return seller;
         return { ...seller, [field]: parseFloat(value) || 0 };
@@ -100,14 +116,25 @@ export default function SettingsPage() {
   };
 
   const handleDeleteSeller = (id: string) => {
-    setSellers(prevSellers => prevSellers.filter(seller => seller.id !== id));
+    setLocalSellers(prevSellers => prevSellers.filter(seller => seller.id !== id));
   };
   
+  const handleSaveChanges = () => {
+    setSellers(() => localSellers);
+    setGoals(() => localGoals);
+     toast({
+        title: "Alterações Salvas!",
+        description: "Suas configurações foram atualizadas com sucesso.",
+    });
+  }
+
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-4">
-        <Shield className="size-8 text-primary" />
-        <h1 className="text-3xl font-bold">Configurações Gerais</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+            <Shield className="size-8 text-primary" />
+            <h1 className="text-3xl font-bold">Configurações Gerais</h1>
+        </div>
       </div>
 
       <Tabs defaultValue="lancamentos" className="w-full">
@@ -132,7 +159,7 @@ export default function SettingsPage() {
               <CardDescription>Insira aqui os totais acumulados de vendas e outros indicadores de performance para cada vendedor.</CardDescription>
             </CardHeader>
             <CardContent>
-                 {sellers.length > 0 ? (
+                 {localSellers.length > 0 ? (
                   <div className="rounded-md border border-border">
                     <Table>
                       <TableHeader>
@@ -146,7 +173,7 @@ export default function SettingsPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {sellers.map((seller) => (
+                        {localSellers.map((seller) => (
                           <TableRow key={seller.id}>
                             <TableCell className="font-medium">{seller.name}</TableCell>
                             <TableCell>
@@ -216,6 +243,11 @@ export default function SettingsPage() {
                     <p className="text-sm">Adicione um novo vendedor para começar a gerenciar.</p>
                   </div>
                 )}
+                 <div className="flex justify-end pt-6">
+                    <Button onClick={handleSaveChanges} className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                      Salvar Lançamentos
+                    </Button>
+                </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -226,7 +258,7 @@ export default function SettingsPage() {
                 <CardDescription>Adicione novos vendedores e gerencie suas credenciais de acesso.</CardDescription>
               </CardHeader>
               <CardContent>
-                  {sellers.length > 0 && (
+                  {localSellers.length > 0 && (
                     <div className="rounded-md border border-border mb-6">
                       <Table>
                         <TableHeader>
@@ -238,7 +270,7 @@ export default function SettingsPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {sellers.map((seller) => (
+                          {localSellers.map((seller) => (
                             <TableRow key={seller.id}>
                               <TableCell className="font-medium">{seller.name}</TableCell>
                               <TableCell>
@@ -259,24 +291,31 @@ export default function SettingsPage() {
                     </div>
                   )}
 
-                  <CardTitle className="text-lg pt-4">Adicionar Novo Vendedor</CardTitle>
-                  <form onSubmit={handleAddSeller} className="flex items-end gap-4 pt-4">
-                    <div className="space-y-2 flex-grow">
-                      <Label htmlFor="sellerName">Nome</Label>
-                      <Input id="sellerName" placeholder="Nome completo" value={newSeller.name} onChange={(e) => setNewSeller(s => ({...s, name: e.target.value}))} className="bg-input" required />
-                    </div>
-                    <div className="space-y-2 flex-grow">
-                      <Label htmlFor="sellerNickname">Login (Nickname)</Label>
-                      <Input id="sellerNickname" placeholder="login.do.vendedor" value={newSeller.nickname} onChange={(e) => setNewSeller(s => ({...s, nickname: e.target.value}))} className="bg-input" required />
-                    </div>
-                     <div className="space-y-2 flex-grow">
-                      <Label htmlFor="sellerPassword">Senha</Label>
-                      <Input id="sellerPassword" type="text" placeholder="Senha de acesso" value={newSeller.password} onChange={(e) => setNewSeller(s => ({...s, password: e.target.value}))} className="bg-input" required />
-                    </div>
-                    <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
-                        Adicionar
-                    </Button>
-                  </form>
+                  <div className="pt-4 border-t">
+                    <CardTitle className="text-lg">Adicionar Novo Vendedor</CardTitle>
+                    <form onSubmit={handleAddSeller} className="flex items-end gap-4 pt-4">
+                      <div className="space-y-2 flex-grow">
+                        <Label htmlFor="sellerName">Nome</Label>
+                        <Input id="sellerName" placeholder="Nome completo" value={newSeller.name} onChange={(e) => setNewSeller(s => ({...s, name: e.target.value}))} className="bg-input" required />
+                      </div>
+                      <div className="space-y-2 flex-grow">
+                        <Label htmlFor="sellerNickname">Login (Nickname)</Label>
+                        <Input id="sellerNickname" placeholder="login.do.vendedor" value={newSeller.nickname} onChange={(e) => setNewSeller(s => ({...s, nickname: e.target.value}))} className="bg-input" required />
+                      </div>
+                       <div className="space-y-2 flex-grow">
+                        <Label htmlFor="sellerPassword">Senha</Label>
+                        <Input id="sellerPassword" type="text" placeholder="Senha de acesso" value={newSeller.password} onChange={(e) => setNewSeller(s => ({...s, password: e.target.value}))} className="bg-input" required />
+                      </div>
+                      <Button type="submit">
+                          Adicionar à Lista
+                      </Button>
+                    </form>
+                  </div>
+                   <div className="flex justify-end pt-6 mt-6 border-t">
+                      <Button onClick={handleSaveChanges} className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                          Salvar Alterações de Vendedores
+                      </Button>
+                  </div>
               </CardContent>
             </Card>
         </TabsContent>
@@ -297,11 +336,11 @@ export default function SettingsPage() {
                             <h4 className="font-semibold text-center">{level.label}</h4>
                             <div className="space-y-1.5">
                                 <Label htmlFor={`sales-${level.key}-threshold`}>Meta</Label>
-                                <Input id={`sales-${level.key}-threshold`} type="number" placeholder="Valor" value={goals.salesValue[level.key].threshold} onChange={(e) => handleGoalChange('salesValue', level.key, 'threshold', e.target.value)} className="bg-input" />
+                                <Input id={`sales-${level.key}-threshold`} type="number" placeholder="Valor" value={localGoals.salesValue[level.key].threshold} onChange={(e) => handleGoalChange('salesValue', level.key, 'threshold', e.target.value)} className="bg-input" />
                             </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor={`sales-${level.key}-prize`}>Prêmio (R$)</Label>
-                                <Input id={`sales-${level.key}-prize`} type="number" placeholder="Prêmio" value={goals.salesValue[level.key].prize} onChange={(e) => handleGoalChange('salesValue', level.key, 'prize', e.target.value)} className="bg-input" />
+                                <Input id={`sales-${level.key}-prize`} type="number" placeholder="Prêmio" value={localGoals.salesValue[level.key].prize} onChange={(e) => handleGoalChange('salesValue', level.key, 'prize', e.target.value)} className="bg-input" />
                             </div>
                         </div>
                     ))}
@@ -317,11 +356,11 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md">
                         <div className="space-y-1.5">
                             <Label htmlFor="performance-bonus-prize">Bônus (R$)</Label>
-                            <Input id="performance-bonus-prize" type="number" placeholder="Ex: 50" value={goals.salesValue.performanceBonus?.prize ?? ''} onChange={(e) => handlePerformanceBonusChange('prize', e.target.value)} className="bg-input" />
+                            <Input id="performance-bonus-prize" type="number" placeholder="Ex: 50" value={localGoals.salesValue.performanceBonus?.prize ?? ''} onChange={(e) => handlePerformanceBonusChange('prize', e.target.value)} className="bg-input" />
                         </div>
                         <div className="space-y-1.5">
                             <Label htmlFor="performance-bonus-per">A cada (R$)</Label>
-                            <Input id="performance-bonus-per" type="number" placeholder="Ex: 1000" value={goals.salesValue.performanceBonus?.per ?? ''} onChange={(e) => handlePerformanceBonusChange('per', e.target.value)} className="bg-input" />
+                            <Input id="performance-bonus-per" type="number" placeholder="Ex: 1000" value={localGoals.salesValue.performanceBonus?.per ?? ''} onChange={(e) => handlePerformanceBonusChange('per', e.target.value)} className="bg-input" />
                         </div>
                     </div>
                 </div>
@@ -334,11 +373,11 @@ export default function SettingsPage() {
                             <h4 className="font-semibold text-center">{level.label}</h4>
                             <div className="space-y-1.5">
                                 <Label htmlFor={`ticket-${level.key}-threshold`}>Meta</Label>
-                                <Input id={`ticket-${level.key}-threshold`} type="number" placeholder="Valor" value={goals.ticketAverage[level.key].threshold} onChange={(e) => handleGoalChange('ticketAverage', level.key, 'threshold', e.target.value)} className="bg-input" />
+                                <Input id={`ticket-${level.key}-threshold`} type="number" placeholder="Valor" value={localGoals.ticketAverage[level.key].threshold} onChange={(e) => handleGoalChange('ticketAverage', level.key, 'threshold', e.target.value)} className="bg-input" />
                             </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor={`ticket-${level.key}-prize`}>Prêmio (R$)</Label>
-                                <Input id={`ticket-${level.key}-prize`} type="number" placeholder="Prêmio" value={goals.ticketAverage[level.key].prize} onChange={(e) => handleGoalChange('ticketAverage', level.key, 'prize', e.target.value)} className="bg-input" />
+                                <Input id={`ticket-${level.key}-prize`} type="number" placeholder="Prêmio" value={localGoals.ticketAverage[level.key].prize} onChange={(e) => handleGoalChange('ticketAverage', level.key, 'prize', e.target.value)} className="bg-input" />
                             </div>
                         </div>
                     ))}
@@ -352,11 +391,11 @@ export default function SettingsPage() {
                             <h4 className="font-semibold text-center">{level.label}</h4>
                             <div className="space-y-1.5">
                                 <Label htmlFor={`pa-${level.key}-threshold`}>Meta</Label>
-                                <Input id={`pa-${level.key}-threshold`} type="number" step="0.1" placeholder="Valor" value={goals.pa[level.key].threshold} onChange={(e) => handleGoalChange('pa', level.key, 'threshold', e.target.value)} className="bg-input" />
+                                <Input id={`pa-${level.key}-threshold`} type="number" step="0.1" placeholder="Valor" value={localGoals.pa[level.key].threshold} onChange={(e) => handleGoalChange('pa', level.key, 'threshold', e.target.value)} className="bg-input" />
                             </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor={`pa-${level.key}-prize`}>Prêmio (R$)</Label>
-                                <Input id={`pa-${level.key}-prize`} type="number" placeholder="Prêmio" value={goals.pa[level.key].prize} onChange={(e) => handleGoalChange('pa', level.key, 'prize', e.target.value)} className="bg-input" />
+                                <Input id={`pa-${level.key}-prize`} type="number" placeholder="Prêmio" value={localGoals.pa[level.key].prize} onChange={(e) => handleGoalChange('pa', level.key, 'prize', e.target.value)} className="bg-input" />
                             </div>
                         </div>
                     ))}
@@ -370,18 +409,18 @@ export default function SettingsPage() {
                             <h4 className="font-semibold text-center">{level.label}</h4>
                             <div className="space-y-1.5">
                                 <Label htmlFor={`points-${level.key}-threshold`}>Meta</Label>
-                                <Input id={`points-${level.key}-threshold`} type="number" placeholder="Valor" value={goals.points[level.key].threshold} onChange={(e) => handleGoalChange('points', level.key, 'threshold', e.target.value)} className="bg-input" />
+                                <Input id={`points-${level.key}-threshold`} type="number" placeholder="Valor" value={localGoals.points[level.key].threshold} onChange={(e) => handleGoalChange('points', level.key, 'threshold', e.target.value)} className="bg-input" />
                             </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor={`points-${level.key}-prize`}>Prêmio (R$)</Label>
-                                <Input id={`points-${level.key}-prize`} type="number" placeholder="Prêmio" value={goals.points[level.key].prize} onChange={(e) => handleGoalChange('points', level.key, 'prize', e.target.value)} className="bg-input" />
+                                <Input id={`points-${level.key}-prize`} type="number" placeholder="Prêmio" value={localGoals.points[level.key].prize} onChange={(e) => handleGoalChange('points', level.key, 'prize', e.target.value)} className="bg-input" />
                             </div>
                         </div>
                     ))}
                 </div>
               </div>
               <div className="flex justify-end pt-6 border-t border-border">
-                 <Button className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                 <Button onClick={handleSaveChanges} className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
                   Salvar Metas
                 </Button>
               </div>
