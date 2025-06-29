@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import type { Seller, Goals, Mission, Admin } from './types';
 import { sellersData as initialSellers, goalsData as initialGoals, missionsData as initialMissions } from './data';
 
@@ -16,7 +16,8 @@ type AppState = {
 };
 
 // The single source of truth for our application's state.
-const state: AppState = {
+// Changed to `let` to allow reassignment for immutability.
+let state: AppState = {
   sellers: initialSellers,
   goals: initialGoals,
   missions: initialMissions,
@@ -38,23 +39,24 @@ export const dataStore = {
   
   // Each setter takes an updater function, similar to React's useState,
   // to prevent race conditions and ensure state updates are atomic.
+  // Updates now create a new state object to ensure immutability.
   setSellers: (updater: (prev: Seller[]) => Seller[]) => {
-    state.sellers = updater(state.sellers);
+    state = { ...state, sellers: updater(state.sellers) };
     notifyListeners();
   },
   
   setGoals: (updater: (prev: Goals) => Goals) => {
-    state.goals = updater(state.goals);
+    state = { ...state, goals: updater(state.goals) };
     notifyListeners();
   },
 
   setMissions: (updater: (prev: Mission[]) => Mission[]) => {
-    state.missions = updater(state.missions);
+    state = { ...state, missions: updater(state.missions) };
     notifyListeners();
   },
 
   setAdminUser: (updater: (prev: Admin) => Admin) => {
-    state.adminUser = updater(state.adminUser);
+    state = { ...state, adminUser: updater(state.adminUser) };
     notifyListeners();
   },
 
@@ -76,13 +78,12 @@ export function useStore<T>(selector: (state: AppState) => T): T {
   useEffect(() => {
     const unsubscribe = dataStore.subscribe(() => {
       const newState = selector(dataStore.getState());
-      // A simple shallow comparison to avoid unnecessary re-renders.
-      if (newState !== data) {
-        setData(newState);
-      }
+      setData(newState);
     });
+    // The selector function is the only dependency that should trigger a re-subscription.
+    // This prevents unnecessary re-subscriptions on re-render.
     return unsubscribe;
-  }, [selector, data]);
+  }, [selector]);
 
   return data;
 }
