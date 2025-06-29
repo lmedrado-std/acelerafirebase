@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import {usePathname, useRouter} from 'next/navigation';
 import {
   Bell,
   GraduationCap,
@@ -28,12 +28,12 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Logo } from '@/components/icons/logo';
-import { cn } from '@/lib/utils';
-import type { Seller, Goals, Mission, Admin } from '@/lib/types';
-import { dataStore, useStore } from '@/lib/store';
+import {Button} from '@/components/ui/button';
+import {Badge} from '@/components/ui/badge';
+import {Logo} from '@/components/icons/logo';
+import {cn} from '@/lib/utils';
+import type {Admin, Goals, Mission, Seller} from '@/lib/types';
+import {dataStore, useStore} from '@/lib/store';
 
 interface AdminContextType {
   sellers: Seller[];
@@ -57,19 +57,20 @@ export const useAdminContext = () => {
 };
 
 const menuItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { href: '/admin/ranking', label: 'Ranking', icon: Trophy },
-  { href: '/admin/missions', label: 'Missões', icon: Target },
-  { href: '/admin/academia', label: 'Academia', icon: GraduationCap },
-  { href: '/admin/quiz', label: 'Quiz', icon: Puzzle },
-  { href: '/admin/loja', label: 'Loja', icon: ShoppingBag },
-  { href: '/admin/perfil', label: 'Perfil', icon: User },
-  { href: '/admin/settings', label: 'Configurações', icon: Shield },
+  {href: '/admin/dashboard', label: 'Dashboard', icon: LayoutGrid},
+  {href: '/admin/ranking', label: 'Ranking', icon: Trophy},
+  {href: '/admin/missions', label: 'Missões', icon: Target},
+  {href: '/admin/academia', label: 'Academia', icon: GraduationCap},
+  {href: '/admin/quiz', label: 'Quiz', icon: Puzzle},
+  {href: '/admin/loja', label: 'Loja', icon: ShoppingBag},
+  {href: '/admin/perfil', label: 'Perfil', icon: User},
+  {href: '/admin/settings', label: 'Configurações', icon: Shield},
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({children}: {children: React.ReactNode}) {
   const pathname = usePathname();
-  const state = useStore((s) => s);
+  const router = useRouter();
+  const state = useStore(s => s);
 
   const contextValue = {
     sellers: state.sellers,
@@ -82,11 +83,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setAdminUser: dataStore.setAdminUser,
   };
 
+  const handleLogout = () => {
+    // In a real app, this would also clear auth tokens.
+    // For the prototype, we can also clear the seller ID from local storage.
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('loggedInSellerId');
+    }
+    router.push('/login');
+  };
+
   return (
     <AdminContext.Provider value={contextValue}>
       <SidebarProvider>
         <div className="flex min-h-screen">
-          <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
+          <Sidebar
+            collapsible="icon"
+            className="border-r border-sidebar-border bg-sidebar"
+          >
             <SidebarHeader className="p-4">
               <div className="flex items-center gap-3">
                 <Logo />
@@ -97,38 +110,48 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarHeader>
             <SidebarContent>
               <SidebarMenu>
-                {menuItems.map((item) => (
+                {menuItems.map(item => (
                   <SidebarMenuItem key={item.label}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === item.href}
-                        className={cn(
-                          'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:font-semibold',
-                          'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                        )}
-                      >
-                        <Link href={item.href}>
-                          <item.icon className="size-5" />
-                          <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.href}
+                      className={cn(
+                        'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:font-semibold',
+                        'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                      )}
+                    >
+                      <Link href={item.href}>
+                        <item.icon className="size-5" />
+                        <span className="group-data-[collapsible=icon]:hidden">
+                          {item.label}
+                        </span>
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
             </SidebarContent>
             <SidebarFooter className="p-4 space-y-4">
               <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center">
-                  <Button variant="ghost" className="relative p-2 h-auto text-sidebar-foreground hover:text-white">
-                    <Bell />
-                    <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 min-w-5 justify-center p-1 text-xs border-2 border-sidebar">
-                      524
-                    </Badge>
-                  </Button>
-                <Button asChild variant="secondary" className="group-data-[collapsible=icon]:hidden bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground">
-                    <Link href="/login">
-                      <LogOut className="mr-2 size-4" /> Sair
-                    </Link>
-                  </Button>
+                <Button
+                  variant="ghost"
+                  className="relative p-2 h-auto text-sidebar-foreground hover:text-white"
+                >
+                  <Bell />
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 h-5 min-w-5 justify-center p-1 text-xs border-2 border-sidebar"
+                  >
+                    524
+                  </Badge>
+                </Button>
+                <Button
+                  onClick={handleLogout}
+                  variant="secondary"
+                  className="group-data-[collapsible=icon]:hidden bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
+                >
+                  <LogOut className="mr-2 size-4" /> Sair
+                </Button>
               </div>
             </SidebarFooter>
           </Sidebar>
@@ -144,11 +167,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {children}
             </main>
             <footer className="flex items-center justify-between p-4 text-xs text-muted-foreground bg-background border-t">
-                <p>Desenvolvido com ❤️ por Rian</p>
-                <a href="https://github.com/RyannBreston" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-foreground">
-                  <Github className="size-4" />
-                  RyannBreston
-                </a>
+              <p>Desenvolvido com ❤️ por Rian</p>
+              <a
+                href="https://github.com/RyannBreston"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 hover:text-foreground"
+              >
+                <Github className="size-4" />
+                RyannBreston
+              </a>
             </footer>
           </div>
         </div>

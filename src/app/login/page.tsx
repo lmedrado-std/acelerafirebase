@@ -1,26 +1,26 @@
-'use client'
+'use client';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import {useState} from 'react';
+import {Button} from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { Logo } from "@/components/icons/logo"
-import { useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
-import { dataStore } from "@/lib/store"
-import { Loader2 } from "lucide-react"
+} from '@/components/ui/card';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import Link from 'next/link';
+import {Logo} from '@/components/icons/logo';
+import {useRouter} from 'next/navigation';
+import {useToast} from '@/hooks/use-toast';
+import {dataStore} from '@/lib/store';
+import {Loader2} from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { toast } = useToast();
+  const {toast} = useToast();
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,23 +29,29 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const { adminUser, sellers } = dataStore.getState();
+    const {adminUser, sellers} = dataStore.getState();
 
     // Check admin credentials
-    if (login.toLowerCase() === adminUser.nickname && password === adminUser.password) {
+    if (
+      login.toLowerCase() === adminUser.nickname &&
+      password === adminUser.password
+    ) {
       router.push('/admin');
       return;
     }
 
     // Check seller credentials
     const seller = sellers.find(
-      s => s.nickname?.toLowerCase() === login.toLowerCase() || s.email?.toLowerCase() === login.toLowerCase()
+      s =>
+        s.nickname?.toLowerCase() === login.toLowerCase() ||
+        s.email?.toLowerCase() === login.toLowerCase()
     );
 
     if (seller && seller.password === password) {
-       // In a real app, you would set the user context here.
-       // For this prototype, we'll just redirect to the seller dashboard
-       // which defaults to a specific seller for now.
+      // Store the logged-in seller's ID to manage their session
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('loggedInSellerId', seller.id);
+      }
       router.push('/seller');
     } else {
       toast({
@@ -62,7 +68,7 @@ export default function LoginPage() {
       <Card className="mx-auto max-w-sm bg-card border-border">
         <CardHeader>
           <div className="flex justify-center mb-4">
-             <Logo />
+            <Logo />
           </div>
           <CardTitle className="text-2xl text-center">Acessar Painel</CardTitle>
           <CardDescription className="text-center">
@@ -81,35 +87,42 @@ export default function LoginPage() {
                   required
                   className="bg-input"
                   value={login}
-                  onChange={(e) => setLogin(e.target.value)}
+                  onChange={e => setLogin(e.target.value)}
                   disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Senha</Label>
-                  <Link href="#" className="ml-auto inline-block text-sm underline text-muted-foreground hover:text-primary">
+                  <Link
+                    href="#"
+                    className="ml-auto inline-block text-sm underline text-muted-foreground hover:text-primary"
+                  >
                     Esqueceu sua senha?
                   </Link>
                 </div>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  required 
+                <Input
+                  id="password"
+                  type="password"
+                  required
                   className="bg-input"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   disabled={isLoading}
                 />
               </div>
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
-                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button
+                type="submit"
+                className="w-full bg-primary hover:bg-primary/90"
+                disabled={isLoading}
+              >
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Entrar
               </Button>
             </div>
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            É um administrador? Use 'admin' e 'admin' ou{" "}
+            É um administrador? Use 'admin' e 'admin' ou{' '}
             <Link href="/admin" className="underline hover:text-primary">
               clique aqui
             </Link>
@@ -117,5 +130,5 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
