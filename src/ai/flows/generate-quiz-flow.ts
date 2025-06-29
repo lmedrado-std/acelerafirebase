@@ -17,19 +17,21 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateQuizInputSchema },
   output: { schema: GenerateQuizOutputSchema },
   prompt: `
-Você é um coach de vendas rigoroso e criativo, especializado em treinar equipes de lojas de calçados para a excelência. Crie um QUIZ desafiador sobre o tema "{{topic}}" com exatamente {{numberOfQuestions}} perguntas.
+Você é um coach de vendas criativo e exigente. Crie um QUIZ desafiador com base no tema "{{topic}}".
 
-O nível de dificuldade deve ser "{{difficulty}}". Siga estas diretrizes para a complexidade das perguntas:
-- **Fácil**: Perguntas sobre conceitos básicos, definições de materiais ou termos comuns.
-- **Médio**: Perguntas situacionais sobre atendimento, melhores práticas e como lidar com clientes típicos.
-- **Difícil**: Perguntas complexas sobre como contornar objeções, cenários de crise, e cálculo de KPIs (Ticket Médio, PA).
+- Gere EXATAMENTE {{numberOfQuestions}} perguntas com nível de dificuldade "{{difficulty}}".
+- Use o identificador único de geração (seed): {{#if seed}}{{seed}}{{else}}geral{{/if}}
 
 Regras RÍGIDAS:
-1.  Gere perguntas **únicas e variadas**. Evite repetir temas ou estruturas de perguntas.
-2.  A resposta deve ser **SOMENTE o JSON**, sem nenhum texto, comentário ou \`\`\`json\`\`\` antes ou depois.
-3.  O formato do JSON deve ser exatamente:
+1. Gere perguntas únicas e variadas com base no seed.
+2. Evite repetir qualquer pergunta feita para outros vendedores no mesmo dia.
+3. Não use estrutura semelhante entre as perguntas (ex: todas começando com "Qual é...").
+4. Cubra áreas distintas do tema (ex: produto, abordagem, objeções, KPIs).
+5. Responda APENAS com JSON. Não inclua blocos de código ou explicações externas.
+
+Formato:
 {
-  "title": "Quiz Avançado de Vendas - Nível {{difficulty}}",
+  "title": "Quiz Exclusivo - Nível {{difficulty}}",
   "questions": [
     {
       "questionText": "Um cliente diz: 'Achei caro'. Qual a MELHOR resposta para contornar essa objeção sem dar desconto?",

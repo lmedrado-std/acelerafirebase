@@ -70,11 +70,16 @@ export default function Quiz() {
     setShowFeedback(false);
     setIsFinished(false);
 
+    const seed = isSellerView && currentSeller
+      ? `${new Date().toISOString().split('T')[0]}-${currentSeller.id}`
+      : new Date().toISOString().split('T')[0];
+
     try {
       const result = await generateQuiz({
         topic: 'Técnicas de Venda e Conhecimento de Produtos em Lojas de Calçados',
         numberOfQuestions: 5,
         difficulty: difficulty,
+        seed: seed,
       });
 
       if (result.questions.length > 0) {
@@ -190,7 +195,9 @@ export default function Quiz() {
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <h2 className="text-xl font-bold">Pronto para o Desafio?</h2>
         <p className="text-muted-foreground mt-2 max-w-md">
-          {isSellerView ? 'Escolha a dificuldade e clique no botão para gerar seu quiz. Você pode fazer o quiz apenas uma vez.' : 'Gere um quiz para testar seus conhecimentos.'}
+          {isSellerView
+            ? 'Gere seu quiz único e aleatório de hoje. Ele é personalizado para você e não se repetirá. Você tem apenas uma tentativa por dia.'
+            : 'Gere um quiz para testar seus conhecimentos.'}
         </p>
 
         <div className="space-y-4 my-6 w-full max-w-sm">

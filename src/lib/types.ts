@@ -91,6 +91,7 @@ export const GenerateQuizInputSchema = z.object({
   topic: z.string().describe('The topic for the quiz.'),
   numberOfQuestions: z.number().min(1).max(10).describe('The number of questions to generate.'),
   difficulty: z.enum(['Fácil', 'Médio', 'Difícil']).describe('The difficulty level for the quiz.'),
+  seed: z.string().optional().describe('An optional seed for controlling randomness and uniqueness.'),
 });
 export type GenerateQuizInput = z.infer<typeof GenerateQuizInputSchema>;
 
