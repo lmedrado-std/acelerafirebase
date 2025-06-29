@@ -129,7 +129,7 @@ export default function RankingPage() {
                  <CardContent>
                     {myRank ? (
                          <div className={cn(
-                            "rounded-xl p-4 shadow-lg border-2 flex items-center justify-between gap-6",
+                            "rounded-xl p-4 shadow-lg border-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4",
                              myRank.rank === 1 && "border-yellow-400/50 bg-primary/10 animate-glow",
                              myRank.rank === 2 && "border-slate-400/50 bg-secondary/10",
                              myRank.rank === 3 && "border-orange-400/50 bg-chart-3/10",
@@ -142,7 +142,7 @@ export default function RankingPage() {
                                   <p className="text-muted-foreground">Seu desempenho no ciclo atual</p>
                                </div>
                             </div>
-                            <div className="text-right">
+                            <div className="w-full sm:w-auto mt-4 sm:mt-0 text-left sm:text-right">
                                <p className="text-3xl font-bold text-green-400">{formatPrize(myRank.data.totalPrize, 'currency')}</p>
                                <p className="text-sm text-muted-foreground">Prêmio Total Acumulado</p>
                             </div>

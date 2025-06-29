@@ -177,7 +177,7 @@ export default function AcademiaPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="flex items-end gap-4">
+            <div className="flex flex-col md:flex-row items-stretch md:items-end gap-4">
                 <div className="space-y-2 flex-grow">
                     <Label htmlFor="course-topic-select">Tópico do Curso</Label>
                     <Select onValueChange={setSelectedTopic} value={selectedTopic}>
@@ -191,7 +191,7 @@ export default function AcademiaPage() {
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="space-y-2 min-w-[180px]">
+                <div className="space-y-2 md:min-w-[180px]">
                   <Label htmlFor="dificuldade-select">Dificuldade</Label>
                   <Select value={dificuldade} onValueChange={v => setDificuldade(v as Dificuldade)}>
                     <SelectTrigger id="dificuldade-select">

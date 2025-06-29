@@ -370,7 +370,7 @@ export default function SettingsPage() {
 
                   <div className="pt-4 border-t">
                     <CardTitle className="text-lg">Adicionar Novo Vendedor</CardTitle>
-                    <form onSubmit={handleAddSeller} className="flex items-end gap-4 pt-4">
+                    <form onSubmit={handleAddSeller} className="flex flex-col md:flex-row items-stretch md:items-end gap-4 pt-4">
                       <div className="space-y-2 flex-grow">
                         <Label htmlFor="sellerName">Nome</Label>
                         <Input id="sellerName" placeholder="Nome completo" value={newSeller.name} onChange={(e) => setNewSeller(s => ({...s, name: e.target.value}))} className="bg-input" required />
