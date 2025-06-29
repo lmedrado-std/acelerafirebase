@@ -365,7 +365,13 @@ export default function RankingPage() {
             <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col space-y-1 rounded-lg border p-4">
                     <p className="text-sm text-muted-foreground">Seu Resultado</p>
-                    <p className="text-3xl font-bold">{formatValue(sellerValue, criterion)}</p>
+                    <p className="text-3xl font-bold">
+                        {criterion === 'salesValue' ? (
+                            <span className="text-lg italic text-muted-foreground">Confidencial</span>
+                        ) : (
+                            formatValue(sellerValue, criterion)
+                        )}
+                    </p>
                 </div>
                  <div className="flex flex-col space-y-1 rounded-lg border p-4">
                     <p className="text-sm text-muted-foreground">Prêmio Recebido</p>
@@ -432,10 +438,12 @@ export default function RankingPage() {
                                         extra
                                         </p>
                                     )}
-                                    <p>
-                                    Seu valor:{' '}
-                                    {formatValue(sellerValue, criterion)}
-                                    </p>
+                                    {criterion !== 'salesValue' && (
+                                      <p>
+                                      Seu valor:{' '}
+                                      {formatValue(sellerValue, criterion)}
+                                      </p>
+                                    )}
                                     <p
                                     className={cn(
                                         'font-bold',
@@ -478,7 +486,7 @@ export default function RankingPage() {
                             </div>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>{details}</p>
+                            <p>{criterion === 'salesValue' ? 'Progresso confidencial' : details}</p>
                         </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
