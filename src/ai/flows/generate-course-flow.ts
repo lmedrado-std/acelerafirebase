@@ -26,6 +26,7 @@ const prompt = ai.definePrompt({
   prompt: `
 Você é um instrutor de vendas especialista e didático, criando materiais para vendedores de calçados. Sua tarefa é criar um MINI CURSO sobre o tema "{{topic}}".
 Use o identificador único de geração (seed) "{{#if seed}}{{seed}}{{else}}geral{{/if}}" para garantir que o conteúdo e as perguntas do quiz sejam únicos e não se repitam.
+O nível de dificuldade do conteúdo e do quiz é "{{#if dificuldade}}{{dificuldade}}{{else}}Médio{{/if}}" (Fácil, Médio ou Difícil).
 
 O mini curso deve ter duas partes, em formato JSON:
 1.  **Conteúdo Didático:** Um texto curto e objetivo (3 a 5 parágrafos) em formato Markdown. O conteúdo deve ser prático e ensinar algo útil sobre o tema.

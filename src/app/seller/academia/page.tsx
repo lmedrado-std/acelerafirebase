@@ -14,7 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-const COURSE_POINTS = 150; // Fixed points for completing a course
+const COURSE_POINTS_CONFIG = {
+  'Fácil': 100,
+  'Médio': 150,
+  'Difícil': 200,
+} as const;
+
+type Dificuldade = keyof typeof COURSE_POINTS_CONFIG;
 
 // Component for a single course quiz
 const CourseQuiz = ({ course, onComplete }: { course: Course; onComplete: () => void }) => {
@@ -79,6 +85,7 @@ export default function AcademiaPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [isGeneratingCourse, setIsGeneratingCourse] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string>('');
+  const [dificuldade, setDificuldade] = useState<Dificuldade>('Médio');
   const { toast } = useToast();
 
   const courseTopics = [
@@ -112,15 +119,14 @@ export default function AcademiaPage() {
     setIsGeneratingCourse(true);
     setCourse(null);
     try {
-      // The seed is composed of the date, seller ID, and selected topic to ensure a unique,
-      // yet consistent, course per seller per day for a specific topic.
-      const seed = `${new Date().toISOString().split('T')[0]}-${currentSeller.id}-${selectedTopic}`;
-      const result = await generateCourse({ topic: selectedTopic, seed });
-      
+      const seed = `${new Date().toISOString().split('T')[0]}-${currentSeller.id}-${selectedTopic}-${dificuldade}`;
+      const result = await generateCourse({ topic: selectedTopic, seed, dificuldade });
+      const points = COURSE_POINTS_CONFIG[dificuldade];
       const newCourse: Course = {
         id: new Date().getTime().toString(),
         ...result,
-        points: COURSE_POINTS,
+        points,
+        dificuldade,
       };
       setCourse(newCourse);
       toast({
@@ -140,19 +146,20 @@ export default function AcademiaPage() {
   };
 
   const handleCompleteCourse = () => {
+    if (!course) return;
     const today = new Date().toISOString().split('T')[0];
 
     setSellers(prevSellers =>
         prevSellers.map(seller =>
             seller.id === currentSeller.id
-            ? { ...seller, points: seller.points + COURSE_POINTS, lastCourseCompletionDate: today }
+            ? { ...seller, points: seller.points + course.points, lastCourseCompletionDate: today }
             : seller
         )
     );
 
     toast({
         title: 'Curso Concluído!',
-        description: `${currentSeller?.name} ganhou ${COURSE_POINTS} pontos pelo curso "${course?.title}".`,
+        description: `${currentSeller?.name} ganhou ${course.points} pontos pelo curso "${course?.title}".`,
     });
   };
   
@@ -166,7 +173,10 @@ export default function AcademiaPage() {
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-xl">Gerador de Cursos</CardTitle>
-          <CardDescription>Selecione um tópico e clique no botão para gerar um curso completo com IA, incluindo um mini quiz. Você pode concluir um curso por dia para ganhar pontos.</CardDescription>
+          <CardDescription>
+            Selecione um tópico e um grau de dificuldade. A pontuação varia conforme o nível:
+            <span className="ml-2 font-bold text-green-400">Fácil: 100pts | Médio: 150pts | Difícil: 200pts</span>
+          </CardDescription>
         </CardHeader>
         <CardContent>
             <div className="flex items-end gap-4">
@@ -182,6 +192,19 @@ export default function AcademiaPage() {
                             ))}
                         </SelectContent>
                     </Select>
+                </div>
+                <div className="space-y-2 min-w-[180px]">
+                  <Label htmlFor="dificuldade-select">Dificuldade</Label>
+                  <Select value={dificuldade} onValueChange={v => setDificuldade(v as Dificuldade)}>
+                    <SelectTrigger id="dificuldade-select">
+                      <SelectValue placeholder="Dificuldade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(COURSE_POINTS_CONFIG).map(level => (
+                        <SelectItem key={level} value={level}>{level}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button onClick={handleGenerateCourse} disabled={isGeneratingCourse || !selectedTopic} className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
                   {isGeneratingCourse ? (
@@ -204,6 +227,7 @@ export default function AcademiaPage() {
                     <CardDescription className="flex items-center mt-2">
                        <Star className="mr-2 size-4 text-yellow-400" />
                        <span>{course.points} Pontos de Recompensa</span>
+                       {course.dificuldade && <span className="ml-2 text-xs font-medium bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">{course.dificuldade}</span>}
                     </CardDescription>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setCourse(null)} aria-label="Remover curso">

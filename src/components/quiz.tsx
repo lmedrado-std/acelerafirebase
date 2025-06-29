@@ -218,6 +218,12 @@ export default function Quiz() {
                     </SelectContent>
                 </Select>
             </div>
+             <p className="text-xs text-muted-foreground pt-1">
+              Pontuação por acerto: 
+              <span className="font-bold text-green-400 ml-1">
+                Fácil: 10pts | Médio: 20pts | Difícil: 30pts
+              </span>
+            </p>
         </div>
 
         <Button onClick={handleStartQuiz} disabled={isLoading || hasCompleted} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">

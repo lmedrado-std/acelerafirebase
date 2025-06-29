@@ -121,6 +121,7 @@ export type GenerateQuizOutput = z.infer<typeof GenerateQuizOutputSchema>;
 export const GenerateCourseInputSchema = z.object({
   topic: z.string(),
   seed: z.string().optional().describe('An optional seed for controlling randomness and uniqueness.'),
+  dificuldade: z.enum(['Fácil', 'Médio', 'Difícil']).optional(),
 });
 export type GenerateCourseInput = z.infer<typeof GenerateCourseInputSchema>;
 
@@ -143,6 +144,7 @@ export type GenerateCourseOutput = z.infer<typeof GenerateCourseOutputSchema>;
 export type Course = GenerateCourseOutput & {
   id: string;
   points: number; // Manually added in the component
+  dificuldade?: 'Fácil' | 'Médio' | 'Difícil';
 };
 
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
