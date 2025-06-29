@@ -10,11 +10,18 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        sans: ['Montserrat', 'sans-serif'],
+        body: ['Montserrat', 'sans-serif'],
+        headline: ['Montserrat', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
+        supermoda: {
+          primary: '#EE5B78',
+          secondary: '#6A73BA',
+          neutral: '#f9f9fb',
+          dark: '#1c1c1e'
+        },
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -89,14 +96,16 @@ export default {
           },
         },
         glow: {
-          '0%, 100%': { boxShadow: '0 0 5px hsl(var(--primary))' },
-          '50%': { boxShadow: '0 0 20px hsl(var(--primary))' },
+          '0%, 100%': { boxShadow: '0 0 10px hsl(var(--primary))' },
+          '50%': { boxShadow: '0 0 20px hsl(var(--secondary))' }
         },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        glow: 'glow 2.5s ease-in-out infinite',
+        glow: 'glow 1.5s ease-in-out infinite',
+        pulseFast: 'pulse 1.2s ease-in-out infinite',
+        bounceSlow: 'bounce 3s infinite',
       },
     },
   },

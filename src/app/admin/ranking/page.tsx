@@ -1,26 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star, Minus, Users, CheckCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { useAdminContext } from '@/app/admin/layout';
-import type { Goals, GoalLevel as GoalLevelType, Seller, SalesValueGoals } from '@/lib/types';
+import type { Goals, Seller, SalesValueGoals } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-
-type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa' | 'points' | 'totalPrize';
-type GoalLevelName = 'Nenhuma' | 'Metinha' | 'Meta' | 'Metona' | 'Lendária';
-
-const goalLevelConfig: Record<GoalLevelName, { label: string; className: string; progressClass: string }> = {
-  'Nenhuma': { label: 'Nenhuma', className: 'bg-muted/50 border-transparent text-muted-foreground', progressClass: 'bg-muted-foreground' },
-  'Metinha': { label: 'Metinha', className: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30', progressClass: 'bg-yellow-400' },
-  'Meta': { label: 'Meta', className: 'bg-green-500/10 text-green-400 border-green-500/30', progressClass: 'bg-green-400' },
-  'Metona': { label: 'Metona', className: 'bg-blue-500/10 text-blue-400 border-blue-500/30', progressClass: 'bg-blue-400' },
-  'Lendária': { label: 'Lendária', className: 'bg-purple-500/10 text-purple-400 border-purple-500/30', progressClass: 'bg-purple-400 animate-pulse' },
-};
 
 const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals }) => {
     if (!sellers || sellers.length === 0 || !goals?.salesValue?.metinha) {
@@ -35,10 +22,10 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
     const progress = (sellersWhoReachedGoal.length / sellers.length) * 100;
 
     return (
-        <Card className="bg-card/80 shadow-lg ring-1 ring-white/10">
+        <Card className="bg-card/80 shadow-xl rounded-2xl ring-1 ring-white/10">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Users className="size-6 text-primary" />
+                    <Users className="size-6 text-supermoda-secondary" />
                     <span>Meta de Equipe: Metinha para Todos!</span>
                 </CardTitle>
                 <CardDescription>
@@ -61,7 +48,7 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
                             <span className="font-medium text-muted-foreground">Progresso</span>
                             <span className="font-bold">{sellersWhoReachedGoal.length} de {sellers.length} vendedores</span>
                         </div>
-                        <Progress value={progress} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-purple-500" />
+                        <Progress value={progress} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-supermoda-primary [&>div]:to-supermoda-secondary" />
                     </div>
                 )}
             </CardContent>
@@ -124,8 +111,8 @@ export default function RankingPage() {
   const getRankIndicator = (index: number) => {
     if (isAllPerformanceZero) return <Minus className="size-6 text-muted-foreground" />;
     if (index === 0) return <Trophy className="size-7 text-yellow-400" />;
-    if (index === 1) return <Medal className="size-7 text-gray-300" />;
-    if (index === 2) return <Award className="size-7 text-orange-400" />;
+    if (index === 1) return <Medal className="size-7" style={{ color: '#C0C0C0' }} />;
+    if (index === 2) return <Award className="size-7" style={{ color: '#CD7F32' }} />;
     return <span className="font-bold text-xl text-muted-foreground">{index + 1}</span>;
   };
 
@@ -133,12 +120,12 @@ export default function RankingPage() {
     <div className="space-y-8">
        <div className="flex items-center gap-4">
         <Trophy className="size-8 text-primary" />
-        <h1 className="text-3xl font-bold">Ranking de Vendedores</h1>
+        <h1 className="text-3xl font-bold font-sans">Ranking de Vendedores</h1>
       </div>
       
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-2">
-            <Card className="bg-gradient-to-br from-card to-background shadow-xl rounded-2xl ring-1 ring-white/10">
+            <Card className="bg-gradient-to-br from-card to-background/80 text-white shadow-xl rounded-2xl ring-1 ring-white/10">
                 <CardHeader>
                   <CardTitle>Classificação Geral por Prêmios</CardTitle>
                   <CardDescription>
@@ -149,7 +136,7 @@ export default function RankingPage() {
                   <div className="rounded-md border border-border/50">
                     <Table>
                       <TableHeader>
-                        <TableRow>
+                        <TableRow className="border-border/50">
                           <TableHead className="w-[80px] text-center">Pos.</TableHead>
                           <TableHead>Vendedor</TableHead>
                           <TableHead className="text-right"><Star className="inline mr-1 size-4" />Pontos</TableHead>
@@ -162,10 +149,10 @@ export default function RankingPage() {
                       <TableBody>
                         {rankedSellers.map((seller, index) => (
                           <TableRow key={seller.id} className={cn(
-                            "transition-all",
+                            "transition-all border-border/30",
                             index === 0 && "bg-primary/10 animate-glow",
-                            index === 1 && "bg-gray-500/10",
-                            index === 2 && "bg-orange-500/10",
+                            index === 1 && "bg-secondary/10",
+                            index === 2 && "bg-chart-3/10",
                           )}>
                             <TableCell className="font-bold text-lg flex justify-center items-center h-full py-4">{getRankIndicator(index)}</TableCell>
                             <TableCell className="font-medium text-base">{seller.name}</TableCell>

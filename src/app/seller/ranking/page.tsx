@@ -1,15 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star, Minus, Users, CheckCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { useSellerContext } from '@/app/seller/layout';
 import type { Goals, Seller, SalesValueGoals } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-
 
 const formatPrize = (value: number, type: 'currency' | 'points' | 'decimal') => {
     if (type === 'currency') return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -30,10 +27,10 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
     const progress = (sellersWhoReachedGoal.length / sellers.length) * 100;
 
     return (
-        <Card className="bg-card/80 shadow-lg ring-1 ring-white/10">
+        <Card className="bg-card/80 shadow-xl rounded-2xl ring-1 ring-white/10">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Users className="size-6 text-primary" />
+                    <Users className="size-6 text-supermoda-secondary" />
                     <span>Meta de Equipe: Metinha para Todos!</span>
                 </CardTitle>
                 <CardDescription>
@@ -56,7 +53,7 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
                             <span className="font-medium text-muted-foreground">Progresso</span>
                             <span className="font-bold">{sellersWhoReachedGoal.length} de {sellers.length} vendedores</span>
                         </div>
-                        <Progress value={progress} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-purple-500" />
+                        <Progress value={progress} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-supermoda-primary [&>div]:to-supermoda-secondary" />
                     </div>
                 )}
             </CardContent>
@@ -120,12 +117,12 @@ export default function RankingPage() {
     <div className="space-y-8">
       <div className="flex items-center gap-4">
         <Trophy className="size-8 text-primary" />
-        <h1 className="text-3xl font-bold">Meu Desempenho no Ranking</h1>
+        <h1 className="text-3xl font-bold font-sans">Meu Desempenho no Ranking</h1>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-2 space-y-4">
-            <Card className="bg-gradient-to-br from-card to-background shadow-xl rounded-2xl ring-1 ring-white/10">
+            <Card className="bg-gradient-to-br from-card to-background/80 shadow-xl rounded-2xl ring-1 ring-white/10">
                  <CardHeader>
                     <CardTitle>Sua Posição Atual</CardTitle>
                  </CardHeader>
@@ -133,10 +130,10 @@ export default function RankingPage() {
                     {myRank ? (
                          <div className={cn(
                             "rounded-xl p-4 shadow-lg border-2 flex items-center justify-between gap-6",
-                            myRank.rank === 1 && "border-yellow-400/80 bg-primary/10 animate-glow",
-                            myRank.rank === 2 && "border-gray-400/80 bg-gray-500/10",
-                            myRank.rank === 3 && "border-orange-400/80 bg-orange-500/10",
-                            myRank.rank > 3 && "border-border/50"
+                             myRank.rank === 1 && "border-yellow-400/50 bg-primary/10 animate-glow",
+                             myRank.rank === 2 && "border-slate-400/50 bg-secondary/10",
+                             myRank.rank === 3 && "border-orange-400/50 bg-chart-3/10",
+                             myRank.rank > 3 && "border-border/50"
                          )}>
                             <div className="flex items-center gap-4">
                                <div className="text-4xl font-black w-16 text-center">{myRank.rank}º</div>
