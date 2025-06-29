@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -13,15 +14,44 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { Logo } from "@/components/icons/logo"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+import { sellersData } from "@/lib/data"
+import { Loader2 } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you'd handle authentication here.
-    // For this prototype, we'll just redirect to the seller dashboard.
-    router.push('/seller');
+    setIsLoading(true);
+
+    // Hardcoded admin credentials for prototype
+    if (login.toLowerCase() === 'admin' && password === 'admin') {
+      router.push('/admin');
+      return;
+    }
+
+    const seller = sellersData.find(
+      s => s.email?.toLowerCase() === login.toLowerCase() || s.nickname?.toLowerCase() === login.toLowerCase()
+    );
+
+    if (seller && seller.password === password) {
+       // In a real app, you would set the user context here.
+       // For this prototype, we'll just redirect to the seller dashboard
+       // which defaults to a specific seller for now.
+      router.push('/seller');
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Falha no Login',
+        description: 'Login ou senha inválidos. Por favor, tente novamente.',
+      });
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -33,7 +63,7 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-2xl text-center">Acessar Painel</CardTitle>
           <CardDescription className="text-center">
-            Entre com seu e-mail ou nickname para acessar a área do vendedor.
+            Entre com seu e-mail ou nickname para acessar.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -47,6 +77,9 @@ export default function LoginPage() {
                   placeholder="seu@email.com ou nickname"
                   required
                   className="bg-input"
+                  value={login}
+                  onChange={(e) => setLogin(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -56,17 +89,26 @@ export default function LoginPage() {
                     Esqueceu sua senha?
                   </Link>
                 </div>
-                <Input id="password" type="password" required className="bg-input" defaultValue="123456" />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  required 
+                  className="bg-input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                />
               </div>
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
+                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Entrar
               </Button>
             </div>
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            É um administrador?{" "}
+            É um administrador? Use 'admin' e 'admin' ou{" "}
             <Link href="/admin" className="underline hover:text-primary">
-              Acesse o painel
+              clique aqui
             </Link>
           </div>
         </CardContent>

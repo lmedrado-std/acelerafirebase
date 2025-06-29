@@ -13,6 +13,7 @@ export type Seller = {
   name: string;
   nickname?: string;
   email?: string;
+  password?: string;
   salesValue: number;
   ticketAverage: number;
   pa: number;

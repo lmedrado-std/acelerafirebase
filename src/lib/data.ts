@@ -1,11 +1,11 @@
 import type { Seller, Goals, Mission } from './types';
 
 export const sellersData: Seller[] = [
-  { id: '1', name: 'Rian Breston', nickname: 'rianb', email: 'rian.breston@example.com', salesValue: 5240.75, ticketAverage: 150.25, pa: 2.1, points: 1200, extraPoints: 100, hasCompletedQuiz: false },
-  { id: '2', name: 'Carla Dias', nickname: 'carlad', email: 'carla.dias@example.com', salesValue: 4890.50, ticketAverage: 142.80, pa: 2.5, points: 950, extraPoints: 50, hasCompletedQuiz: false },
-  { id: '3', name: 'Marcos Andrade', nickname: 'marcosa', email: 'marcos.andrade@example.com', salesValue: 6100.00, ticketAverage: 185.00, pa: 1.9, points: 1500, extraPoints: 0, hasCompletedQuiz: false },
-  { id: '4', name: 'Ana Pereira', nickname: 'anap', email: 'ana.pereira@example.com', salesValue: 5800.00, ticketAverage: 190.50, pa: 2.0, points: 1350, extraPoints: 200, hasCompletedQuiz: false },
-  { id: '5', name: 'Lucas Martins', nickname: 'lucasm', email: 'lucas.martins@example.com', salesValue: 4200.20, ticketAverage: 120.70, pa: 2.9, points: 1800, extraPoints: 0, hasCompletedQuiz: false },
+  { id: '1', name: 'Rian Breston', nickname: 'rianb', email: 'rian.breston@example.com', password: '123456', salesValue: 5240.75, ticketAverage: 150.25, pa: 2.1, points: 1200, extraPoints: 100, hasCompletedQuiz: false },
+  { id: '2', name: 'Carla Dias', nickname: 'carlad', email: 'carla.dias@example.com', password: '123456', salesValue: 4890.50, ticketAverage: 142.80, pa: 2.5, points: 950, extraPoints: 50, hasCompletedQuiz: false },
+  { id: '3', name: 'Marcos Andrade', nickname: 'marcosa', email: 'marcos.andrade@example.com', password: '123456', salesValue: 6100.00, ticketAverage: 185.00, pa: 1.9, points: 1500, extraPoints: 0, hasCompletedQuiz: false },
+  { id: '4', name: 'Ana Pereira', nickname: 'anap', email: 'ana.pereira@example.com', password: '123456', salesValue: 5800.00, ticketAverage: 190.50, pa: 2.0, points: 1350, extraPoints: 200, hasCompletedQuiz: false },
+  { id: '5', name: 'Lucas Martins', nickname: 'lucasm', email: 'lucas.martins@example.com', password: '123456', salesValue: 4200.20, ticketAverage: 120.70, pa: 2.9, points: 1800, extraPoints: 0, hasCompletedQuiz: false },
 ];
 
 export const goalsData: Goals = {
