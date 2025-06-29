@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import PerformanceChart from './PerformanceChart';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useSellerContext } from '@/app/seller/layout';
+import { SellerContext } from '@/app/seller/layout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const saveResultToLocalStorage = (result: QuizResult) => {
@@ -38,7 +38,10 @@ const difficultyConfig: Record<Difficulty, { points: number }> = {
 };
 
 export default function Quiz() {
-  const { currentSeller, setSellers } = useSellerContext();
+  const sellerContext = useContext(SellerContext);
+  const isSellerView = !!sellerContext;
+  const { currentSeller, setSellers } = sellerContext || {};
+  
   const [quiz, setQuiz] = useState<GenerateQuizOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -55,7 +58,7 @@ export default function Quiz() {
   }, [isFinished]);
 
   const handleStartQuiz = async () => {
-    if (currentSeller.hasCompletedQuiz) {
+    if (isSellerView && currentSeller?.hasCompletedQuiz) {
         toast({ variant: 'destructive', title: 'Quiz já realizado', description: 'Você pode realizar o quiz apenas uma vez.' });
         return;
     }
@@ -115,24 +118,28 @@ export default function Quiz() {
         date: new Date().toLocaleDateString('pt-BR'),
       };
       
-      setSellers(prevSellers =>
-          prevSellers.map(seller =>
-              seller.id === currentSeller.id
-              ? { ...seller, points: seller.points + pointsEarned, hasCompletedQuiz: true }
-              : seller
-          )
-      );
-      toast({
-          title: "Pontuação Registrada!",
-          description: `${currentSeller?.name} ganhou ${pointsEarned} pontos.`,
-      });
+      if (isSellerView && setSellers && currentSeller) {
+        setSellers(prevSellers =>
+            prevSellers.map(seller =>
+                seller.id === currentSeller.id
+                ? { ...seller, points: seller.points + pointsEarned, hasCompletedQuiz: true }
+                : seller
+            )
+        );
+        toast({
+            title: "Pontuação Registrada!",
+            description: `${currentSeller?.name} ganhou ${pointsEarned} pontos.`,
+        });
+      }
 
       saveResultToLocalStorage(finalResult);
-      try {
-        await addDoc(collection(db, 'quiz-results'), {...finalResult, sellerId: currentSeller.id, sellerName: currentSeller?.name, difficulty: difficulty });
-        console.log('🔥 Resultado salvo no Firestore!');
-      } catch (err) {
-        console.error('❌ Erro ao salvar no Firestore:', err);
+      if (isSellerView && currentSeller) {
+        try {
+          await addDoc(collection(db, 'quiz-results'), {...finalResult, sellerId: currentSeller.id, sellerName: currentSeller?.name, difficulty: difficulty });
+          console.log('🔥 Resultado salvo no Firestore!');
+        } catch (err) {
+          console.error('❌ Erro ao salvar no Firestore:', err);
+        }
       }
     }
   };
@@ -165,7 +172,7 @@ export default function Quiz() {
         <Trophy className="h-16 w-16 text-yellow-400" />
         <h2 className="mt-4 text-2xl font-bold">Quiz Finalizado!</h2>
         <p className="text-muted-foreground mt-2">
-          {currentSeller?.name} acertou {score} de {quiz!.questions.length} perguntas e ganhou {pointsEarned} pontos!
+          {isSellerView && currentSeller ? `${currentSeller.name} acertou ${score} de ${quiz!.questions.length} perguntas e ganhou ${pointsEarned} pontos!` : `Você acertou ${score} de ${quiz!.questions.length} perguntas.`}
         </p>
 
         <PerformanceChart data={quizHistory} />
@@ -178,17 +185,18 @@ export default function Quiz() {
   }
 
   if (!quiz || !currentQuestion) {
+    const hasCompleted = isSellerView && currentSeller?.hasCompletedQuiz;
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <h2 className="text-xl font-bold">Pronto para o Desafio?</h2>
         <p className="text-muted-foreground mt-2 max-w-md">
-          Escolha a dificuldade e clique no botão para gerar seu quiz. Você pode fazer o quiz apenas uma vez.
+          {isSellerView ? 'Escolha a dificuldade e clique no botão para gerar seu quiz. Você pode fazer o quiz apenas uma vez.' : 'Gere um quiz para testar seus conhecimentos.'}
         </p>
 
         <div className="space-y-4 my-6 w-full max-w-sm">
              <div className="space-y-2">
                 <Label htmlFor="difficulty-select">Nível de Dificuldade</Label>
-                <Select value={difficulty} onValueChange={(val) => setDifficulty(val as Difficulty)} disabled={currentSeller?.hasCompletedQuiz}>
+                <Select value={difficulty} onValueChange={(val) => setDifficulty(val as Difficulty)} disabled={hasCompleted}>
                     <SelectTrigger id="difficulty-select">
                         <SelectValue placeholder="Selecione o nível..." />
                     </SelectTrigger>
@@ -201,10 +209,10 @@ export default function Quiz() {
             </div>
         </div>
 
-        <Button onClick={handleStartQuiz} disabled={isLoading || currentSeller?.hasCompletedQuiz} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
-          {currentSeller?.hasCompletedQuiz ? <><Trophy className="mr-2"/> Quiz Concluído</> : <><Sparkles className="mr-2" /> Iniciar Quiz</>}
+        <Button onClick={handleStartQuiz} disabled={isLoading || hasCompleted} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+          {hasCompleted ? <><Trophy className="mr-2"/> Quiz Concluído</> : <><Sparkles className="mr-2" /> Iniciar Quiz</>}
         </Button>
-        {currentSeller?.hasCompletedQuiz && <p className="text-xs text-muted-foreground mt-2">Você já ganhou seus pontos neste desafio.</p>}
+        {hasCompleted && <p className="text-xs text-muted-foreground mt-2">Você já ganhou seus pontos neste desafio.</p>}
       </div>
     );
   }

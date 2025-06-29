@@ -42,7 +42,7 @@ interface SellerContextType {
   currentSeller: Seller;
 }
 
-const SellerContext = React.createContext<SellerContextType | null>(null);
+export const SellerContext = React.createContext<SellerContextType | null>(null);
 
 export const useSellerContext = () => {
   const context = React.useContext(SellerContext);
