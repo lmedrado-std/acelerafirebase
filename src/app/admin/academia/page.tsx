@@ -10,10 +10,15 @@ import ReactMarkdown from 'react-markdown';
 import { generateCourse } from "@/ai/flows/generate-course-flow";
 import type { Course } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { useAdminContext } from '@/app/admin/layout';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 export default function AcademiaPage() {
+  const { sellers, setSellers } = useAdminContext();
   const [courses, setCourses] = useState<Course[]>([]);
   const [isGeneratingCourse, setIsGeneratingCourse] = useState(false);
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const courseTopics = [
@@ -54,6 +59,42 @@ export default function AcademiaPage() {
   const handleDeleteCourse = (id: string) => {
     setCourses(prev => prev.filter(c => c.id !== id));
   };
+
+  const handleCompleteCourse = (course: Course) => {
+    if (!selectedSellerId) {
+        toast({
+            variant: 'destructive',
+            title: 'Nenhum Vendedor Selecionado',
+            description: 'Por favor, selecione um vendedor para premiar.',
+        });
+        return;
+    }
+
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const sellerToUpdate = sellers.find(s => s.id === selectedSellerId);
+
+    if (sellerToUpdate?.lastCourseCompletionDate === today) {
+        toast({
+            variant: 'destructive',
+            title: 'Limite Diário Atingido',
+            description: `${sellerToUpdate.name} já concluiu um curso hoje.`,
+        });
+        return;
+    }
+
+    setSellers(prevSellers =>
+        prevSellers.map(seller =>
+            seller.id === selectedSellerId
+            ? { ...seller, points: seller.points + course.points, lastCourseCompletionDate: today }
+            : seller
+        )
+    );
+
+    toast({
+        title: 'Curso Concluído!',
+        description: `${sellerToUpdate?.name} ganhou ${course.points} pontos pelo curso "${course.title}".`,
+    });
+  };
   
   return (
     <div className="space-y-8">
@@ -83,6 +124,23 @@ export default function AcademiaPage() {
 
           <div className="space-y-4 pt-6 border-t border-border">
             <h3 className="text-lg font-semibold">Cursos Existentes</h3>
+            
+            {courses.length > 0 && (
+              <div className="space-y-2 max-w-sm mb-4">
+                <Label htmlFor="seller-select-academia">Premiar Vendedor</Label>
+                <Select onValueChange={setSelectedSellerId}>
+                  <SelectTrigger id="seller-select-academia">
+                    <SelectValue placeholder="Selecione um vendedor..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sellers.map(seller => (
+                      <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {courses.length > 0 ? (
               <div className="space-y-4">
                 {courses.map((course) => (
@@ -141,11 +199,12 @@ export default function AcademiaPage() {
                         )}
                       </Accordion>
                     </CardContent>
-                     <CardFooter>
+                     <CardFooter className="justify-between">
                         <div className="text-sm font-semibold flex items-center">
                             <Star className="mr-2 size-4 text-yellow-400" />
                             <span>{course.points} Pontos</span>
                         </div>
+                        <Button onClick={() => handleCompleteCourse(course)}>Concluir e Premiar</Button>
                     </CardFooter>
                   </Card>
                 ))}

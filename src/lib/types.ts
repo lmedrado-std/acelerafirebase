@@ -16,6 +16,8 @@ export type Seller = {
   pa: number;
   points: number;
   extraPoints: number;
+  hasCompletedQuiz?: boolean;
+  lastCourseCompletionDate?: string; // YYYY-MM-DD
 };
 
 export type GoalLevels = {
