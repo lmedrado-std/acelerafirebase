@@ -9,12 +9,11 @@ import {
   LayoutGrid,
   LogOut,
   Puzzle,
-  Shield,
   Target,
   Trophy,
   User,
-  Github,
   ShoppingBag,
+  Github
 } from 'lucide-react';
 
 import {
@@ -32,47 +31,48 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/icons/logo';
 import { cn } from '@/lib/utils';
-import { sellersData as initialSellers, goalsData as initialGoals, missionsData as initialMissions } from '@/lib/data';
+import { sellersData, goalsData, missionsData } from '@/lib/data';
 import type { Seller, Goals, Mission } from '@/lib/types';
 
-interface AdminContextType {
+interface SellerContextType {
   sellers: Seller[];
-  setSellers: React.Dispatch<React.SetStateAction<Seller[]>>;
   goals: Goals;
-  setGoals: React.Dispatch<React.SetStateAction<Goals>>;
   missions: Mission[];
-  setMissions: React.Dispatch<React.SetStateAction<Mission[]>>;
+  currentSeller: Seller;
 }
 
-const AdminContext = React.createContext<AdminContextType | null>(null);
+const SellerContext = React.createContext<SellerContextType | null>(null);
 
-export const useAdminContext = () => {
-  const context = React.useContext(AdminContext);
+export const useSellerContext = () => {
+  const context = React.useContext(SellerContext);
   if (!context) {
-    throw new Error('useAdminContext must be used within an AdminLayout');
+    throw new Error('useSellerContext must be used within a SellerLayout');
   }
   return context;
 };
 
 const menuItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { href: '/admin/ranking', label: 'Ranking', icon: Trophy },
-  { href: '/admin/missions', label: 'Missões', icon: Target },
-  { href: '/admin/academia', label: 'Academia', icon: GraduationCap },
-  { href: '/admin/quiz', label: 'Quiz', icon: Puzzle },
-  { href: '/admin/loja', label: 'Loja', icon: ShoppingBag },
-  { href: '/admin/perfil', label: 'Perfil', icon: User },
-  { href: '/admin/settings', label: 'Configurações', icon: Shield },
+  { href: '/seller/dashboard', label: 'Dashboard', icon: LayoutGrid },
+  { href: '/seller/ranking', label: 'Ranking', icon: Trophy },
+  { href: '/seller/missions', label: 'Missões', icon: Target },
+  { href: '/seller/academia', label: 'Academia', icon: GraduationCap },
+  { href: '/seller/quiz', label: 'Quiz', icon: Puzzle },
+  { href: '/seller/loja', label: 'Loja', icon: ShoppingBag },
+  { href: '/seller/perfil', label: 'Meu Perfil', icon: User },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function SellerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [sellers, setSellers] = React.useState<Seller[]>(initialSellers);
-  const [goals, setGoals] = React.useState<Goals>(initialGoals);
-  const [missions, setMissions] = React.useState<Mission[]>(initialMissions);
+  const [sellers] = React.useState<Seller[]>(sellersData);
+  const [goals] = React.useState<Goals>(goalsData);
+  const [missions] = React.useState<Mission[]>(missionsData);
+  // In a real app, this would come from an authentication context
+  const [currentSeller] = React.useState<Seller>(sellersData[0]);
+
+  const value = { sellers, goals, missions, currentSeller };
 
   return (
-    <AdminContext.Provider value={{ sellers, setSellers, goals, setGoals, missions, setMissions }}>
+    <SellerContext.Provider value={value}>
       <SidebarProvider>
         <div className="flex min-h-screen">
           <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
@@ -110,7 +110,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <Button variant="ghost" className="relative p-2 h-auto text-sidebar-foreground hover:text-white">
                     <Bell />
                     <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 min-w-5 justify-center p-1 text-xs border-2 border-sidebar">
-                      524
+                      3
                     </Badge>
                   </Button>
                 <Button asChild variant="secondary" className="group-data-[collapsible=icon]:hidden bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground">
@@ -142,6 +142,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
       </SidebarProvider>
-    </AdminContext.Provider>
+    </SellerContext.Provider>
   );
 }
