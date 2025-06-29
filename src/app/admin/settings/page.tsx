@@ -26,7 +26,7 @@ const goalLevels: Array<{key: keyof GoalLevels, label: string}> = [
 
 export default function SettingsPage() {
   const { sellers, setSellers, goals, setGoals } = useAdminContext();
-  const [sellerName, setSellerName] = useState('');
+  const [newSeller, setNewSeller] = useState({ name: '', nickname: '', password: '' });
 
   const handleGoalChange = (
     criterion: keyof Goals,
@@ -64,39 +64,37 @@ export default function SettingsPage() {
 
   const handleAddSeller = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!sellerName.trim()) return;
+    if (!newSeller.name.trim() || !newSeller.nickname.trim() || !newSeller.password.trim()) return;
 
-    const newSeller: Seller = {
+    const newSellerData: Seller = {
       id: new Date().getTime().toString(),
-      name: sellerName,
+      name: newSeller.name,
+      nickname: newSeller.nickname,
+      password: newSeller.password,
+      email: `${newSeller.nickname.toLowerCase()}@example.com`,
       salesValue: 0,
       ticketAverage: 0,
       pa: 0,
       points: 0,
       extraPoints: 0,
-      nickname: sellerName.toLowerCase().replace(/\s+/g, ''),
-      email: '',
-      password: '123',
     };
-    setSellers(prevSellers => [...prevSellers, newSeller]);
-    setSellerName('');
+    setSellers(prevSellers => [...prevSellers, newSellerData]);
+    setNewSeller({ name: '', nickname: '', password: '' });
+  };
+  
+   const handleSellerCredsUpdate = (id: string, field: 'nickname' | 'password', value: string) => {
+    setSellers(prevSellers =>
+      prevSellers.map(seller => 
+        seller.id === id ? { ...seller, [field]: value } : seller
+      )
+    );
   };
 
-  const handleSellerUpdate = (id: string, field: keyof Omit<Seller, 'id' | 'name'>, value: string) => {
+  const handleSellerPerfUpdate = (id: string, field: keyof Omit<Seller, 'id' | 'name' | 'nickname' | 'password' | 'email'>, value: string) => {
     setSellers(prevSellers =>
       prevSellers.map(seller => {
         if (seller.id !== id) return seller;
-
-        const updatedSeller = { ...seller };
-        const numericFields: (keyof Seller)[] = ['salesValue', 'ticketAverage', 'pa', 'points', 'extraPoints'];
-
-        if (numericFields.includes(field as keyof Seller)) {
-          (updatedSeller as any)[field] = parseFloat(value) || 0;
-        } else {
-          (updatedSeller as any)[field] = value;
-        }
-
-        return updatedSeller;
+        return { ...seller, [field]: parseFloat(value) || 0 };
       })
     );
   };
@@ -118,6 +116,9 @@ export default function SettingsPage() {
             <TabsTrigger value="lancamentos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
               <ClipboardList className="mr-2 size-5" /> Lançamentos
             </TabsTrigger>
+             <TabsTrigger value="vendedores" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+              <Users className="mr-2 size-5" /> Vendedores
+            </TabsTrigger>
              <TabsTrigger value="metas" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
               <Flag className="mr-2 size-5" /> Metas
             </TabsTrigger>
@@ -128,7 +129,7 @@ export default function SettingsPage() {
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-xl">Lançamento de Vendas</CardTitle>
-              <CardDescription>Insira aqui os totais acumulados de vendas e gerencie senhas para cada vendedor.</CardDescription>
+              <CardDescription>Insira aqui os totais acumulados de vendas e outros indicadores de performance para cada vendedor.</CardDescription>
             </CardHeader>
             <CardContent>
                  {sellers.length > 0 ? (
@@ -140,9 +141,8 @@ export default function SettingsPage() {
                           <TableHead className="text-right">Valor de Venda (R$)</TableHead>
                           <TableHead className="text-right">Ticket Médio (R$)</TableHead>
                           <TableHead className="text-right">PA</TableHead>
-                          <TableHead className="text-right">Pontos</TableHead>
+                          <TableHead className="text-right">Pontos (Auto)</TableHead>
                           <TableHead className="text-right">Pontos Extras</TableHead>
-                          <TableHead className="text-center">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -150,28 +150,22 @@ export default function SettingsPage() {
                           <TableRow key={seller.id}>
                             <TableCell className="font-medium">{seller.name}</TableCell>
                             <TableCell>
-                              <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-muted-foreground">R$</span>
                                 <Input
                                   type="number"
                                   step="0.01"
-                                  className="bg-input pl-10 text-right min-w-[140px]"
+                                  className="bg-input text-right min-w-[140px]"
                                   value={seller.salesValue}
-                                  onChange={(e) => handleSellerUpdate(seller.id, 'salesValue', e.target.value)}
+                                  onChange={(e) => handleSellerPerfUpdate(seller.id, 'salesValue', e.target.value)}
                                 />
-                              </div>
                             </TableCell>
                             <TableCell>
-                              <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-muted-foreground">R$</span>
                                 <Input
                                   type="number"
                                   step="0.01"
-                                  className="bg-input pl-10 text-right min-w-[140px]"
+                                  className="bg-input text-right min-w-[140px]"
                                   value={seller.ticketAverage}
-                                  onChange={(e) => handleSellerUpdate(seller.id, 'ticketAverage', e.target.value)}
+                                  onChange={(e) => handleSellerPerfUpdate(seller.id, 'ticketAverage', e.target.value)}
                                  />
-                              </div>
                             </TableCell>
                             <TableCell>
                                 <Input
@@ -179,7 +173,7 @@ export default function SettingsPage() {
                                   step="0.1"
                                   className="bg-input text-right min-w-[100px]"
                                   value={seller.pa}
-                                  onChange={(e) => handleSellerUpdate(seller.id, 'pa', e.target.value)}
+                                  onChange={(e) => handleSellerPerfUpdate(seller.id, 'pa', e.target.value)}
                                 />
                             </TableCell>
                             <TableCell>
@@ -196,7 +190,7 @@ export default function SettingsPage() {
                                       <Info className="size-4 text-muted-foreground" />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>Pontos automáticos de missões, cursos e quizzes.</p>
+                                      <p>Pontos de missões, cursos e quizzes.</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -207,13 +201,8 @@ export default function SettingsPage() {
                                   type="number"
                                   className="bg-input text-right min-w-[100px]"
                                   value={seller.extraPoints}
-                                  onChange={(e) => handleSellerUpdate(seller.id, 'extraPoints', e.target.value)}
+                                  onChange={(e) => handleSellerPerfUpdate(seller.id, 'extraPoints', e.target.value)}
                                 />
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Button variant="ghost" size="icon" onClick={() => handleDeleteSeller(seller.id)} aria-label="Remover vendedor">
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -229,30 +218,67 @@ export default function SettingsPage() {
                 )}
             </CardContent>
           </Card>
-           <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="text-xl">Adicionar Novo Vendedor</CardTitle>
-              <CardDescription>Digite o nome do vendedor para adicioná-lo à lista.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleAddSeller} className="flex items-end gap-4">
-                <div className="space-y-2 flex-grow">
-                  <Label htmlFor="sellerName">Nome do Vendedor</Label>
-                  <Input 
-                    id="sellerName" 
-                    placeholder="Nome do Vendedor" 
-                    className="bg-input" 
-                    value={sellerName}
-                    onChange={(e) => setSellerName(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
-                    Adicionar Vendedor
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+        </TabsContent>
+         <TabsContent value="vendedores" className="space-y-6 mt-4">
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="text-xl">Gerenciar Vendedores</CardTitle>
+                <CardDescription>Adicione novos vendedores e gerencie suas credenciais de acesso.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  {sellers.length > 0 && (
+                    <div className="rounded-md border border-border mb-6">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Nome</TableHead>
+                            <TableHead>Login (Nickname)</TableHead>
+                            <TableHead>Senha</TableHead>
+                            <TableHead className="text-center">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {sellers.map((seller) => (
+                            <TableRow key={seller.id}>
+                              <TableCell className="font-medium">{seller.name}</TableCell>
+                              <TableCell>
+                                <Input value={seller.nickname} onChange={(e) => handleSellerCredsUpdate(seller.id, 'nickname', e.target.value)} className="bg-input" />
+                              </TableCell>
+                              <TableCell>
+                                <Input type="text" value={seller.password} onChange={(e) => handleSellerCredsUpdate(seller.id, 'password', e.target.value)} className="bg-input" />
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Button variant="ghost" size="icon" onClick={() => handleDeleteSeller(seller.id)} aria-label="Remover vendedor">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+
+                  <CardTitle className="text-lg pt-4">Adicionar Novo Vendedor</CardTitle>
+                  <form onSubmit={handleAddSeller} className="flex items-end gap-4 pt-4">
+                    <div className="space-y-2 flex-grow">
+                      <Label htmlFor="sellerName">Nome</Label>
+                      <Input id="sellerName" placeholder="Nome completo" value={newSeller.name} onChange={(e) => setNewSeller(s => ({...s, name: e.target.value}))} className="bg-input" required />
+                    </div>
+                    <div className="space-y-2 flex-grow">
+                      <Label htmlFor="sellerNickname">Login (Nickname)</Label>
+                      <Input id="sellerNickname" placeholder="login.do.vendedor" value={newSeller.nickname} onChange={(e) => setNewSeller(s => ({...s, nickname: e.target.value}))} className="bg-input" required />
+                    </div>
+                     <div className="space-y-2 flex-grow">
+                      <Label htmlFor="sellerPassword">Senha</Label>
+                      <Input id="sellerPassword" type="text" placeholder="Senha de acesso" value={newSeller.password} onChange={(e) => setNewSeller(s => ({...s, password: e.target.value}))} className="bg-input" required />
+                    </div>
+                    <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
+                        Adicionar
+                    </Button>
+                  </form>
+              </CardContent>
+            </Card>
         </TabsContent>
         <TabsContent value="metas" className="space-y-6 mt-4">
           <Card className="bg-card border-border">

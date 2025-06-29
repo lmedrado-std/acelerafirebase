@@ -31,12 +31,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/icons/logo';
 import { cn } from '@/lib/utils';
-import { sellersData, goalsData, missionsData } from '@/lib/data';
 import type { Seller, Goals, Mission } from '@/lib/types';
+import { dataStore, useStore } from '@/lib/store';
+
 
 interface SellerContextType {
   sellers: Seller[];
-  setSellers: React.Dispatch<React.SetStateAction<Seller[]>>;
+  setSellers: (updater: (prev: Seller[]) => Seller[]) => void;
   goals: Goals;
   missions: Mission[];
   currentSeller: Seller;
@@ -64,13 +65,32 @@ const menuItems = [
 
 export default function SellerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [sellers, setSellers] = React.useState<Seller[]>(sellersData);
-  const [goals] = React.useState<Goals>(goalsData);
-  const [missions] = React.useState<Mission[]>(missionsData);
-  // In a real app, this would come from an authentication context
-  const currentSeller = sellers.find(s => s.id === '1')!;
+  const { sellers, goals, missions } = useStore(s => ({
+    sellers: s.sellers,
+    goals: s.goals,
+    missions: s.missions,
+  }));
+  
+  // In a real app, this would come from an authentication context.
+  // For this prototype, we'll find the current seller in the global store.
+  const currentSeller = sellers.find(s => s.id === '1');
 
-  const value = { sellers, setSellers, goals, missions, currentSeller };
+  // Render a loading state or handle the case where the seller is not found
+  if (!currentSeller) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Carregando dados do vendedor...
+      </div>
+    );
+  }
+
+  const value = { 
+    sellers, 
+    setSellers: dataStore.setSellers, 
+    goals, 
+    missions, 
+    currentSeller 
+  };
 
   return (
     <SellerContext.Provider value={value}>

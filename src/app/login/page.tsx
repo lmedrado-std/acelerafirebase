@@ -15,7 +15,7 @@ import Link from "next/link"
 import { Logo } from "@/components/icons/logo"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { sellersData } from "@/lib/data"
+import { dataStore } from "@/lib/store"
 import { Loader2 } from "lucide-react"
 
 export default function LoginPage() {
@@ -29,14 +29,17 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Hardcoded admin credentials for prototype
-    if (login.toLowerCase() === 'admin' && password === 'admin') {
+    const { adminUser, sellers } = dataStore.getState();
+
+    // Check admin credentials
+    if (login.toLowerCase() === adminUser.nickname && password === adminUser.password) {
       router.push('/admin');
       return;
     }
 
-    const seller = sellersData.find(
-      s => s.email?.toLowerCase() === login.toLowerCase() || s.nickname?.toLowerCase() === login.toLowerCase()
+    // Check seller credentials
+    const seller = sellers.find(
+      s => s.nickname?.toLowerCase() === login.toLowerCase() || s.email?.toLowerCase() === login.toLowerCase()
     );
 
     if (seller && seller.password === password) {
