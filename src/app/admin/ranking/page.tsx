@@ -12,6 +12,7 @@ import type { Goals, GoalLevel as GoalLevelType, Seller, SalesValueGoals } from 
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import TeamGoalProgress from '@/components/TeamGoalProgress';
 
 type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa' | 'points' | 'totalPrize';
 type GoalLevelName = 'Nenhuma' | 'Metinha' | 'Meta' | 'Metona' | 'Lendária';
@@ -39,6 +40,9 @@ export default function RankingPage() {
   , [sellersData]);
 
   const sortedSellers = useMemo(() => {
+    const teamGoalMet = sellersData.length > 0 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold);
+    const teamBonus = 100;
+
     const sellersWithPrizes = sellersData.map(seller => {
         const prizes: Record<keyof Omit<Goals, 'salesValue' | 'gamification'>, number> = {
             salesValue: 0,
@@ -72,7 +76,10 @@ export default function RankingPage() {
             }
         });
 
-        const totalPrize = Object.values(prizes).reduce((sum, p) => sum + p, 0);
+        let totalPrize = Object.values(prizes).reduce((sum, p) => sum + p, 0);
+        if (teamGoalMet) {
+            totalPrize += teamBonus;
+        }
 
         return { ...seller, prizes, totalPrize };
     });
@@ -215,6 +222,8 @@ export default function RankingPage() {
         </CardContent>
       </Card>
       
+      <TeamGoalProgress sellers={sellersData} goals={goalsData} />
+
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Classificação por {getCriterionLabel(criterion)}</CardTitle>

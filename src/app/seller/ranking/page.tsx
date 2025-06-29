@@ -29,6 +29,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {cn} from '@/lib/utils';
+import TeamGoalProgress from '@/components/TeamGoalProgress';
 
 type RankingCriterion =
   | 'salesValue'
@@ -72,9 +73,12 @@ export default function RankingPage() {
   } = useSellerContext();
 
   const sortedSellers = useMemo(() => {
+    const teamGoalMet = sellersData.length > 0 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold);
+    const teamBonus = 100;
+
     const sellersWithPrizes = sellersData.map(seller => {
       const prizes: Record<
-        keyof Omit<Goals, 'salesValue'> | 'salesValue',
+        keyof Omit<Goals, 'salesValue' | 'gamification'>,
         number
       > = {
         salesValue: 0,
@@ -83,7 +87,7 @@ export default function RankingPage() {
         points: 0,
       };
 
-      const allCriteria: Array<keyof Goals> = [
+      const allCriteria: Array<keyof typeof prizes> = [
         'salesValue',
         'ticketAverage',
         'pa',
@@ -91,40 +95,46 @@ export default function RankingPage() {
       ];
 
       allCriteria.forEach(crit => {
-        const goals = goalsData[crit];
-        const sellerValue =
-          crit === 'points' ? seller.points + seller.extraPoints : seller[crit];
+        if (crit === 'salesValue' || crit === 'ticketAverage' || crit === 'pa' || crit === 'points') {
+            const goals = goalsData[crit];
+            const sellerValue =
+            crit === 'points' ? seller.points + seller.extraPoints : seller[crit];
 
-        let currentPrize = 0;
-        if (sellerValue >= goals.metinha.threshold)
-          currentPrize += goals.metinha.prize;
-        if (sellerValue >= goals.meta.threshold)
-          currentPrize += goals.meta.prize;
-        if (sellerValue >= goals.metona.threshold)
-          currentPrize += goals.metona.prize;
-        if (sellerValue >= goals.lendaria.threshold)
-          currentPrize += goals.lendaria.prize;
+            let currentPrize = 0;
+            if (sellerValue >= goals.metinha.threshold)
+            currentPrize += goals.metinha.prize;
+            if (sellerValue >= goals.meta.threshold)
+            currentPrize += goals.meta.prize;
+            if (sellerValue >= goals.metona.threshold)
+            currentPrize += goals.metona.prize;
+            if (sellerValue >= goals.lendaria.threshold)
+            currentPrize += goals.lendaria.prize;
 
-        // Add performance bonus only if criterion is salesValue
-        if (crit === 'salesValue') {
-          const salesGoals = goals as SalesValueGoals;
-          if (
-            seller.salesValue > salesGoals.lendaria.threshold &&
-            salesGoals.performanceBonus &&
-            salesGoals.performanceBonus.per > 0
-          ) {
-            const excessSales =
-              seller.salesValue - salesGoals.lendaria.threshold;
-            const bonusUnits = Math.floor(
-              excessSales / salesGoals.performanceBonus.per
-            );
-            currentPrize += bonusUnits * salesGoals.performanceBonus.prize;
-          }
+            // Add performance bonus only if criterion is salesValue
+            if (crit === 'salesValue') {
+            const salesGoals = goals as SalesValueGoals;
+            if (
+                seller.salesValue > salesGoals.lendaria.threshold &&
+                salesGoals.performanceBonus &&
+                salesGoals.performanceBonus.per > 0
+            ) {
+                const excessSales =
+                seller.salesValue - salesGoals.lendaria.threshold;
+                const bonusUnits = Math.floor(
+                excessSales / salesGoals.performanceBonus.per
+                );
+                currentPrize += bonusUnits * salesGoals.performanceBonus.prize;
+            }
+            }
+            prizes[crit] = currentPrize;
         }
-        prizes[crit] = currentPrize;
       });
 
-      const totalPrize = Object.values(prizes).reduce((sum, p) => sum + p, 0);
+      let totalPrize = Object.values(prizes).reduce((sum, p) => sum + p, 0);
+      
+      if (teamGoalMet) {
+        totalPrize += teamBonus;
+      }
 
       return {...seller, prizes, totalPrize};
     });
@@ -178,7 +188,7 @@ export default function RankingPage() {
   };
 
   const getGoalProgress = (value: number, criterion: RankingCriterion) => {
-    if (criterion === 'totalPrize')
+    if (criterion === 'totalPrize' || !goalsData[criterion])
       return {percent: 100, label: 'N/A', details: 'N/A'};
     const goals = goalsData[criterion];
     let nextGoal, currentGoalBase, nextGoalLabel, progress;
@@ -248,7 +258,7 @@ export default function RankingPage() {
     name: GoalLevelName;
     threshold: number;
     prize: number;
-  }> = criterionGoals
+  }> = (criterionGoals && (criterion === 'salesValue' || criterion === 'ticketAverage' || criterion === 'pa' || criterion === 'points'))
     ? [
         {name: 'Metinha', ...criterionGoals.metinha},
         {name: 'Meta', ...criterionGoals.meta},
@@ -265,8 +275,7 @@ export default function RankingPage() {
   const prizeToDisplay =
     criterion === 'totalPrize'
       ? sellerData.totalPrize
-      : sellerData.prizes[criterion as keyof typeof sellerData.prizes] ||
-        0;
+      : (sellerData.prizes && criterion in sellerData.prizes) ? sellerData.prizes[criterion as keyof typeof sellerData.prizes] : 0;
 
 
   return (
@@ -300,6 +309,8 @@ export default function RankingPage() {
           </p>
         </CardContent>
       </Card>
+      
+      <TeamGoalProgress sellers={sellersData} goals={goalsData} />
 
       <Card className="bg-card border-border">
         <CardHeader>
