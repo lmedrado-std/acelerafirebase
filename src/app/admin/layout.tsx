@@ -33,7 +33,7 @@ import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/icons/logo';
 import { cn } from '@/lib/utils';
 import { sellersData as initialSellers, goalsData as initialGoals, missionsData as initialMissions } from '@/lib/data';
-import type { Seller, Goals, Mission } from '@/lib/types';
+import type { Seller, Goals, Mission, Admin } from '@/lib/types';
 
 interface AdminContextType {
   sellers: Seller[];
@@ -42,6 +42,8 @@ interface AdminContextType {
   setGoals: React.Dispatch<React.SetStateAction<Goals>>;
   missions: Mission[];
   setMissions: React.Dispatch<React.SetStateAction<Mission[]>>;
+  adminUser: Admin;
+  setAdminUser: React.Dispatch<React.SetStateAction<Admin>>;
 }
 
 const AdminContext = React.createContext<AdminContextType | null>(null);
@@ -70,9 +72,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sellers, setSellers] = React.useState<Seller[]>(initialSellers);
   const [goals, setGoals] = React.useState<Goals>(initialGoals);
   const [missions, setMissions] = React.useState<Mission[]>(initialMissions);
+  const [adminUser, setAdminUser] = React.useState<Admin>({
+    nickname: 'admin',
+    email: 'admin@aceleragt.com',
+    password: 'admin',
+  });
 
   return (
-    <AdminContext.Provider value={{ sellers, setSellers, goals, setGoals, missions, setMissions }}>
+    <AdminContext.Provider value={{ sellers, setSellers, goals, setGoals, missions, setMissions, adminUser, setAdminUser }}>
       <SidebarProvider>
         <div className="flex min-h-screen">
           <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">

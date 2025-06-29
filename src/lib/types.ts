@@ -23,6 +23,12 @@ export type Seller = {
   lastCourseCompletionDate?: string; // YYYY-MM-DD
 };
 
+export type Admin = {
+  nickname: string;
+  email: string;
+  password: string;
+};
+
 export type GoalLevels = {
   metinha: number;
   meta: number;

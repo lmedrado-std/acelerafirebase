@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminContext } from "../layout";
 
 export default function PerfilPage() {
     const { toast } = useToast();
-    const [name] = useState('Admin'); // Admin name is static
-    const [nickname, setNickname] = useState('admin');
-    const [email, setEmail] = useState('admin@aceleragt.com');
+    const { adminUser, setAdminUser } = useAdminContext();
+    
+    const [nickname, setNickname] = useState(adminUser.nickname);
+    const [email, setEmail] = useState(adminUser.email);
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -36,11 +38,12 @@ export default function PerfilPage() {
             return;
         }
 
-        console.log({
-            adminNickname: nickname,
-            adminEmail: email,
-            newPassword: password,
-        });
+        setAdminUser(prev => ({
+            ...prev,
+            nickname,
+            email,
+            password: password || prev.password, // Keep old password if new one is empty
+        }));
 
         toast({
             title: 'Perfil de Administrador Atualizado!',
@@ -66,7 +69,7 @@ export default function PerfilPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                     <Label htmlFor="name">Nome</Label>
-                    <Input id="name" value={name} disabled className="bg-input" />
+                    <Input id="name" value="Admin" disabled className="bg-input" />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="nickname">Login (Nickname)</Label>
