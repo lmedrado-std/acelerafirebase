@@ -10,6 +10,9 @@ import { generateQuiz } from '@/ai/flows/generate-quiz-flow';
 import type { GenerateQuizOutput } from '@/lib/types';
 import { Loader2, Sparkles, Trophy, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import PerformanceChart from './PerformanceChart';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 type Question = GenerateQuizOutput['questions'][0];
 
@@ -84,7 +87,7 @@ export default function Quiz() {
     }
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     setShowFeedback(false);
     setSelectedAnswer(null);
     if (currentQuestionIndex < quiz!.questions.length - 1) {
@@ -97,6 +100,12 @@ export default function Quiz() {
         date: new Date().toLocaleDateString('pt-BR'),
       };
       saveResultToLocalStorage(finalResult);
+      try {
+        await addDoc(collection(db, 'quiz-results'), finalResult);
+        console.log('🔥 Resultado salvo no Firestore!');
+      } catch (err) {
+        console.error('❌ Erro ao salvar no Firestore:', err);
+      }
     }
   };
 
@@ -130,6 +139,8 @@ export default function Quiz() {
             </li>
           ))}
         </ul>
+
+        <PerformanceChart data={results} />
 
         <Button onClick={handleStartQuiz} className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-primary-foreground font-semibold">
           <RotateCcw className="mr-2" /> Tentar Novamente
