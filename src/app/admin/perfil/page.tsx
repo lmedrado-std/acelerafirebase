@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function PerfilPage() {
     const { toast } = useToast();
     const [name] = useState('Admin'); // Admin name is static
+    const [nickname, setNickname] = useState('admin');
     const [email, setEmail] = useState('admin@aceleragt.com');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -36,6 +37,7 @@ export default function PerfilPage() {
         }
 
         console.log({
+            adminNickname: nickname,
             adminEmail: email,
             newPassword: password,
         });
@@ -65,6 +67,10 @@ export default function PerfilPage() {
                 <div className="space-y-2">
                     <Label htmlFor="name">Nome</Label>
                     <Input id="name" value={name} disabled className="bg-input" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="nickname">Login (Nickname)</Label>
+                    <Input id="nickname" type="text" placeholder="Nickname do administrador" value={nickname} onChange={(e) => setNickname(e.target.value)} className="bg-input" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="email">Email de Administrador (Opcional)</Label>

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function PerfilPage() {
     const { currentSeller } = useSellerContext();
     const { toast } = useToast();
+    const [nickname, setNickname] = useState(currentSeller.nickname || '');
     const [email, setEmail] = useState(currentSeller.email || '');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,8 +22,17 @@ export default function PerfilPage() {
         if (password !== confirmPassword) {
             toast({
                 variant: 'destructive',
-                title: 'Erro',
+                title: 'Erro de Validação',
                 description: 'As senhas não coincidem. Por favor, tente novamente.',
+            });
+            return;
+        }
+
+        if (password && password.length < 6) {
+             toast({
+                variant: 'destructive',
+                title: 'Senha Muito Curta',
+                description: 'A nova senha deve ter pelo menos 6 caracteres.',
             });
             return;
         }
@@ -31,6 +41,7 @@ export default function PerfilPage() {
         // For this prototype, we'll just show a success message.
         console.log({
             userId: currentSeller.id,
+            newNickname: nickname,
             newEmail: email,
             newPassword: password,
         });
@@ -61,6 +72,10 @@ export default function PerfilPage() {
                     <Label htmlFor="name">Nome</Label>
                     <Input id="name" value={currentSeller.name} disabled className="bg-input" />
                 </div>
+                <div className="space-y-2">
+                    <Label htmlFor="nickname">Login (Nickname)</Label>
+                    <Input id="nickname" type="text" placeholder="Seu nickname de login" value={nickname} onChange={(e) => setNickname(e.target.value)} className="bg-input" />
+                </div>
                  <div className="space-y-2">
                     <Label htmlFor="email">Email (Opcional)</Label>
                     <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-input" />
@@ -68,7 +83,7 @@ export default function PerfilPage() {
                  <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="password">Nova Senha</Label>
-                        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-input" />
+                        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-input" placeholder="Deixe em branco para não alterar" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
