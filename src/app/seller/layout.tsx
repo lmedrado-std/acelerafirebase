@@ -119,13 +119,13 @@ const SellerSidebarContent = () => {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-4 space-y-4">
-        <div className="flex items-center justify-end group-data-[collapsible=icon]:justify-center">
+        <div className="flex items-center justify-center">
             <Button
               onClick={handleLogout}
               variant="secondary"
               className="w-full bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
             >
-              <LogOut className="mr-2" />
+              <LogOut className="mr-2 group-data-[collapsible=icon]:mr-0" />
               <span className="group-data-[collapsible=icon]:hidden">Sair</span>
             </Button>
         </div>
