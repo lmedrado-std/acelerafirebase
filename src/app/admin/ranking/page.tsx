@@ -10,16 +10,17 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals }) => {
-    if (!sellers || sellers.length === 0 || !goals?.salesValue?.metinha) {
+    if (!sellers || !goals?.salesValue?.metinha) {
         return null;
     }
     
-    const metinhaThreshold = goals.salesValue.metinha.threshold;
     const teamBonus = 100; // Hardcoded bonus as per request
 
-    const sellersWhoReachedGoal = sellers.filter(s => s.salesValue >= metinhaThreshold);
-    const isGoalAchieved = sellers.length > 0 && sellersWhoReachedGoal.length === sellers.length;
-    const progress = (sellersWhoReachedGoal.length / sellers.length) * 100;
+    const sellersWhoReachedGoal = sellers.filter(s => s.salesValue >= goals.salesValue.metinha.threshold);
+    // Goal is only considered if there is more than one seller
+    const isGoalAchievable = sellers.length > 1;
+    const isGoalAchieved = isGoalAchievable && sellersWhoReachedGoal.length === sellers.length;
+    const progress = isGoalAchievable ? (sellersWhoReachedGoal.length / sellers.length) * 100 : 0;
 
     return (
         <Card className="bg-card/80 shadow-xl rounded-2xl ring-1 ring-white/10">
@@ -29,12 +30,19 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
                     <span>Meta de Equipe: Metinha para Todos!</span>
                 </CardTitle>
                 <CardDescription>
-                    Se todos atingirem a "Metinha" de vendas ({formatPrize(metinhaThreshold, 'currency')}), 
+                    Se todos atingirem a "Metinha" de vendas,
                     cada um ganha um bônus de <span className="font-bold text-green-400">{formatPrize(teamBonus, 'currency')}</span>.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                {isGoalAchieved ? (
+                {!isGoalAchievable ? (
+                     <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-4 text-muted-foreground">
+                        <div>
+                            <h4 className="font-bold">Mais Vendedores Necessários</h4>
+                            <p className="text-sm">A meta de equipe é ativada com no mínimo 2 vendedores.</p>
+                        </div>
+                    </div>
+                ) : isGoalAchieved ? (
                     <div className="flex items-center gap-3 rounded-lg bg-green-500/10 p-4 text-green-400">
                         <CheckCircle className="size-8" />
                         <div>
@@ -70,7 +78,7 @@ export default function RankingPage() {
     sellersData.every(s => s.salesValue === 0 && s.ticketAverage === 0 && s.pa === 0 && s.points === 0 && s.extraPoints === 0), [sellersData]);
 
   const rankedSellers = useMemo(() => {
-    const teamGoalMet = sellersData.length > 0 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold);
+    const teamGoalMet = sellersData.length > 1 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold);
     const teamBonus = 100;
 
     const sellersWithPrizes = sellersData.map(seller => {
