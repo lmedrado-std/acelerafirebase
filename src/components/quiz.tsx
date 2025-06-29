@@ -173,7 +173,7 @@ export default function Quiz() {
   }
 
   if (isFinished) {
-    const pointsEarned = score * difficultyConfig[difficulty].points;
+    const pointsPerCorrectAnswer = difficultyConfig[difficulty].points;
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <Trophy className="h-16 w-16 text-yellow-400" />
