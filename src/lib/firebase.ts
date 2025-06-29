@@ -1,8 +1,16 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
-// IMPORTANT: Replace these placeholder values with your actual Firebase project configuration.
-// You can find this in your Firebase project settings (Project Settings > General).
+// -----------------------------------------------------------------------------
+// 🚨 ATENÇÃO: CONFIGURAÇÃO DO FIREBASE 🚨
+// -----------------------------------------------------------------------------
+// As chaves abaixo são apenas placeholders. Você PRECISA substituí-las pelas
+// credenciais REAIS do seu projeto Firebase para que as funcionalidades
+// que dependem do Firestore (como cache de quizzes e histórico) funcionem.
+//
+// Você pode encontrar essas informações nas configurações do seu projeto Firebase:
+// Project Settings > General > Your apps > Web app > SDK setup and configuration
+// -----------------------------------------------------------------------------
 const firebaseConfig = {
   apiKey: 'YOUR_API_KEY',
   authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
