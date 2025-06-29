@@ -4,7 +4,6 @@ import * as React from 'react';
 import Link from 'next/link';
 import {usePathname, useRouter} from 'next/navigation';
 import {
-  Bell,
   GraduationCap,
   LayoutGrid,
   LogOut,
@@ -183,18 +182,6 @@ export default function SellerLayout({children}: {children: React.ReactNode}) {
             <main className="flex-1 p-4 sm:p-6 md:p-8 bg-background">
               {children}
             </main>
-            <footer className="flex items-center justify-between p-4 text-xs text-muted-foreground bg-background border-t">
-              <p>Desenvolvido com ❤️ por Rian</p>
-              <a
-                href="https://github.com/RyannBreston"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 hover:text-foreground"
-              >
-                <Github className="size-4" />
-                RyannBreston
-              </a>
-            </footer>
           </div>
         </div>
       </SidebarProvider>
