@@ -57,7 +57,7 @@ export const useSellerContext = () => {
 
 const menuItems = [
   {href: '/seller/dashboard', label: 'Dashboard', icon: LayoutGrid},
-  {href: '/seller/ranking', label: 'Ranking', icon: Trophy},
+  {href: '/seller/ranking', label: 'Meu Desempenho', icon: Trophy},
   {href: '/seller/missions', label: 'Missões', icon: Target},
   {href: '/seller/academia', label: 'Academia', icon: GraduationCap},
   {href: '/seller/quiz', label: 'Quiz', icon: Puzzle},
@@ -75,8 +75,10 @@ export default function SellerLayout({children}: {children: React.ReactNode}) {
   }));
 
   const [currentSeller, setCurrentSeller] = React.useState<Seller | null>(null);
+  const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
+    setIsClient(true);
     const sellerId = localStorage.getItem('loggedInSellerId');
     if (sellerId) {
       const foundSeller = sellers.find(s => s.id === sellerId);
@@ -170,13 +172,15 @@ export default function SellerLayout({children}: {children: React.ReactNode}) {
                     3
                   </Badge>
                 </Button>
-                <Button
-                  onClick={handleLogout}
-                  variant="secondary"
-                  className="group-data-[collapsible=icon]:hidden bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
-                >
-                  <LogOut className="mr-2 size-4" /> Sair
-                </Button>
+                {isClient && (
+                  <Button
+                    onClick={handleLogout}
+                    variant="secondary"
+                    className="group-data-[collapsible=icon]:hidden bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
+                  >
+                    <LogOut className="mr-2 size-4" /> Sair
+                  </Button>
+                )}
               </div>
             </SidebarFooter>
           </Sidebar>

@@ -71,6 +71,11 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
   const pathname = usePathname();
   const router = useRouter();
   const state = useStore(s => s);
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const contextValue = {
     sellers: state.sellers,
@@ -145,13 +150,15 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
                     524
                   </Badge>
                 </Button>
-                <Button
-                  onClick={handleLogout}
-                  variant="secondary"
-                  className="group-data-[collapsible=icon]:hidden bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
-                >
-                  <LogOut className="mr-2 size-4" /> Sair
-                </Button>
+                {isClient && (
+                  <Button
+                    onClick={handleLogout}
+                    variant="secondary"
+                    className="group-data-[collapsible=icon]:hidden bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
+                  >
+                    <LogOut className="mr-2 size-4" /> Sair
+                  </Button>
+                )}
               </div>
             </SidebarFooter>
           </Sidebar>
