@@ -1,29 +1,39 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Users, Trophy, DollarSign, LayoutGrid, Star } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Trophy, DollarSign, LayoutGrid, Star, Ticket, Box } from "lucide-react";
 import { useAdminContext } from '@/app/admin/layout';
+import SalesOverviewChart from '@/components/SalesOverviewChart';
 
 export default function DashboardPage() {
-  const { sellers: sellersData, goals: goalsData } = useAdminContext();
+  const { sellers: sellersData } = useAdminContext();
 
-  const { bestSeller, totalSellers, currentSales, monthlyGoal, totalPoints } = useMemo(() => {
-    if (sellersData.length === 0) {
+  const { 
+    bestSeller,
+    totalSellers,
+    currentSales,
+    totalPoints,
+    averageTicket,
+    averagePA
+  } = useMemo(() => {
+    const totalSellers = sellersData.length;
+    
+    if (totalSellers === 0) {
       return {
         bestSeller: { name: "Nenhum", value: 0 },
         totalSellers: 0,
         currentSales: 0,
-        monthlyGoal: 0,
         totalPoints: 0,
+        averageTicket: 0,
+        averagePA: 0,
       };
     }
 
-    const totalSellers = sellersData.length;
     const currentSales = sellersData.reduce((acc, seller) => acc + seller.salesValue, 0);
-    const monthlyGoal = goalsData.salesValue.meta * totalSellers;
     const totalPoints = sellersData.reduce((acc, seller) => acc + seller.points + seller.extraPoints, 0);
+    const totalTicket = sellersData.reduce((acc, seller) => acc + seller.ticketAverage, 0);
+    const totalPA = sellersData.reduce((acc, seller) => acc + seller.pa, 0);
 
     const bestSellerData = sellersData.reduce((prev, current) => 
       (prev.salesValue > current.salesValue) ? prev : current
@@ -33,12 +43,11 @@ export default function DashboardPage() {
       bestSeller: { name: bestSellerData.name, value: bestSellerData.salesValue },
       totalSellers,
       currentSales,
-      monthlyGoal,
       totalPoints,
+      averageTicket: totalSellers > 0 ? totalTicket / totalSellers : 0,
+      averagePA: totalSellers > 0 ? totalPA / totalSellers : 0,
     };
-  }, [sellersData, goalsData]);
-
-  const progress = monthlyGoal > 0 ? (currentSales / monthlyGoal) * 100 : 0;
+  }, [sellersData]);
 
   return (
     <div className="space-y-8">
@@ -46,38 +55,12 @@ export default function DashboardPage() {
         <LayoutGrid className="size-8 text-primary" />
         <h1 className="text-3xl font-bold">Dashboard</h1>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Vendedores Ativos
+              Vendas Totais (Mês)
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalSellers}</div>
-            <p className="text-xs text-muted-foreground">
-              Total de vendedores na equipe
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Melhor Vendedor (Mês)
-            </CardTitle>
-            <Trophy className="h-4 w-4 text-yellow-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{bestSeller.name}</div>
-            <p className="text-xs text-muted-foreground">
-              {bestSeller.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} em vendas
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas Totais (Mês)</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -85,7 +68,39 @@ export default function DashboardPage() {
               {currentSales.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </div>
             <p className="text-xs text-muted-foreground">
-              Total de vendas realizadas no período
+              Total de vendas da equipe
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+             Ticket Médio (Equipe)
+            </CardTitle>
+            <Ticket className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {averageTicket.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+             Média de ticket por venda
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              PA Médio (Equipe)
+            </CardTitle>
+            <Box className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {averagePA.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Média de produtos por atendimento
             </p>
           </CardContent>
         </Card>
@@ -103,28 +118,38 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
+         <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Melhor Vendedor (Mês)
+            </CardTitle>
+            <Trophy className="h-4 w-4 text-yellow-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{bestSeller.name}</div>
+            <p className="text-xs text-muted-foreground">
+              {bestSeller.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} em vendas
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Vendedores Ativos
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalSellers}</div>
+            <p className="text-xs text-muted-foreground">
+              Total de vendedores na equipe
+            </p>
+          </CardContent>
+        </Card>
       </div>
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle>Progresso da Meta Mensal</CardTitle>
-          <CardDescription>
-            Acompanhe o progresso da equipe em relação à meta de vendas do mês.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-4">
-            <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Progresso</span>
-                    <span className="font-semibold">{progress.toFixed(0)}%</span>
-                </div>
-                <Progress value={progress} className="h-3" />
-                <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>{currentSales.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                    <span>{monthlyGoal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                </div>
-            </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-4">
+        <SalesOverviewChart sellers={sellersData} />
+      </div>
     </div>
   );
 }
