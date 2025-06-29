@@ -41,7 +41,6 @@ export type GoalLevels = {
   lendaria: GoalLevel;
 };
 
-// Add a specific type for SalesValue goals to include the performance bonus
 export type SalesValueGoals = GoalLevels & {
   performanceBonus?: {
     per: number;
@@ -50,7 +49,7 @@ export type SalesValueGoals = GoalLevels & {
 };
 
 export type Goals = {
-  salesValue: SalesValueGoals; // Use the new type
+  salesValue: SalesValueGoals;
   ticketAverage: GoalLevels;
   pa: GoalLevels;
   points: GoalLevels;
@@ -118,18 +117,11 @@ export type GenerateQuizOutput = z.infer<typeof GenerateQuizOutputSchema>;
 
 
 // Generate Course (For Academia Page)
-export const GenerateCourseInputSchema = z.object({
-  topic: z.string(),
-  seed: z.string().optional().describe('An optional seed for controlling randomness and uniqueness.'),
-  dificuldade: z.enum(['Fácil', 'Médio', 'Difícil']).optional(),
-});
-export type GenerateCourseInput = z.infer<typeof GenerateCourseInputSchema>;
-
-const CourseQuizQuestionSchema = z.object({
-    question: z.string(),
-    options: z.array(z.string()),
-    correctAnswerIndex: z.number(),
-    explanation: z.string(),
+export const CourseQuizQuestionSchema = z.object({
+  question: z.string(),
+  options: z.array(z.string()),
+  correctAnswerIndex: z.number(),
+  explanation: z.string(),
 });
 
 export const GenerateCourseOutputSchema = z.object({
@@ -138,6 +130,13 @@ export const GenerateCourseOutputSchema = z.object({
   quiz: z.array(CourseQuizQuestionSchema),
 });
 export type GenerateCourseOutput = z.infer<typeof GenerateCourseOutputSchema>;
+
+export const GenerateCourseInputSchema = z.object({
+  topic: z.string(),
+  seed: z.string().optional().describe('An optional seed for controlling randomness and uniqueness.'),
+  dificuldade: z.enum(['Fácil', 'Médio', 'Difícil']).optional(),
+});
+export type GenerateCourseInput = z.infer<typeof GenerateCourseInputSchema>;
 
 
 // Password Reset
