@@ -126,7 +126,6 @@ export default function Quiz() {
       };
       
       if (isSellerView && setSellers && currentSeller) {
-        const today = new Date().toISOString().split('T')[0];
         setSellers(prevSellers =>
             prevSellers.map(seller =>
                 seller.id === currentSeller.id
@@ -193,7 +192,6 @@ export default function Quiz() {
   }
 
   if (!quiz || !currentQuestion) {
-    const today = new Date().toISOString().split('T')[0];
     const hasCompleted = isSellerView && currentSeller?.hasCompletedQuiz;
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">

@@ -12,7 +12,6 @@ import {
   Target,
   Trophy,
   User,
-  Github,
   ShoppingBag,
 } from 'lucide-react';
 
@@ -38,7 +37,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {Button} from '@/components/ui/button';
-import {Badge} from '@/components/ui/badge';
 import {Logo} from '@/components/icons/logo';
 import {cn} from '@/lib/utils';
 import type {Admin, Goals, Mission, Seller} from '@/lib/types';
@@ -91,7 +89,7 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
     setIsClient(true);
   }, []);
 
-  const contextValue = {
+  const contextValue = React.useMemo(() => ({
     sellers: state.sellers,
     setSellers: dataStore.setSellers,
     goals: state.goals,
@@ -102,7 +100,7 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
     setAdminUser: dataStore.setAdminUser,
     isDirty,
     setIsDirty,
-  };
+  }), [state.sellers, state.goals, state.missions, state.adminUser, isDirty]);
 
   const handleNavigate = (path: string) => {
     if (pathname === '/admin/settings' && isDirty) {
@@ -180,6 +178,7 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
                     variant="secondary"
                     className="group-data-[collapsible=icon]:hidden bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
                   >
+                    <LogOut />
                     Sair
                   </Button>
                 )}

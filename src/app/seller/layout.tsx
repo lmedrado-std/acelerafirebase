@@ -12,7 +12,6 @@ import {
   Trophy,
   User,
   ShoppingBag,
-  Github,
 } from 'lucide-react';
 
 import {
@@ -27,7 +26,6 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {Button} from '@/components/ui/button';
-import {Badge} from '@/components/ui/badge';
 import {Logo} from '@/components/icons/logo';
 import {cn} from '@/lib/utils';
 import type {Seller, Goals, Mission} from '@/lib/types';
@@ -67,11 +65,7 @@ const menuItems = [
 export default function SellerLayout({children}: {children: React.ReactNode}) {
   const pathname = usePathname();
   const router = useRouter();
-  const {sellers, goals, missions} = useStore(s => ({
-    sellers: s.sellers,
-    goals: s.goals,
-    missions: s.missions,
-  }));
+  const state = useStore(s => s);
 
   const [currentSeller, setCurrentSeller] = React.useState<Seller | null>(null);
   const [isClient, setIsClient] = React.useState(false);
@@ -80,18 +74,17 @@ export default function SellerLayout({children}: {children: React.ReactNode}) {
     setIsClient(true);
     const sellerId = localStorage.getItem('loggedInSellerId');
     if (sellerId) {
-      const foundSeller = sellers.find(s => s.id === sellerId);
+      const foundSeller = state.sellers.find(s => s.id === sellerId);
       if (foundSeller) {
         setCurrentSeller(foundSeller);
       } else {
-        // Clear invalid ID and redirect to login
         localStorage.removeItem('loggedInSellerId');
         router.push('/login');
       }
     } else {
       router.push('/login');
     }
-  }, [sellers, router]);
+  }, [state.sellers, router]);
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -100,7 +93,14 @@ export default function SellerLayout({children}: {children: React.ReactNode}) {
     router.push('/login');
   };
 
-  // Render a loading state while we identify the current seller.
+  const contextValue = React.useMemo(() => ({
+    sellers: state.sellers,
+    setSellers: dataStore.setSellers,
+    goals: state.goals,
+    missions: state.missions,
+    currentSeller: currentSeller!,
+  }), [state.sellers, state.goals, state.missions, currentSeller]);
+
   if (!currentSeller) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
@@ -110,16 +110,8 @@ export default function SellerLayout({children}: {children: React.ReactNode}) {
     );
   }
 
-  const value = {
-    sellers,
-    setSellers: dataStore.setSellers,
-    goals,
-    missions,
-    currentSeller,
-  };
-
   return (
-    <SellerContext.Provider value={value}>
+    <SellerContext.Provider value={contextValue}>
       <SidebarProvider>
         <div className="flex min-h-screen">
           <Sidebar
@@ -165,6 +157,7 @@ export default function SellerLayout({children}: {children: React.ReactNode}) {
                     variant="secondary"
                     className="group-data-[collapsible=icon]:hidden bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
                   >
+                    <LogOut />
                     Sair
                   </Button>
                 )}

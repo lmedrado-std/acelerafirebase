@@ -466,34 +466,32 @@ export default function RankingPage() {
                     </div>
                 </div>
 
-                {criterion !== 'salesValue' && (
-                  <div>
-                      <h4 className="font-semibold mb-3">Progresso para Próxima Meta</h4>
-                      <TooltipProvider>
-                          <Tooltip>
-                          <TooltipTrigger asChild>
-                              <div className="flex flex-col gap-1.5 text-left w-full">
-                              <div className="flex justify-between items-center">
-                                  <span className="text-sm font-medium">
-                                  {label}
-                                  </span>
-                                  <span className="text-sm font-bold">
-                                  {percent.toFixed(0)}%
-                                  </span>
-                              </div>
-                              <Progress
-                                  value={percent}
-                                  className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-purple-500"
-                              />
-                              </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                              <p>{details}</p>
-                          </TooltipContent>
-                          </Tooltip>
-                      </TooltipProvider>
-                  </div>
-                )}
+                <div>
+                    <h4 className="font-semibold mb-3">Progresso para Próxima Meta</h4>
+                    <TooltipProvider>
+                        <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="flex flex-col gap-1.5 text-left w-full">
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium">
+                                {label}
+                                </span>
+                                <span className="text-sm font-bold">
+                                {percent.toFixed(0)}%
+                                </span>
+                            </div>
+                            <Progress
+                                value={percent}
+                                className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-purple-500"
+                            />
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{details}</p>
+                        </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
             </>
             )}
         </CardContent>
