@@ -25,7 +25,7 @@ export type Seller = {
 
 export type Admin = {
   nickname: string;
-  email: string;
+  email?: string;
   password: string;
 };
 
