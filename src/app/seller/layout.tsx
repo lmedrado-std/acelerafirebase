@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   History,
   Loader2,
+  User,
 } from 'lucide-react';
 
 import {
@@ -61,6 +62,7 @@ const menuItems = [
   {href: '/seller/quiz', label: 'Quiz', icon: Puzzle},
   {href: '/seller/loja', label: 'Loja', icon: ShoppingBag},
   {href: '/seller/historico', label: 'Histórico', icon: History},
+  {href: '/seller/perfil', label: 'Meu Perfil', icon: User},
 ];
 
 const SellerSidebarContent = () => {
