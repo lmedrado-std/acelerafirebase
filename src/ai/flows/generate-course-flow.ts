@@ -153,6 +153,7 @@ const generateCourseFlow = ai.defineFlow(
     try {
       const response = await prompt(input);
 
+      // Prefer the structured output if available
       if (response.output) {
         if (response.output.quiz.length === 0) {
           console.warn(
@@ -163,6 +164,7 @@ const generateCourseFlow = ai.defineFlow(
         return response.output;
       }
 
+      // Fallback to parsing raw text if structured output is missing
       const rawText = response.text;
       if (!rawText) {
         console.warn('⚠️ IA retornou uma resposta vazia. Usando fallback.');
@@ -178,18 +180,24 @@ const generateCourseFlow = ai.defineFlow(
       }
 
       const jsonString = match[1] || match[2];
-      const parsed = JSON.parse(jsonString);
+      try {
+        const parsed = JSON.parse(jsonString);
+        const validated = GenerateCourseOutputSchema.parse(parsed);
 
-      const validated = GenerateCourseOutputSchema.parse(parsed);
+        if (validated.quiz.length === 0) {
+          console.warn(
+            '⚠️ IA retornou um curso válido mas sem quiz (após parse). Usando fallback.'
+          );
+          return getFallbackCourse();
+        }
 
-      if (validated.quiz.length === 0) {
-        console.warn(
-          '⚠️ IA retornou um curso válido mas sem quiz (após parse). Usando fallback.'
-        );
-        return getFallbackCourse();
+        return validated;
+      } catch (parseError) {
+         console.error('❌ Erro ao parsear JSON do fluxo de geração de curso:', parseError);
+         console.warn('⚠️ Usando fallback local por falha no parse do JSON.');
+         return getFallbackCourse();
       }
 
-      return validated;
     } catch (error) {
       console.error('❌ Erro no fluxo de geração de curso:', error);
       console.warn('⚠️ Usando fallback local por falha na IA.');
