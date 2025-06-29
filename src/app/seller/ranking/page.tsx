@@ -8,7 +8,7 @@ import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star } from 'lucide-reac
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useSellerContext } from '@/app/seller/layout';
-import type { GoalLevel as GoalLevelType, Seller, Goals } from '@/lib/types';
+import type { GoalLevel as GoalLevelType, Seller, Goals, SalesValueGoals } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -30,33 +30,45 @@ export default function RankingPage() {
 
   const sortedSellers = useMemo(() => {
      const sellersWithPrizes = sellersData.map(seller => {
-        let totalPrize = 0;
-        const criteria: Array<keyof Goals> = ['salesValue', 'ticketAverage', 'pa', 'points'];
+        const prizes: Record<keyof Omit<Goals, 'salesValue'> | 'salesValue', number> = {
+            salesValue: 0,
+            ticketAverage: 0,
+            pa: 0,
+            points: 0,
+        };
+
+        const allCriteria: Array<keyof Goals> = ['salesValue', 'ticketAverage', 'pa', 'points'];
         
-        criteria.forEach(crit => {
+        allCriteria.forEach(crit => {
             const goals = goalsData[crit];
             const sellerValue = crit === 'points' ? seller.points + seller.extraPoints : seller[crit];
 
-            if (sellerValue >= goals.metinha.threshold) totalPrize += goals.metinha.prize;
-            if (sellerValue >= goals.meta.threshold) totalPrize += goals.meta.prize;
-            if (sellerValue >= goals.metona.threshold) totalPrize += goals.metona.prize;
-            if (sellerValue >= goals.lendaria.threshold) totalPrize += goals.lendaria.prize;
+            let currentPrize = 0;
+            if (sellerValue >= goals.metinha.threshold) currentPrize += goals.metinha.prize;
+            if (sellerValue >= goals.meta.threshold) currentPrize += goals.meta.prize;
+            if (sellerValue >= goals.metona.threshold) currentPrize += goals.metona.prize;
+            if (sellerValue >= goals.lendaria.threshold) currentPrize += goals.lendaria.prize;
+
+            // Add performance bonus only if criterion is salesValue
+            if (crit === 'salesValue') {
+                const salesGoals = goals as SalesValueGoals;
+                if (seller.salesValue > salesGoals.lendaria.threshold && salesGoals.performanceBonus && salesGoals.performanceBonus.per > 0) {
+                    const excessSales = seller.salesValue - salesGoals.lendaria.threshold;
+                    const bonusUnits = Math.floor(excessSales / salesGoals.performanceBonus.per);
+                    currentPrize += bonusUnits * salesGoals.performanceBonus.prize;
+                }
+            }
+            prizes[crit] = currentPrize;
         });
 
-        // Performance Bonus Calculation (only for salesValue)
-        const salesGoals = goalsData.salesValue;
-        if (seller.salesValue > salesGoals.lendaria.threshold && salesGoals.performanceBonus && salesGoals.performanceBonus.per > 0) {
-             const excessSales = seller.salesValue - salesGoals.lendaria.threshold;
-             const bonusUnits = Math.floor(excessSales / salesGoals.performanceBonus.per);
-             totalPrize += bonusUnits * salesGoals.performanceBonus.prize;
-        }
+        const totalPrize = Object.values(prizes).reduce((sum, p) => sum + p, 0);
 
-        return { ...seller, totalPrize };
+        return { ...seller, prizes, totalPrize };
     });
 
     return sellersWithPrizes.sort((a, b) => {
         if (criterion === 'totalPrize') {
-          return (b as any).totalPrize - (a as any).totalPrize;
+          return b.totalPrize - a.totalPrize;
         }
         if (criterion === 'points') {
             return (b.points + b.extraPoints) - (a.points + a.extraPoints);
@@ -76,7 +88,7 @@ export default function RankingPage() {
       case 'points':
         return 'Pontos';
       case 'totalPrize':
-        return 'Total de Prêmios';
+        return 'Prêmio Total';
       default:
         return '';
     }
@@ -172,7 +184,7 @@ export default function RankingPage() {
                             <Star className="mr-2 size-4" /> Pontos
                         </TabsTrigger>
                          <TabsTrigger value="totalPrize" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
-                            <Trophy className="mr-2 size-4" /> Prêmios
+                            <Trophy className="mr-2 size-4" /> Prêmio Total
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>
@@ -211,7 +223,7 @@ export default function RankingPage() {
                   <TableBody>
                     {sortedSellers.map((seller, index) => {
                       const sellerValue = criterion === 'totalPrize' 
-                        ? (seller as any).totalPrize
+                        ? seller.totalPrize
                         : (criterion === 'points' ? seller.points + seller.extraPoints : seller[criterion]);
                       
                       const criterionGoals = criterion !== 'totalPrize' ? goalsData[criterion] : null;
@@ -224,6 +236,10 @@ export default function RankingPage() {
                       ] : [];
 
                       const { percent, label, details } = getGoalProgress(sellerValue, criterion);
+
+                      const prizeToDisplay = criterion === 'totalPrize' 
+                        ? seller.totalPrize 
+                        : (seller.prizes[criterion as keyof typeof seller.prizes] || 0);
                       
                       return (
                         <TableRow key={seller.id} className={cn(
@@ -235,7 +251,7 @@ export default function RankingPage() {
                           </TableCell>
                           <TableCell className="font-medium">{seller.name}</TableCell>
                            <TableCell className="text-right font-semibold text-green-400">
-                             {formatPrize((seller as any).totalPrize)}
+                             {formatPrize(prizeToDisplay)}
                           </TableCell>
                           {criterion !== 'totalPrize' && criterionGoals && (
                             <>
