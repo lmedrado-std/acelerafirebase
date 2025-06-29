@@ -62,8 +62,8 @@ export default function PerfilPage() {
                     <Input id="name" value={currentSeller.name} disabled className="bg-input" />
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-input" />
+                    <Label htmlFor="email">Email (Opcional)</Label>
+                    <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-input" />
                 </div>
                  <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
