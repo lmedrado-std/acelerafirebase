@@ -133,7 +133,7 @@ export default function RankingPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="rounded-md border border-border/50">
+                  <div className="rounded-md border border-border/50 overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="border-border/50">

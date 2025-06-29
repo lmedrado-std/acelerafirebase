@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -201,6 +201,7 @@ const Sidebar = React.forwardRef<
             className="h-auto w-full rounded-t-2xl bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
             side="bottom"
           >
+            <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
             <div className="flex h-auto max-h-[80svh] w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star, Minus, Users, CheckCircle } from 'lucide-react';
 import { useSellerContext } from '@/app/seller/layout';
 import type { Goals, Seller, SalesValueGoals } from '@/lib/types';
@@ -63,6 +64,7 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
 
 export default function RankingPage() {
   const { sellers: sellersData, goals: goalsData, currentSeller } = useSellerContext();
+  const [criterion, setCriterion] = useState<'salesValue' | 'ticketAverage' | 'pa' | 'points' | 'totalPrize'>('totalPrize');
 
   const isAllPerformanceZero = useMemo(() => 
     sellersData.every(s => s.salesValue === 0 && s.ticketAverage === 0 && s.pa === 0 && s.points === 0 && s.extraPoints === 0), [sellersData]);
@@ -100,18 +102,24 @@ export default function RankingPage() {
         });
         let totalPrize = Object.values(prizes).reduce((sum, p) => sum + p, 0);
         if (teamGoalMet) totalPrize += teamBonus;
-        return { ...seller, totalPrize };
+        return { ...seller, totalPrize, prizes };
     });
 
-    if (isAllPerformanceZero) return [...sellersWithPrizes].sort((a,b) => a.name.localeCompare(b.name));
-    return sellersWithPrizes.sort((a, b) => b.totalPrize - a.totalPrize || a.name.localeCompare(b.name));
-  }, [sellersData, goalsData, isAllPerformanceZero]);
+    return sellersWithPrizes.sort((a, b) => {
+        if (criterion === 'totalPrize') return b.totalPrize - a.totalPrize;
+        if (criterion === 'points') return (b.points + b.extraPoints) - (a.points + a.extraPoints);
+        return b[criterion as 'salesValue' | 'ticketAverage' | 'pa'] - a[criterion as 'salesValue' | 'ticketAverage' | 'pa'];
+    });
+  }, [sellersData, goalsData, criterion]);
 
-  const myRank = useMemo(() => {
+  const myData = useMemo(() => {
     if (!currentSeller) return null;
-    const index = rankedSellers.findIndex(s => s.id === currentSeller.id);
-    return index !== -1 ? { rank: index + 1, data: rankedSellers[index] } : null;
-  }, [rankedSellers, currentSeller]);
+    const sellerWithPrize = rankedSellers.find(s => s.id === currentSeller.id);
+    if (!sellerWithPrize) return null;
+    const rank = rankedSellers.findIndex(s => s.id === currentSeller.id) + 1;
+    return { ...sellerWithPrize, rank };
+  }, [currentSeller, rankedSellers]);
+
 
   return (
     <div className="space-y-8">
@@ -119,32 +127,50 @@ export default function RankingPage() {
         <Trophy className="size-8 text-primary" />
         <h1 className="text-3xl font-bold font-sans">Meu Desempenho no Ranking</h1>
       </div>
+      <div className="w-full overflow-x-auto pb-2">
+         <Tabs value={criterion} onValueChange={(v) => setCriterion(v as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 gap-1 p-1 h-auto">
+                <TabsTrigger value="totalPrize"><Trophy className="mr-2"/>Prêmio Total</TabsTrigger>
+                <TabsTrigger value="salesValue"><DollarSign className="mr-2"/>Vendas</TabsTrigger>
+                <TabsTrigger value="points"><Star className="mr-2"/>Pontos</TabsTrigger>
+                <TabsTrigger value="ticketAverage"><Ticket className="mr-2"/>T. Médio</TabsTrigger>
+                <TabsTrigger value="pa"><Box className="mr-2"/>PA</TabsTrigger>
+            </TabsList>
+        </Tabs>
+      </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-2 space-y-4">
             <Card className="bg-gradient-to-br from-card to-background/80 shadow-xl rounded-2xl ring-1 ring-white/10">
                  <CardHeader>
-                    <CardTitle>Sua Posição Atual</CardTitle>
+                    <CardTitle>Sua Posição por <span className="text-primary">{
+                        {totalPrize: "Prêmio Total", salesValue: "Vendas", points: "Pontos", ticketAverage: "Ticket Médio", pa: "PA"}[criterion]
+                    }</span></CardTitle>
                  </CardHeader>
                  <CardContent>
-                    {myRank ? (
+                    {myData ? (
                          <div className={cn(
                             "rounded-xl p-4 shadow-lg border-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4",
-                             myRank.rank === 1 && "border-yellow-400/50 bg-primary/10 animate-glow",
-                             myRank.rank === 2 && "border-slate-400/50 bg-secondary/10",
-                             myRank.rank === 3 && "border-orange-400/50 bg-chart-3/10",
-                             myRank.rank > 3 && "border-border/50"
+                             myData.rank === 1 && "border-yellow-400/50 bg-primary/10 animate-glow",
+                             myData.rank === 2 && "border-slate-400/50 bg-secondary/10",
+                             myData.rank === 3 && "border-orange-400/50 bg-chart-3/10",
+                             myData.rank > 3 && "border-border/50"
                          )}>
                             <div className="flex items-center gap-4">
-                               <div className="text-4xl font-black w-16 text-center">{myRank.rank}º</div>
+                               <div className="text-4xl font-black w-16 text-center">{myData.rank}º</div>
                                <div>
-                                  <p className="text-2xl font-bold">{myRank.data.name}</p>
-                                  <p className="text-muted-foreground">Seu desempenho no ciclo atual</p>
+                                  <p className="text-2xl font-bold">{myData.name}</p>
+                                  <p className="text-muted-foreground">Sua posição na equipe</p>
                                </div>
                             </div>
                             <div className="w-full sm:w-auto mt-4 sm:mt-0 text-left sm:text-right">
-                               <p className="text-3xl font-bold text-green-400">{formatPrize(myRank.data.totalPrize, 'currency')}</p>
-                               <p className="text-sm text-muted-foreground">Prêmio Total Acumulado</p>
+                               <p className="text-3xl font-bold text-green-400">{formatPrize(
+                                   criterion === 'totalPrize' ? myData.totalPrize : 
+                                   criterion === 'points' ? myData.points + myData.extraPoints :
+                                   myData[criterion as keyof Seller],
+                                   criterion === 'points' || criterion === 'totalPrize' ? 'currency' : 'decimal' 
+                               )}</p>
+                               <p className="text-sm text-muted-foreground">Valor no critério</p>
                             </div>
                          </div>
                     ) : (
