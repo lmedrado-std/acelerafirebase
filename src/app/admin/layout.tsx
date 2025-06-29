@@ -10,7 +10,6 @@ import {
   Shield,
   Target,
   Trophy,
-  User,
   ShoppingBag,
   History,
   Loader2,
@@ -77,7 +76,6 @@ const menuItems = [
   {href: '/admin/quiz', label: 'Quiz', icon: Puzzle},
   {href: '/admin/loja', label: 'Loja', icon: ShoppingBag},
   {href: '/admin/historico', label: 'Histórico', icon: History},
-  {href: '/admin/perfil', label: 'Perfil', icon: User},
   {href: '/admin/settings', label: 'Configurações', icon: Shield},
 ];
 

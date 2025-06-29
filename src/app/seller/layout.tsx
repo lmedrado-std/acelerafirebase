@@ -9,7 +9,6 @@ import {
   Puzzle,
   Target,
   Trophy,
-  User,
   ShoppingBag,
   History,
   Loader2,
@@ -62,7 +61,6 @@ const menuItems = [
   {href: '/seller/quiz', label: 'Quiz', icon: Puzzle},
   {href: '/seller/loja', label: 'Loja', icon: ShoppingBag},
   {href: '/seller/historico', label: 'Histórico', icon: History},
-  {href: '/seller/perfil', label: 'Meu Perfil', icon: User},
 ];
 
 const SellerSidebarContent = () => {
