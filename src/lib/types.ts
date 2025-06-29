@@ -70,7 +70,7 @@ export const AnalyzeSalesTrendsOutputSchema = z.object({
 export type AnalyzeSalesTrendsOutput = z.infer<typeof AnalyzeSalesTrendsOutputSchema>;
 
 
-// Generate Quiz
+// Generate Quiz (For Quiz Page)
 export const QuizQuestionSchema = z.object({
   questionText: z.string().describe('The text of the quiz question.'),
   options: z.array(z.string()).min(4).max(4).describe('A list of four possible answers for the question.'),
@@ -92,28 +92,23 @@ export const GenerateQuizOutputSchema = z.object({
 export type GenerateQuizOutput = z.infer<typeof GenerateQuizOutputSchema>;
 
 
-// Generate Course
-export const CourseModuleSchema = z.object({
-  title: z.string().describe("The title of the course module."),
-  content: z.string().describe("The content of the course module, in Markdown format."),
-});
-
-export const QuizSchema = z.object({
-  title: z.string().describe('The title of the quiz.'),
-  questions: z.array(QuizQuestionSchema),
-});
-
+// Generate Course (For Academia Page)
 export const GenerateCourseInputSchema = z.object({
-  topic: z.string().describe('The topic for the course.'),
+  topic: z.string(),
 });
 export type GenerateCourseInput = z.infer<typeof GenerateCourseInputSchema>;
 
+const CourseQuizQuestionSchema = z.object({
+    question: z.string(),
+    options: z.array(z.string()),
+    correctAnswerIndex: z.number(),
+    explanation: z.string(),
+});
+
 export const GenerateCourseOutputSchema = z.object({
-  title: z.string().describe('The title of the generated course.'),
-  description: z.string().describe('A brief description of the course.'),
-  points: z.number().describe('The suggested number of points for completing the course (between 100 and 500).'),
-  modules: z.array(CourseModuleSchema).describe('An array of course modules.'),
-  quiz: QuizSchema.describe('A final quiz to test the knowledge from the course.'),
+  title: z.string(),
+  content: z.string(),
+  quiz: z.array(CourseQuizQuestionSchema),
 });
 export type GenerateCourseOutput = z.infer<typeof GenerateCourseOutputSchema>;
 
@@ -121,6 +116,7 @@ export type GenerateCourseOutput = z.infer<typeof GenerateCourseOutputSchema>;
 // Component-specific types
 export type Course = GenerateCourseOutput & {
   id: string;
+  points: number; // Manually added in the component
 };
 
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;

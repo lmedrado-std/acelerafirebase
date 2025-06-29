@@ -2,9 +2,8 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2, Sparkles, BookCopy, Trash2, GraduationCap, Star } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Sparkles, BookCopy, Trash2, GraduationCap, Star, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
 import { generateCourse } from "@/ai/flows/generate-course-flow";
@@ -13,6 +12,67 @@ import { cn } from '@/lib/utils';
 import { useAdminContext } from '@/app/admin/layout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
+const COURSE_POINTS = 150; // Fixed points for completing a course
+
+// Component for a single course quiz
+const CourseQuiz = ({ course, onComplete }: { course: Course; onComplete: () => void }) => {
+    const [answers, setAnswers] = useState<(number | null)[]>(new Array(course.quiz.length).fill(null));
+    const [submitted, setSubmitted] = useState(false);
+
+    const handleAnswerChange = (questionIndex: number, answerIndex: number) => {
+        const newAnswers = [...answers];
+        newAnswers[questionIndex] = answerIndex;
+        setAnswers(newAnswers);
+    };
+
+    const handleSubmit = () => {
+        setSubmitted(true);
+        onComplete();
+    };
+    
+    const allQuestionsAnswered = answers.every(a => a !== null);
+
+    return (
+        <div className="space-y-6">
+            <h4 className="font-semibold text-lg">Teste seus conhecimentos</h4>
+            {course.quiz.map((q, qIndex) => (
+                <div key={qIndex} className={cn(
+                    "p-4 rounded-lg bg-input transition-all",
+                    submitted && (answers[qIndex] === q.correctAnswerIndex ? 'border-2 border-green-500' : 'border-2 border-destructive')
+                )}>
+                    <p><strong>{qIndex + 1}. {q.question}</strong></p>
+                    <RadioGroup
+                        value={answers[qIndex]?.toString()}
+                        onValueChange={(value) => handleAnswerChange(qIndex, parseInt(value))}
+                        disabled={submitted}
+                        className="mt-2 space-y-2"
+                    >
+                        {q.options.map((opt, oIndex) => (
+                            <Label key={oIndex} htmlFor={`q${qIndex}-o${oIndex}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-background/50 cursor-pointer">
+                                <RadioGroupItem value={oIndex.toString()} id={`q${qIndex}-o${oIndex}`} />
+                                <span>{opt}</span>
+                            </Label>
+                        ))}
+                    </RadioGroup>
+                    {submitted && (
+                        <div className="mt-3 text-sm flex items-center gap-2">
+                             {answers[qIndex] === q.correctAnswerIndex 
+                                ? <CheckCircle className="size-4 text-green-500" />
+                                : <XCircle className="size-4 text-destructive" />}
+                            <p><span className="font-bold">Explicação:</span> {q.explanation}</p>
+                        </div>
+                    )}
+                </div>
+            ))}
+            <Button onClick={handleSubmit} disabled={!allQuestionsAnswered || submitted}>
+                {submitted ? 'Quiz Finalizado' : 'Finalizar Quiz e Concluir Curso'}
+            </Button>
+        </div>
+    );
+};
+
 
 export default function AcademiaPage() {
   const { sellers, setSellers } = useAdminContext();
@@ -46,8 +106,9 @@ export default function AcademiaPage() {
       const newCourse: Course = {
         id: new Date().getTime().toString(),
         ...result,
+        points: COURSE_POINTS,
       };
-      setCourses(prev => [...prev, newCourse]);
+      setCourses(prev => [newCourse, ...prev]);
       toast({
         title: "Curso Gerado com Sucesso!",
         description: `O curso "${result.title}" foi criado.`,
@@ -68,7 +129,7 @@ export default function AcademiaPage() {
     setCourses(prev => prev.filter(c => c.id !== id));
   };
 
-  const handleCompleteCourse = (course: Course) => {
+  const handleCompleteCourse = (courseId: string) => {
     if (!selectedSellerId) {
         toast({
             variant: 'destructive',
@@ -78,8 +139,11 @@ export default function AcademiaPage() {
         return;
     }
 
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
     const sellerToUpdate = sellers.find(s => s.id === selectedSellerId);
+    const course = courses.find(c => c.id === courseId);
+
+    if (!course) return;
 
     if (sellerToUpdate?.lastCourseCompletionDate === today) {
         toast({
@@ -113,13 +177,10 @@ export default function AcademiaPage() {
 
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-xl">Gerenciar Cursos da Academia</CardTitle>
-          <CardDescription>Gere e gerencie os cursos de treinamento para os vendedores usando IA.</CardDescription>
+          <CardTitle className="text-xl">Gerador de Cursos</CardTitle>
+          <CardDescription>Selecione um tópico e clique no botão para gerar um curso completo com IA, incluindo um mini quiz.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="p-6 border rounded-lg border-border">
-            <h3 className="text-lg font-semibold">Gerador de Cursos</h3>
-            <p className="text-muted-foreground mb-4">Selecione um tópico e clique no botão para gerar um curso completo usando IA.</p>
+        <CardContent>
             <div className="flex items-end gap-4">
                 <div className="space-y-2 flex-grow">
                     <Label htmlFor="course-topic-select">Tópico do Curso</Label>
@@ -143,105 +204,67 @@ export default function AcademiaPage() {
                   Gerar Curso com IA
                 </Button>
             </div>
-          </div>
-
-          <div className="space-y-4 pt-6 border-t border-border">
-            <h3 className="text-lg font-semibold">Cursos Existentes</h3>
-            
-            {courses.length > 0 && (
-              <div className="space-y-2 max-w-sm mb-4">
-                <Label htmlFor="seller-select-academia">Premiar Vendedor</Label>
-                <Select onValueChange={setSelectedSellerId}>
-                  <SelectTrigger id="seller-select-academia">
-                    <SelectValue placeholder="Selecione um vendedor..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sellers.map(seller => (
-                      <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {courses.length > 0 ? (
-              <div className="space-y-4">
-                {courses.map((course) => (
-                  <Card key={course.id} className="bg-background/50">
-                    <CardHeader className="flex flex-row items-start justify-between">
-                        <div>
-                            <CardTitle>{course.title}</CardTitle>
-                            <CardDescription>{course.description}</CardDescription>
-                        </div>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteCourse(course.id)} aria-label="Remover curso">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                    </CardHeader>
-                    <CardContent>
-                      <Accordion type="single" collapsible className="w-full">
-                        {course.modules && course.modules.length > 0 && (
-                            <AccordionItem value="modules">
-                            <AccordionTrigger>Módulos do Curso</AccordionTrigger>
-                            <AccordionContent>
-                                <div className="space-y-4">
-                                    {course.modules.map((module, index) => (
-                                        <div key={index} className="p-4 rounded-lg bg-input">
-                                            <h4 className="font-semibold text-lg">{module.title}</h4>
-                                            <div className="prose prose-sm prose-invert mt-2 text-muted-foreground">
-                                                <ReactMarkdown>{module.content}</ReactMarkdown>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </AccordionContent>
-                            </AccordionItem>
-                        )}
-                        {course.quiz && course.quiz.questions.length > 0 && (
-                            <AccordionItem value="quiz">
-                            <AccordionTrigger>Quiz Final ({course.quiz.title})</AccordionTrigger>
-                            <AccordionContent>
-                              <div className="space-y-6">
-                                {course.quiz.questions.map((q, i) => (
-                                  <div key={i}>
-                                    <p><strong>{i + 1}. {q.questionText}</strong></p>
-                                    <ul className="mt-2 space-y-1 list-disc pl-5">
-                                      {q.options.map((opt, j) => (
-                                        <li key={j} className={cn(j === q.correctAnswerIndex && "font-bold text-primary")}>
-                                          {opt}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                    <p className="text-sm text-muted-foreground mt-2">
-                                      <span className="font-semibold">Explicação:</span> {q.explanation}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        )}
-                      </Accordion>
-                    </CardContent>
-                     <CardFooter className="justify-between">
-                        <div className="text-sm font-semibold flex items-center">
-                            <Star className="mr-2 size-4 text-yellow-400" />
-                            <span>{course.points} Pontos</span>
-                        </div>
-                        <Button onClick={() => handleCompleteCourse(course)}>Concluir e Premiar</Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground border-2 border-dashed border-border rounded-lg p-8">
-                <BookCopy className="mx-auto h-12 w-12 text-muted-foreground" />
-                <p className="mt-4 font-semibold">Nenhum curso encontrado</p>
-                <p className="text-sm">Gere um novo curso com IA para começar.</p>
-              </div>
-            )}
-          </div>
         </CardContent>
       </Card>
+
+      <div className="space-y-4 pt-6">
+        <h3 className="text-lg font-semibold">Cursos Gerados</h3>
+        
+        {courses.length > 0 && (
+          <div className="space-y-2 max-w-sm mb-4">
+            <Label htmlFor="seller-select-academia">Premiar Vendedor</Label>
+            <Select onValueChange={setSelectedSellerId}>
+              <SelectTrigger id="seller-select-academia">
+                <SelectValue placeholder="Selecione um vendedor..." />
+              </SelectTrigger>
+              <SelectContent>
+                {sellers.map(seller => (
+                  <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Selecione um vendedor para concluir cursos e receber pontos.</p>
+          </div>
+        )}
+
+        {courses.length > 0 ? (
+          <div className="space-y-4">
+            {courses.map((course) => (
+              <Card key={course.id} className="bg-background/50">
+                <CardHeader className="flex flex-row items-start justify-between">
+                    <div>
+                        <CardTitle>{course.title}</CardTitle>
+                        <CardDescription className="flex items-center mt-2">
+                           <Star className="mr-2 size-4 text-yellow-400" />
+                           <span>{course.points} Pontos de Recompensa</span>
+                        </CardDescription>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteCourse(course.id)} aria-label="Remover curso">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="prose prose-sm prose-invert max-w-none text-muted-foreground">
+                        <ReactMarkdown>{course.content}</ReactMarkdown>
+                    </div>
+
+                    {course.quiz && course.quiz.length > 0 && (
+                        <div className="pt-6 border-t">
+                            <CourseQuiz course={course} onComplete={() => handleCompleteCourse(course.id)} />
+                        </div>
+                    )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-muted-foreground border-2 border-dashed border-border rounded-lg p-8">
+            <BookCopy className="mx-auto h-12 w-12 text-muted-foreground" />
+            <p className="mt-4 font-semibold">Nenhum curso gerado</p>
+            <p className="text-sm">Gere um novo curso com IA para começar.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

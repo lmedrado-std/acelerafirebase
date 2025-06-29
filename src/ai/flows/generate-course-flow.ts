@@ -6,14 +6,16 @@
  */
 
 import {ai} from '@/ai/genkit';
-import { 
+import {
   GenerateCourseInputSchema,
   GenerateCourseOutputSchema,
   type GenerateCourseInput,
   type GenerateCourseOutput,
 } from '@/lib/types';
 
-export async function generateCourse(input: GenerateCourseInput): Promise<GenerateCourseOutput> {
+export async function generateCourse(
+  input: GenerateCourseInput
+): Promise<GenerateCourseOutput> {
   return generateCourseFlow(input);
 }
 
@@ -21,74 +23,74 @@ const prompt = ai.definePrompt({
   name: 'generateCoursePrompt',
   input: {schema: GenerateCourseInputSchema},
   output: {schema: GenerateCourseOutputSchema},
-  prompt: `You are an expert in creating training materials for retail employees, especially for shoe stores. Your task is to generate a complete training course about "{{topic}}".
+  prompt: `
+Você é um instrutor de vendas para vendedores de calçados. Crie um MINI CURSO sobre o tema "{{topic}}".
 
-The course must include the following components:
-1.  **Title and Description**: A clear title for the course and a short, engaging description.
-2.  **Points**: A suggested number of points for completing the course, ranging from 100 to 500.
-3.  **Modules**: At least 3-4 content modules. Each module must have a title and its content in Markdown format. The content should be educational and practical for a shoe salesperson.
-4.  **Final Quiz**: A quiz to test the material covered. The quiz must have its own title and contain exactly 5 multiple-choice questions. Each question must include four options, the correct answer, and an explanation.
+O curso deve conter:
+- Um título envolvente
+- Conteúdo didático curto (3 a 5 parágrafos) em formato Markdown.
+- Um quiz com 3 perguntas de múltipla escolha (4 alternativas cada)
 
-You MUST respond with a valid JSON object that strictly adheres to the provided output schema. Ensure there is no extra text, formatting, or code fences (like \`\`\`json) outside of the JSON structure.
-
-Example of the expected JSON structure:
+Formato da resposta:
 {
-  "title": "Course Title Example",
-  "description": "A brief description of the course.",
-  "points": 250,
-  "modules": [
+  "title": "Título do curso",
+  "content": "Texto do curso...",
+  "quiz": [
     {
-      "title": "Module 1: Introduction",
-      "content": "This is the content for module 1 in Markdown."
+      "question": "Pergunta?",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswerIndex": 1,
+      "explanation": "Explicação curta da resposta"
     }
-  ],
-  "quiz": {
-    "title": "Final Quiz Example",
-    "questions": [
-      {
-        "questionText": "What is a key feature of our new shoe model?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "correctAnswerIndex": 0,
-        "explanation": "Explanation for the correct answer."
-      }
-    ]
-  }
-}`,
-  config: {
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-    ],
-  },
+  ]
+}
+
+⚠️ Não inclua texto fora do JSON.
+`,
 });
 
 const getFallbackCourse = (): GenerateCourseOutput => ({
-  title: "Curso Básico de Atendimento",
-  description: "Um curso de emergência sobre como atender bem os clientes e conhecer os produtos. A IA falhou em gerar o conteúdo, mas você ainda pode aprender!",
-  points: 100,
-  modules: [
+  title: 'Curso de Emergência: Atendimento ao Cliente',
+  content:
+    'Aprenda o básico para encantar seus clientes. A primeira impressão é a que fica. Um sorriso, uma saudação amigável e uma escuta atenta são as ferramentas mais poderosas de um vendedor. Lembre-se de entender a necessidade do cliente antes de oferecer um produto. Fazer as perguntas certas é mais importante do que ter todas as respostas.',
+  quiz: [
     {
-      title: "Módulo 1: A Primeira Impressão",
-      content: "Aprenda a importância de um bom dia, um sorriso e de se colocar à disposição. A primeira impressão é a que fica."
+      question: 'Qual é o primeiro passo para um bom atendimento?',
+      options: [
+        'Mostrar as promoções',
+        'Sorrir e cumprimentar',
+        'Perguntar o que o cliente quer',
+        'Falar do produto mais caro',
+      ],
+      correctAnswerIndex: 1,
+      explanation:
+        'Um cumprimento amigável cria um ambiente acolhedor e abre portas para a venda.',
     },
     {
-      title: "Módulo 2: Escuta Ativa",
-      content: "Mais importante do que falar, é ouvir. Entenda a necessidade do cliente para oferecer a solução certa."
-    }
+      question: 'O que é mais importante na venda consultiva?',
+      options: [
+        'Falar sem parar',
+        'Decorar o manual',
+        'Ouvir o cliente',
+        'Ter pressa para fechar',
+      ],
+      correctAnswerIndex: 2,
+      explanation:
+        'Ouvir ativamente para entender a necessidade do cliente é a chave para oferecer a solução certa.',
+    },
+    {
+      question: 'Como lidar com um cliente indeciso?',
+      options: [
+        'Pressioná-lo a escolher',
+        'Deixá-lo sozinho',
+        'Fazer perguntas para limitar as opções',
+        'Mostrar mais 10 produtos',
+      ],
+      correctAnswerIndex: 2,
+      explanation:
+        'Ajudar o cliente a focar, fazendo perguntas-chave, demonstra expertise e cuidado.',
+    },
   ],
-  quiz: {
-    title: "Quiz de Atendimento",
-    questions: [
-      {
-        questionText: "Qual é o primeiro passo para um bom atendimento?",
-        options: ["Oferecer o produto mais caro", "Sorrir e cumprimentar", "Perguntar o que o cliente quer", "Falar das promoções"],
-        correctAnswerIndex: 1,
-        explanation: "Um sorriso e um cumprimento criam um ambiente acolhedor e abrem portas para a venda."
-      }
-    ]
-  }
 });
 
 const generateCourseFlow = ai.defineFlow(
@@ -97,46 +99,50 @@ const generateCourseFlow = ai.defineFlow(
     inputSchema: GenerateCourseInputSchema,
     outputSchema: GenerateCourseOutputSchema,
   },
-  async (input) => {
+  async input => {
     try {
       const response = await prompt(input);
 
       if (response.output) {
-         if (response.output.modules.length === 0 || response.output.quiz.questions.length === 0) {
-          console.warn("⚠️ IA retornou um curso válido mas sem conteúdo. Usando fallback.");
+        if (response.output.quiz.length === 0) {
+          console.warn(
+            '⚠️ IA retornou um curso válido mas sem quiz. Usando fallback.'
+          );
           return getFallbackCourse();
         }
         return response.output;
       }
-      
+
       const rawText = response.text;
       if (!rawText) {
-        console.warn("⚠️ IA retornou uma resposta vazia. Usando fallback.");
+        console.warn('⚠️ IA retornou uma resposta vazia. Usando fallback.');
         return getFallbackCourse();
       }
-      
+
       const jsonRegex = /```json\n([\s\S]*?)\n```|({[\s\S]*})/;
       const match = rawText.match(jsonRegex);
 
       if (!match) {
-        throw new Error('AI response did not contain valid JSON.');
+        console.warn('AI response did not contain valid JSON. Using fallback.');
+        return getFallbackCourse();
       }
-      
+
       const jsonString = match[1] || match[2];
       const parsed = JSON.parse(jsonString);
 
       const validated = GenerateCourseOutputSchema.parse(parsed);
 
-      if (validated.modules.length === 0 || validated.quiz.questions.length === 0) {
-        console.warn("⚠️ IA retornou um curso válido mas sem conteúdo (após parse). Usando fallback.");
+      if (validated.quiz.length === 0) {
+        console.warn(
+          '⚠️ IA retornou um curso válido mas sem quiz (após parse). Usando fallback.'
+        );
         return getFallbackCourse();
       }
 
       return validated;
-
     } catch (error) {
       console.error('❌ Erro no fluxo de geração de curso:', error);
-      console.warn("⚠️ Usando fallback local por falha na IA.");
+      console.warn('⚠️ Usando fallback local por falha na IA.');
       return getFallbackCourse();
     }
   }
