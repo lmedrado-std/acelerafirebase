@@ -8,15 +8,15 @@ import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star } from 'lucide-reac
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAdminContext } from '@/app/admin/layout';
-import type { Seller } from '@/lib/types';
+import type { GoalLevel as GoalLevelType, Seller } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa' | 'points';
-type GoalLevel = 'Nenhuma' | 'Metinha' | 'Meta' | 'Metona' | 'Lendária';
+type GoalLevelName = 'Nenhuma' | 'Metinha' | 'Meta' | 'Metona' | 'Lendária';
 
-const goalLevelConfig: Record<GoalLevel, { label: string; className: string }> = {
+const goalLevelConfig: Record<GoalLevelName, { label: string; className: string }> = {
   'Nenhuma': { label: 'Nenhuma', className: 'bg-muted border-transparent text-muted-foreground hover:bg-muted' },
   'Metinha': { label: 'Metinha', className: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
   'Meta': { label: 'Meta', className: 'bg-green-500/10 text-green-500 border-green-500/20' },
@@ -62,28 +62,32 @@ export default function RankingPage() {
     }
     return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
+  
+  const formatPrize = (value: number) => {
+     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
 
   const getGoalProgress = (value: number, criterion: RankingCriterion) => {
     const goals = goalsData[criterion];
     let nextGoal, currentGoalBase, nextGoalLabel, progress;
 
-    if (value >= goals.lendaria) {
+    if (value >= goals.lendaria.threshold) {
       return { percent: 100, label: `Nível Lendário Atingido!`, details: `${formatValue(value, criterion)}` };
     }
-    if (value >= goals.metona) {
-      nextGoal = goals.lendaria;
-      currentGoalBase = goals.metona;
+    if (value >= goals.metona.threshold) {
+      nextGoal = goals.lendaria.threshold;
+      currentGoalBase = goals.metona.threshold;
       nextGoalLabel = 'Lendária';
-    } else if (value >= goals.meta) {
-      nextGoal = goals.metona;
-      currentGoalBase = goals.meta;
+    } else if (value >= goals.meta.threshold) {
+      nextGoal = goals.metona.threshold;
+      currentGoalBase = goals.meta.threshold;
       nextGoalLabel = 'Metona';
-    } else if (value >= goals.metinha) {
-      nextGoal = goals.meta;
-      currentGoalBase = goals.metinha;
+    } else if (value >= goals.metinha.threshold) {
+      nextGoal = goals.meta.threshold;
+      currentGoalBase = goals.metinha.threshold;
       nextGoalLabel = 'Meta';
     } else {
-      nextGoal = goals.metinha;
+      nextGoal = goals.metinha.threshold;
       currentGoalBase = 0;
       nextGoalLabel = 'Metinha';
     }
@@ -165,11 +169,11 @@ export default function RankingPage() {
                     {sortedSellers.map((seller, index) => {
                       const sellerValue = criterion === 'points' ? seller.points + seller.extraPoints : seller[criterion];
                       const criterionGoals = goalsData[criterion];
-                      const allGoals: Array<{ name: GoalLevel; threshold: number }> = [
-                        { name: 'Metinha', threshold: criterionGoals.metinha },
-                        { name: 'Meta', threshold: criterionGoals.meta },
-                        { name: 'Metona', threshold: criterionGoals.metona },
-                        { name: 'Lendária', threshold: criterionGoals.lendaria },
+                      const allGoals: Array<{ name: GoalLevelName; threshold: number; prize: number }> = [
+                        { name: 'Metinha', ...criterionGoals.metinha },
+                        { name: 'Meta', ...criterionGoals.meta },
+                        { name: 'Metona', ...criterionGoals.metona },
+                        { name: 'Lendária', ...criterionGoals.lendaria },
                       ];
                       const { percent, label, details } = getGoalProgress(sellerValue, criterion);
                       
@@ -200,9 +204,10 @@ export default function RankingPage() {
                                         </Badge>
                                       </TooltipTrigger>
                                       <TooltipContent>
-                                        <div className="space-y-1 text-xs">
+                                        <div className="space-y-1 text-xs text-left">
                                           <p className="font-semibold">{goal.name}</p>
                                           <p>Meta: {formatValue(goal.threshold, criterion)}</p>
+                                          <p>Prêmio: <span className="font-bold text-green-400">{formatPrize(goal.prize)}</span></p>
                                           <p>Seu valor: {formatValue(sellerValue, criterion)}</p>
                                           <p className={cn("font-bold", isAchieved ? 'text-green-400' : 'text-yellow-400')}>
                                             {isAchieved ? 'Atingida!' : 'Pendente'}

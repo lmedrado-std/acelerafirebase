@@ -17,6 +17,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
+const goalLevels: Array<{key: keyof GoalLevels, label: string}> = [
+    { key: 'metinha', label: 'Metinha'},
+    { key: 'meta', label: 'Meta'},
+    { key: 'metona', label: 'Metona'},
+    { key: 'lendaria', label: 'Lendária'},
+];
+
 export default function SettingsPage() {
   const { sellers, setSellers, goals, setGoals } = useAdminContext();
   const [sellerName, setSellerName] = useState('');
@@ -24,13 +31,17 @@ export default function SettingsPage() {
   const handleGoalChange = (
     criterion: keyof Goals,
     level: keyof GoalLevels,
+    field: 'threshold' | 'prize',
     value: string
   ) => {
     setGoals(prev => ({
       ...prev,
       [criterion]: {
         ...prev[criterion],
-        [level]: parseFloat(value) || 0,
+        [level]: {
+          ...prev[criterion][level],
+          [field]: parseFloat(value) || 0,
+        },
       },
     }));
   };
@@ -232,92 +243,80 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Definir Metas de Performance</CardTitle>
               <CardDescription>
-                Configure os valores para cada nível de meta. Esses valores serão usados no ranking.
+                Configure os valores para cada nível de meta e os prêmios associados.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
               <div>
                 <h3 className="text-lg font-medium mb-4">Valor de Venda (R$)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="sales-metinha">Metinha</Label>
-                    <Input id="sales-metinha" type="number" value={goals.salesValue.metinha} onChange={(e) => handleGoalChange('salesValue', 'metinha', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sales-meta">Meta</Label>
-                    <Input id="sales-meta" type="number" value={goals.salesValue.meta} onChange={(e) => handleGoalChange('salesValue', 'meta', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sales-metona">Metona</Label>
-                    <Input id="sales-metona" type="number" value={goals.salesValue.metona} onChange={(e) => handleGoalChange('salesValue', 'metona', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sales-lendaria">Lendária</Label>
-                    <Input id="sales-lendaria" type="number" value={goals.salesValue.lendaria} onChange={(e) => handleGoalChange('salesValue', 'lendaria', e.target.value)} className="bg-input" />
-                  </div>
+                    {goalLevels.map(level => (
+                        <div key={level.key} className="space-y-2 rounded-lg border p-3">
+                            <h4 className="font-semibold text-center">{level.label}</h4>
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`sales-${level.key}-threshold`}>Meta</Label>
+                                <Input id={`sales-${level.key}-threshold`} type="number" placeholder="Valor" value={goals.salesValue[level.key].threshold} onChange={(e) => handleGoalChange('salesValue', level.key, 'threshold', e.target.value)} className="bg-input" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`sales-${level.key}-prize`}>Prêmio (R$)</Label>
+                                <Input id={`sales-${level.key}-prize`} type="number" placeholder="Prêmio" value={goals.salesValue[level.key].prize} onChange={(e) => handleGoalChange('salesValue', level.key, 'prize', e.target.value)} className="bg-input" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
               </div>
                <div className="border-t border-border pt-8">
                 <h3 className="text-lg font-medium mb-4">Ticket Médio (R$)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="ticket-metinha">Metinha</Label>
-                    <Input id="ticket-metinha" type="number" value={goals.ticketAverage.metinha} onChange={(e) => handleGoalChange('ticketAverage', 'metinha', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ticket-meta">Meta</Label>
-                    <Input id="ticket-meta" type="number" value={goals.ticketAverage.meta} onChange={(e) => handleGoalChange('ticketAverage', 'meta', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ticket-metona">Metona</Label>
-                    <Input id="ticket-metona" type="number" value={goals.ticketAverage.metona} onChange={(e) => handleGoalChange('ticketAverage', 'metona', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ticket-lendaria">Lendária</Label>
-                    <Input id="ticket-lendaria" type="number" value={goals.ticketAverage.lendaria} onChange={(e) => handleGoalChange('ticketAverage', 'lendaria', e.target.value)} className="bg-input" />
-                  </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {goalLevels.map(level => (
+                        <div key={level.key} className="space-y-2 rounded-lg border p-3">
+                            <h4 className="font-semibold text-center">{level.label}</h4>
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`ticket-${level.key}-threshold`}>Meta</Label>
+                                <Input id={`ticket-${level.key}-threshold`} type="number" placeholder="Valor" value={goals.ticketAverage[level.key].threshold} onChange={(e) => handleGoalChange('ticketAverage', level.key, 'threshold', e.target.value)} className="bg-input" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`ticket-${level.key}-prize`}>Prêmio (R$)</Label>
+                                <Input id={`ticket-${level.key}-prize`} type="number" placeholder="Prêmio" value={goals.ticketAverage[level.key].prize} onChange={(e) => handleGoalChange('ticketAverage', level.key, 'prize', e.target.value)} className="bg-input" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
               </div>
               <div className="border-t border-border pt-8">
                 <h3 className="text-lg font-medium mb-4">PA (Produtos por Atendimento)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="pa-metinha">Metinha</Label>
-                    <Input id="pa-metinha" type="number" step="0.1" value={goals.pa.metinha} onChange={(e) => handleGoalChange('pa', 'metinha', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pa-meta">Meta</Label>
-                    <Input id="pa-meta" type="number" step="0.1" value={goals.pa.meta} onChange={(e) => handleGoalChange('pa', 'meta', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pa-metona">Metona</Label>
-                    <Input id="pa-metona" type="number" step="0.1" value={goals.pa.metona} onChange={(e) => handleGoalChange('pa', 'metona', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pa-lendaria">Lendária</Label>
-                    <Input id="pa-lendaria" type="number" step="0.1" value={goals.pa.lendaria} onChange={(e) => handleGoalChange('pa', 'lendaria', e.target.value)} className="bg-input" />
-                  </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {goalLevels.map(level => (
+                        <div key={level.key} className="space-y-2 rounded-lg border p-3">
+                            <h4 className="font-semibold text-center">{level.label}</h4>
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`pa-${level.key}-threshold`}>Meta</Label>
+                                <Input id={`pa-${level.key}-threshold`} type="number" step="0.1" placeholder="Valor" value={goals.pa[level.key].threshold} onChange={(e) => handleGoalChange('pa', level.key, 'threshold', e.target.value)} className="bg-input" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`pa-${level.key}-prize`}>Prêmio (R$)</Label>
+                                <Input id={`pa-${level.key}-prize`} type="number" placeholder="Prêmio" value={goals.pa[level.key].prize} onChange={(e) => handleGoalChange('pa', level.key, 'prize', e.target.value)} className="bg-input" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
               </div>
               <div className="border-t border-border pt-8">
                 <h3 className="text-lg font-medium mb-4">Pontos</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="points-metinha">Metinha</Label>
-                    <Input id="points-metinha" type="number" value={goals.points.metinha} onChange={(e) => handleGoalChange('points', 'metinha', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="points-meta">Meta</Label>
-                    <Input id="points-meta" type="number" value={goals.points.meta} onChange={(e) => handleGoalChange('points', 'meta', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="points-metona">Metona</Label>
-                    <Input id="points-metona" type="number" value={goals.points.metona} onChange={(e) => handleGoalChange('points', 'metona', e.target.value)} className="bg-input" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="points-lendaria">Lendária</Label>
-                    <Input id="points-lendaria" type="number" value={goals.points.lendaria} onChange={(e) => handleGoalChange('points', 'lendaria', e.target.value)} className="bg-input" />
-                  </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {goalLevels.map(level => (
+                        <div key={level.key} className="space-y-2 rounded-lg border p-3">
+                            <h4 className="font-semibold text-center">{level.label}</h4>
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`points-${level.key}-threshold`}>Meta</Label>
+                                <Input id={`points-${level.key}-threshold`} type="number" placeholder="Valor" value={goals.points[level.key].threshold} onChange={(e) => handleGoalChange('points', level.key, 'threshold', e.target.value)} className="bg-input" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`points-${level.key}-prize`}>Prêmio (R$)</Label>
+                                <Input id={`points-${level.key}-prize`} type="number" placeholder="Prêmio" value={goals.points[level.key].prize} onChange={(e) => handleGoalChange('points', level.key, 'prize', e.target.value)} className="bg-input" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
               </div>
               <div className="flex justify-end pt-6 border-t border-border">

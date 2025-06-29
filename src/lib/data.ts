@@ -9,10 +9,30 @@ export const sellersData: Seller[] = [
 ];
 
 export const goalsData: Goals = {
-  salesValue: { metinha: 4000, meta: 5000, metona: 6000, lendaria: 7000 },
-  ticketAverage: { metinha: 130, meta: 150, metona: 180, lendaria: 200 },
-  pa: { metinha: 2.0, meta: 2.5, metona: 2.8, lendaria: 3.0 },
-  points: { metinha: 800, meta: 1000, metona: 1500, lendaria: 2000 },
+  salesValue: {
+    metinha: { threshold: 4000, prize: 50 },
+    meta: { threshold: 5000, prize: 100 },
+    metona: { threshold: 6000, prize: 150 },
+    lendaria: { threshold: 7000, prize: 250 },
+  },
+  ticketAverage: {
+    metinha: { threshold: 130, prize: 20 },
+    meta: { threshold: 150, prize: 40 },
+    metona: { threshold: 180, prize: 60 },
+    lendaria: { threshold: 200, prize: 100 },
+  },
+  pa: {
+    metinha: { threshold: 2.0, prize: 20 },
+    meta: { threshold: 2.5, prize: 40 },
+    metona: { threshold: 2.8, prize: 60 },
+    lendaria: { threshold: 3.0, prize: 100 },
+  },
+  points: {
+    metinha: { threshold: 800, prize: 20 },
+    meta: { threshold: 1000, prize: 40 },
+    metona: { threshold: 1500, prize: 60 },
+    lendaria: { threshold: 2000, prize: 100 },
+  },
 };
 
 export const missionsData: Mission[] = [

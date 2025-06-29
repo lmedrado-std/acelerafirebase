@@ -29,11 +29,16 @@ export type Admin = {
   password: string;
 };
 
+export type GoalLevel = {
+  threshold: number;
+  prize: number;
+};
+
 export type GoalLevels = {
-  metinha: number;
-  meta: number;
-  metona: number;
-  lendaria: number;
+  metinha: GoalLevel;
+  meta: GoalLevel;
+  metona: GoalLevel;
+  lendaria: GoalLevel;
 };
 
 export type Goals = {
