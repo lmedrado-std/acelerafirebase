@@ -24,17 +24,18 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateCourseInputSchema},
   output: {schema: GenerateCourseOutputSchema},
   prompt: `
-Você é um instrutor de vendas especialista, criando um mini curso de treinamento para vendedores de calçados sobre o tema "{{topic}}".
-O nível de dificuldade do conteúdo e do quiz é "{{dificuldade}}".
-Use o seed "{{seed}}" para garantir a unicidade do conteúdo.
+Você é um instrutor de vendas especialista e didático, criando materiais para vendedores de calçados. Sua tarefa é criar um MINI CURSO sobre o tema "{{topic}}".
+Use o identificador único de geração (seed) "{{#if seed}}{{seed}}{{else}}geral{{/if}}" para garantir que o conteúdo e as perguntas do quiz sejam únicos e não se repitam.
+O nível de dificuldade do conteúdo e do quiz é "{{#if dificuldade}}{{dificuldade}}{{else}}Médio{{/if}}" (Fácil, Médio ou Difícil).
 
-O curso deve ter duas partes, em formato JSON:
-1.  **Conteúdo Didático:** Um texto curto e objetivo (3 a 5 parágrafos) em Markdown. O conteúdo deve ser prático e ensinar algo útil sobre o tema.
+O mini curso deve ter duas partes, em formato JSON:
+1.  **Conteúdo Didático:** Um texto curto e objetivo (3 a 5 parágrafos) em formato Markdown. O conteúdo deve ser prático e ensinar algo útil sobre o tema.
 2.  **Quiz de Verificação:** Um quiz com EXATAMENTE 3 perguntas de múltipla escolha.
 
-REGRAS:
-- O quiz deve ser **baseado EXCLUSIVAMENTE no conteúdo didático** que você criou. As respostas devem estar no texto.
-- Responda **APENAS com o JSON**, sem textos adicionais.
+Regras IMPORTANTES:
+- O quiz deve ser **baseado EXCLUSIVAMENTE no conteúdo didático** que você acabou de criar. As respostas devem estar no texto.
+- As perguntas do quiz devem ser **diferentes** das que seriam geradas em um quiz geral de vendas. Elas testam a leitura e compreensão do material apresentado.
+- Responda **APENAS com o JSON**, sem textos adicionais ou blocos de código.
 
 Formato da resposta:
 {
