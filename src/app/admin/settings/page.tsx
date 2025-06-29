@@ -286,7 +286,7 @@ export default function SettingsPage() {
                                   type="number"
                                   className="bg-input text-right min-w-[100px]"
                                   value={seller.points}
-                                  onChange={(e) => handleSellerPerfUpdate(seller.id, 'points', e.target.value)}
+                                  disabled
                                 />
                                 <TooltipProvider>
                                   <Tooltip>

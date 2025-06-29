@@ -64,7 +64,7 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
 
 export default function RankingPage() {
   const { sellers: sellersData, goals: goalsData, currentSeller } = useSellerContext();
-  const [criterion, setCriterion] = useState<'salesValue' | 'ticketAverage' | 'pa' | 'points' | 'totalPrize'>('totalPrize');
+  const [criterion, setCriterion] = useState<'totalPrize' | 'salesValue' | 'ticketAverage' | 'pa' | 'points' >('totalPrize');
 
   const isAllPerformanceZero = useMemo(() => 
     sellersData.every(s => s.salesValue === 0 && s.ticketAverage === 0 && s.pa === 0 && s.points === 0 && s.extraPoints === 0), [sellersData]);
@@ -127,9 +127,9 @@ export default function RankingPage() {
         <Trophy className="size-8 text-primary" />
         <h1 className="text-3xl font-bold font-sans">Meu Desempenho no Ranking</h1>
       </div>
-      <div className="w-full overflow-x-auto pb-2">
+      <div className="w-full pb-2">
          <Tabs value={criterion} onValueChange={(v) => setCriterion(v as any)} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 gap-1 p-1 h-auto">
+            <TabsList className="h-auto p-1 flex flex-wrap justify-start">
                 <TabsTrigger value="totalPrize"><Trophy className="mr-2"/>Prêmio Total</TabsTrigger>
                 <TabsTrigger value="salesValue"><DollarSign className="mr-2"/>Vendas</TabsTrigger>
                 <TabsTrigger value="points"><Star className="mr-2"/>Pontos</TabsTrigger>
@@ -168,7 +168,7 @@ export default function RankingPage() {
                                    criterion === 'totalPrize' ? myData.totalPrize : 
                                    criterion === 'points' ? myData.points + myData.extraPoints :
                                    myData[criterion as keyof Seller],
-                                   criterion === 'points' || criterion === 'totalPrize' ? 'currency' : 'decimal' 
+                                   criterion === 'points' ? 'points' : criterion === 'pa' ? 'decimal' : 'currency'
                                )}</p>
                                <p className="text-sm text-muted-foreground">Valor no critério</p>
                             </div>

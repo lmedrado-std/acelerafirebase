@@ -198,10 +198,10 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="h-auto w-full rounded-t-2xl bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
-            side="bottom"
+            className="w-full bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+            side="top"
           >
-            <SheetHeader className="sr-only">
+             <SheetHeader className="sr-only">
               <SheetTitle>Menu de Navegação</SheetTitle>
             </SheetHeader>
             <div className="flex h-auto max-h-[80svh] w-full flex-col">{children}</div>

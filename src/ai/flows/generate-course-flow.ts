@@ -24,18 +24,17 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateCourseInputSchema},
   output: {schema: GenerateCourseOutputSchema},
   prompt: `
-Você é um instrutor de vendas especialista e didático, criando materiais de treinamento para vendedores de calçados. Sua tarefa é criar um MINI CURSO focado e relevante sobre o tema: "{{topic}}".
+Você é um instrutor de vendas especialista, criando um mini curso de treinamento para vendedores de calçados sobre o tema "{{topic}}".
+O nível de dificuldade do conteúdo e do quiz é "{{dificuldade}}".
+Use o seed "{{seed}}" para garantir a unicidade do conteúdo.
 
-O mini curso deve ter duas partes, em formato JSON:
-1.  **Conteúdo Didático:** Um texto curto e objetivo (3 a 5 parágrafos) em formato Markdown. O conteúdo deve ser PRÁTICO, ENSINAR algo útil e ser DIRETAMENTE RELACIONADO ao tema "{{topic}}".
+O curso deve ter duas partes, em formato JSON:
+1.  **Conteúdo Didático:** Um texto curto e objetivo (3 a 5 parágrafos) em Markdown. O conteúdo deve ser prático e ensinar algo útil sobre o tema.
 2.  **Quiz de Verificação:** Um quiz com EXATAMENTE 3 perguntas de múltipla escolha.
 
-Regras IMPORTANTES:
-- O quiz deve ser **BASEADO EXCLUSIVAMENTE NO CONTEÚDO DIDÁTICO** que você acabou de criar. As respostas para as perguntas do quiz DEVEM ESTAR CLARAMENTE NO TEXTO do mini curso.
-- As perguntas do quiz devem testar a leitura e compreensão do material apresentado, não conhecimentos gerais de vendas.
-- O nível de dificuldade do conteúdo e do quiz é "{{#if dificuldade}}{{dificuldade}}{{else}}Médio{{/if}}" (Fácil, Médio ou Difícil). Adapte a complexidade da linguagem e dos conceitos ao nível.
-- Use o identificador único de geração (seed) "{{#if seed}}{{seed}}{{else}}geral{{/if}}" para garantir que o conteúdo e as perguntas do quiz sejam únicos para cada solicitação, evitando repetições para o mesmo tema e seed.
-- Responda **APENAS com o JSON**, sem textos adicionais ou blocos de código.
+REGRAS:
+- O quiz deve ser **baseado EXCLUSIVAMENTE no conteúdo didático** que você criou. As respostas devem estar no texto.
+- Responda **APENAS com o JSON**, sem textos adicionais.
 
 Formato da resposta:
 {
