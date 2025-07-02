@@ -123,7 +123,7 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
 
 export default function RankingPage() {
   const [criterion, setCriterion] =
-    useState<RankingCriterion>('totalPrize');
+    useState<RankingCriterion | 'salesValue'>('totalPrize');
   const {
     sellers: sellersData,
     goals: goalsData,
@@ -330,7 +330,9 @@ export default function RankingPage() {
             <CardContent>
                 <Tabs
                   value={criterion}
-                  onValueChange={value => setCriterion(value as RankingCriterion)}
+                  onValueChange={value =>
+                    setCriterion(value as RankingCriterion | 'salesValue')
+                  }
                 >
                   <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 bg-input p-1 h-auto">
                     {tabs.map(tab => (
@@ -356,15 +358,15 @@ export default function RankingPage() {
             </CardHeader>
             <CardContent className="space-y-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <div className={cn(
+                    <div className={cn(
                         "flex flex-col space-y-1 rounded-lg border p-4",
-                        criterion === 'totalPrize' && "sm:col-span-2"
-                     )}>
+                        (criterion === 'totalPrize' || criterion === 'salesValue') && "sm:col-span-2"
+                    )}>
                         <p className="text-sm text-muted-foreground">Prêmio Recebido (Neste Critério)</p>
                         <p className="text-3xl font-bold text-green-400">{formatPrize(prizeToDisplay)}</p>
                     </div>
 
-                    {criterion !== 'totalPrize' && (
+                    {criterion !== 'totalPrize' && criterion !== 'salesValue' && (
                       <div className="flex flex-col space-y-1 rounded-lg border p-4">
                           <p className="text-sm text-muted-foreground">Seu Resultado</p>
                           <p className="text-3xl font-bold">
@@ -433,10 +435,10 @@ export default function RankingPage() {
                                             extra
                                             </p>
                                         )}
-                                        <p>
+                                        {criterion !== 'salesValue' && <p>
                                         Seu valor:{' '}
                                         {formatValue(sellerValue, criterion)}
-                                        </p>
+                                        </p>}
                                         <p
                                         className={cn(
                                             'font-bold',
@@ -479,7 +481,11 @@ export default function RankingPage() {
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>{details}</p>
+                                {criterion === 'salesValue' ? (
+                                    <p>Acompanhe seu progresso para a próxima meta de vendas.</p>
+                                ) : (
+                                    <p>{details}</p>
+                                )}
                             </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
