@@ -4,8 +4,23 @@ Publicar seu projeto no GitHub é uma ótima maneira de guardar uma cópia segur
 
 Siga estes passos com calma. Você só precisa copiar os comandos e colá-los no terminal.
 
-### Onde fica o Terminal?
-No ambiente do Studio, na parte de baixo da tela, você verá algumas abas. Clique na que diz **"Terminal"**. É lá que você vai digitar (ou colar) os comandos abaixo.
+---
+
+### **Onde fica o Terminal?**
+
+No ambiente do Studio, olhe para a **parte de baixo da sua tela**. Você verá um painel com algumas abas. Clique na que diz **"Terminal"**.
+
+```
++---------------------------------------------+
+|                                             |
+|          (Área do seu código)               |
+|                                             |
++---------------------------------------------+
+| [Problemas] [Saída] [TERMINAL] [Console]    |  <-- Clique aqui!
++---------------------------------------------+
+```
+
+É nesse espaço que abrirá (o terminal) que você vai digitar (ou colar) os comandos abaixo.
 
 ---
 
