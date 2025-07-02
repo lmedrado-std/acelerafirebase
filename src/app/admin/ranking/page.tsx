@@ -1,209 +1,296 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star, Minus, Users, CheckCircle, Info } from 'lucide-react';
+import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useAdminContext } from '@/app/admin/layout';
-import type { Goals, Seller } from '@/lib/types';
+import type { Goals, GoalLevel as GoalLevelType, Seller, SalesValueGoals } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
-import { cn, calculateSellerPrizes } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn, calculateSellerPrizes } from '@/lib/utils';
 
-const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals }) => {
-    if (!sellers || !goals?.salesValue?.metinha) {
-        return null;
-    }
-    
-    const teamBonus = 100; // Hardcoded bonus as per request
+type RankingCriterion = 'salesValue' | 'ticketAverage' | 'pa' | 'points' | 'totalPrize';
+type GoalLevelName = 'Nenhuma' | 'Metinha' | 'Meta' | 'Metona' | 'Lendária';
 
-    const sellersWhoReachedGoal = sellers.filter(s => s.salesValue >= goals.salesValue.metinha.threshold && goals.salesValue.metinha.threshold > 0);
-    // Goal is only considered if there is more than one seller
-    const isGoalAchievable = sellers.length > 1;
-    const isGoalAchieved = isGoalAchievable && sellersWhoReachedGoal.length === sellers.length;
-    const progress = isGoalAchievable ? (sellersWhoReachedGoal.length / sellers.length) * 100 : 0;
-
-    return (
-        <Card className="bg-card/80 shadow-xl rounded-2xl ring-1 ring-white/10">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Users className="size-6 text-supermoda-secondary" />
-                    <span>Meta de Equipe: Metinha para Todos!</span>
-                </CardTitle>
-                <CardDescription>
-                    Se todos atingirem a "Metinha" de vendas,
-                    cada um ganha um bônus de <span className="font-bold text-green-400">{formatPrize(teamBonus, 'currency')}</span>.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                {!isGoalAchievable ? (
-                     <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-4 text-muted-foreground">
-                        <div>
-                            <h4 className="font-bold">Mais Vendedores Necessários</h4>
-                            <p className="text-sm">A meta de equipe é ativada com no mínimo 2 vendedores.</p>
-                        </div>
-                    </div>
-                ) : isGoalAchieved ? (
-                    <div className="flex items-center gap-3 rounded-lg bg-green-500/10 p-4 text-green-400">
-                        <CheckCircle className="size-8" />
-                        <div>
-                            <h4 className="font-bold">Parabéns, Equipe!</h4>
-                            <p className="text-sm">Meta atingida! O bônus foi adicionado ao prêmio de todos.</p>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="flex flex-col gap-2">
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="font-medium text-muted-foreground">Progresso</span>
-                            <span className="font-bold">{sellersWhoReachedGoal.length} de {sellers.length} vendedores</span>
-                        </div>
-                        <Progress value={progress} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-supermoda-primary [&>div]:to-supermoda-secondary" />
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-    );
+const goalLevelConfig: Record<GoalLevelName, { label: string; className: string }> = {
+  'Nenhuma': { label: 'Nenhuma', className: 'bg-muted border-transparent text-muted-foreground hover:bg-muted' },
+  'Metinha': { label: 'Metinha', className: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
+  'Meta': { label: 'Meta', className: 'bg-green-500/10 text-green-500 border-green-500/20' },
+  'Metona': { label: 'Metona', className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  'Lendária': { label: 'Lendária', className: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
 };
 
-
-const formatPrize = (value: number, type: 'currency' | 'points' | 'decimal') => {
-    if (type === 'currency') return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    if (type === 'points') return value.toLocaleString('pt-BR');
-    return value.toFixed(1);
-}
-
 export default function RankingPage() {
+  const [criterion, setCriterion] = useState<RankingCriterion>('salesValue');
   const { sellers: sellersData, goals: goalsData } = useAdminContext();
 
-  const isAllPerformanceZero = useMemo(() => 
-    sellersData.every(s => s.salesValue === 0 && s.ticketAverage === 0 && s.pa === 0 && s.points === 0 && s.extraPoints === 0), [sellersData]);
-
-  const rankedSellers = useMemo(() => {
-    const teamGoalMet = sellersData.length > 1 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold && goalsData.salesValue.metinha.threshold > 0);
-    const teamBonusValue = 100;
-
+  const sortedSellers = useMemo(() => {
     const sellersWithPrizes = sellersData.map(seller => {
-        const calculated = calculateSellerPrizes(seller, goalsData);
-        let { totalPrize } = calculated;
-        const teamBonus = teamGoalMet ? teamBonusValue : 0;
-        
-        totalPrize += teamBonus;
-
-        return { ...calculated, totalPrize, teamBonus };
+        const calculatedPrizes = calculateSellerPrizes(seller, goalsData);
+        return { ...seller, ...calculatedPrizes };
     });
 
-    if (isAllPerformanceZero) return [...sellersWithPrizes].sort((a,b) => a.name.localeCompare(b.name));
-    return sellersWithPrizes.sort((a, b) => b.totalPrize - a.totalPrize || a.name.localeCompare(b.name));
-  }, [sellersData, goalsData, isAllPerformanceZero]);
+    return sellersWithPrizes.sort((a, b) => {
+        if (criterion === 'totalPrize') {
+          return b.totalPrize - a.totalPrize;
+        }
+        if (criterion === 'points') {
+            return (b.points + b.extraPoints) - (a.points + a.extraPoints);
+        }
+        return b[criterion] - a[criterion];
+    });
+  }, [sellersData, goalsData, criterion]);
+  
+  const getCriterionLabel = (currentCriterion: RankingCriterion) => {
+    switch (currentCriterion) {
+      case 'salesValue':
+        return 'Valor de Venda';
+      case 'ticketAverage':
+        return 'Ticket Médio';
+      case 'pa':
+        return 'PA';
+      case 'points':
+        return 'Pontos';
+      case 'totalPrize':
+        return 'Prêmio Total';
+      default:
+        return '';
+    }
+  };
+
+  const formatValue = (value: number, currentCriterion: RankingCriterion | 'salesValue') => {
+    if (currentCriterion === 'pa') {
+        return value.toFixed(1);
+    }
+    if (currentCriterion === 'points') {
+        return value.toLocaleString('pt-BR');
+    }
+    return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+  
+  const formatPrize = (value: number) => {
+     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  const getGoalProgress = (value: number, criterion: Exclude<RankingCriterion, 'totalPrize'>) => {
+    const goals = goalsData[criterion];
+    let nextGoal, currentGoalBase, nextGoalLabel, progress;
+
+    if (!goals?.lendaria) return { percent: 0, label: 'N/A', details: 'N/A'};
+
+    if (value >= goals.lendaria.threshold) {
+      return { percent: 100, label: `Nível Lendário Atingido!`, details: `${formatValue(value, criterion)}` };
+    }
+    if (value >= goals.metona.threshold) {
+      nextGoal = goals.lendaria.threshold;
+      currentGoalBase = goals.metona.threshold;
+      nextGoalLabel = 'Lendária';
+    } else if (value >= goals.meta.threshold) {
+      nextGoal = goals.metona.threshold;
+      currentGoalBase = goals.meta.threshold;
+      nextGoalLabel = 'Metona';
+    } else if (value >= goals.metinha.threshold) {
+      nextGoal = goals.meta.threshold;
+      currentGoalBase = goals.metinha.threshold;
+      nextGoalLabel = 'Meta';
+    } else {
+      nextGoal = goals.metinha.threshold;
+      currentGoalBase = 0;
+      nextGoalLabel = 'Metinha';
+    }
+
+    if (nextGoal <= 0 || nextGoal - currentGoalBase <= 0) {
+      progress = value > 0 ? 100 : 0;
+    } else {
+      progress = Math.min(100, ((value - currentGoalBase) / (nextGoal - currentGoalBase)) * 100);
+    }
+    
+    return { 
+      percent: progress, 
+      label: `Próximo Nível: ${nextGoalLabel}`,
+      details: `${formatValue(value, criterion)} / ${formatValue(nextGoal, criterion)}`
+    };
+  };
   
   const getRankIndicator = (index: number) => {
-    if (isAllPerformanceZero) return <Minus className="size-6 text-muted-foreground" />;
-    if (index === 0) return <Trophy className="size-7 text-yellow-400" />;
-    if (index === 1) return <Medal className="size-7" style={{ color: '#C0C0C0' }} />;
-    if (index === 2) return <Award className="size-7" style={{ color: '#CD7F32' }} />;
-    return <span className="font-bold text-xl text-muted-foreground">{index + 1}</span>;
+    if (index === 0) return <Trophy className="h-6 w-6 text-yellow-400" />;
+    if (index === 1) return <Medal className="h-6 w-6" style={{ color: '#C0C0C0' }} />;
+    if (index === 2) return <Award className="h-6 w-6" style={{ color: '#CD7F32' }} />;
+    return <span className="font-bold text-lg text-muted-foreground">{index + 1}</span>;
   };
 
   return (
     <div className="space-y-8">
        <div className="flex items-center gap-4">
         <Trophy className="size-8 text-primary" />
-        <h1 className="text-3xl font-bold font-sans">Ranking de Vendedores</h1>
+        <h1 className="text-3xl font-bold">Ranking de Vendedores</h1>
       </div>
       
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        <div className="xl:col-span-2">
-            <Card className="bg-gradient-to-br from-card to-background/80 text-white shadow-xl rounded-2xl ring-1 ring-white/10">
-                <CardHeader>
-                  <CardTitle>Classificação Geral por Prêmios</CardTitle>
-                  <CardDescription>
-                      {isAllPerformanceZero ? 'Nenhum dado lançado. A lista está em ordem alfabética.' : 'Classificação baseada no prêmio total acumulado.'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-md border border-border/50 overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-border/50">
-                          <TableHead className="w-[80px] text-center">Pos.</TableHead>
-                          <TableHead>Vendedor</TableHead>
-                          <TableHead className="text-right"><Star className="inline mr-1 size-4" />Pontos</TableHead>
-                          <TableHead className="text-right"><DollarSign className="inline mr-1 size-4" />Vendas</TableHead>
-                          <TableHead className="text-right"><Ticket className="inline mr-1 size-4" />T. Médio</TableHead>
-                          <TableHead className="text-right"><Box className="inline mr-1 size-4" />PA</TableHead>
-                          <TableHead className="text-right font-bold text-primary"><Trophy className="inline mr-1 size-4" />Prêmio Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {rankedSellers.map((seller, index) => (
-                          <TableRow key={seller.id} className={cn(
-                            "transition-all border-border/30",
-                            index === 0 && "bg-primary/10 animate-glow",
-                            index === 1 && "bg-secondary/10",
-                            index === 2 && "bg-chart-3/10",
-                          )}>
-                            <TableCell className="font-bold text-lg flex justify-center items-center h-full py-4">{getRankIndicator(index)}</TableCell>
-                            <TableCell className="font-medium text-base">{seller.name}</TableCell>
-                            <TableCell className="text-right font-mono">{(seller.points + seller.extraPoints).toLocaleString('pt-BR')}</TableCell>
-                            <TableCell className="text-right font-mono">{formatPrize(seller.salesValue, 'currency')}</TableCell>
-                            <TableCell className="text-right font-mono">{formatPrize(seller.ticketAverage, 'currency')}</TableCell>
-                            <TableCell className="text-right font-mono">{formatPrize(seller.pa, 'decimal')}</TableCell>
-                            <TableCell className="text-right font-bold text-lg text-green-400">
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle>Filtros do Ranking</CardTitle>
+          <CardDescription>Selecione o critério para visualizar a classificação dos vendedores.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div>
+                <Label className="text-sm font-medium mb-2 block">Critério de Classificação</Label>
+                <Tabs value={criterion} onValueChange={(value) => setCriterion(value as RankingCriterion)}>
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 bg-input p-1 h-auto">
+                        <TabsTrigger value="salesValue" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+                            <DollarSign className="mr-2 size-4" /> Vendas
+                        </TabsTrigger>
+                        <TabsTrigger value="ticketAverage" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+                            <Ticket className="mr-2 size-4" /> Ticket Médio
+                        </TabsTrigger>
+                        <TabsTrigger value="pa" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+                            <Box className="mr-2 size-4" /> PA
+                        </TabsTrigger>
+                          <TabsTrigger value="points" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+                            <Star className="mr-2 size-4" /> Pontos
+                        </TabsTrigger>
+                         <TabsTrigger value="totalPrize" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+                            <Trophy className="mr-2 size-4" /> Prêmio Total
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            </div>
+        </CardContent>
+      </Card>
+      
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle>Classificação por {getCriterionLabel(criterion)}</CardTitle>
+           <CardDescription>
+              Visualizando a classificação dos vendedores com base nos dados mais recentes.
+           </CardDescription>
+        </CardHeader>
+        <CardContent>
+           <div className="rounded-md border border-border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px] text-center">Posição</TableHead>
+                      <TableHead>Vendedor</TableHead>
+                       <TableHead className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                            <span>Prêmios (R$)</span>
+                            <Award className="size-4 text-green-400" />
+                        </div>
+                      </TableHead>
+                      {criterion !== 'totalPrize' && (
+                        <>
+                          <TableHead className="w-[320px] text-center">Nível da Meta</TableHead>
+                          <TableHead className="w-[300px]">Progresso da Meta</TableHead>
+                        </>
+                      )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedSellers.map((seller, index) => {
+                      const sellerValue = criterion === 'totalPrize' 
+                        ? seller.totalPrize
+                        : (criterion === 'points' ? seller.points + seller.extraPoints : seller[criterion]);
+
+                      const criterionGoals = criterion !== 'totalPrize' ? goalsData[criterion] : null;
+                      
+                      const allGoals: Array<{ name: GoalLevelName; threshold: number; prize: number }> = criterionGoals ? [
+                        { name: 'Metinha', ...criterionGoals.metinha },
+                        { name: 'Meta', ...criterionGoals.meta },
+                        { name: 'Metona', ...criterionGoals.metona },
+                        { name: 'Lendária', ...criterionGoals.lendaria },
+                      ] : [];
+
+                      const { percent, label, details } = criterion !== 'totalPrize' ? getGoalProgress(sellerValue, criterion) : { percent: 0, label: '', details: ''};
+                      
+                      const prizeToDisplay = criterion === 'totalPrize' 
+                        ? seller.totalPrize 
+                        : (seller.prizes[criterion as keyof typeof seller.prizes] || 0);
+
+                      return (
+                        <TableRow key={seller.id} className={index < 3 ? 'bg-card-foreground/5' : ''}>
+                          <TableCell className="font-bold text-lg flex justify-center items-center h-full py-4">
+                            {getRankIndicator(index)}
+                          </TableCell>
+                          <TableCell className="font-medium">{seller.name}</TableCell>
+                           <TableCell className="text-right font-semibold text-green-400">
+                            {formatPrize(prizeToDisplay)}
+                          </TableCell>
+                          {criterion !== 'totalPrize' && criterionGoals && (
+                            <>
+                              <TableCell className="text-center">
+                                <div className="flex justify-center items-center gap-1.5 flex-wrap">
+                                  {allGoals.map((goal) => {
+                                    const isAchieved = sellerValue >= goal.threshold && goal.threshold > 0;
+                                    const config = goalLevelConfig[goal.name];
+                                    return (
+                                      <TooltipProvider key={goal.name}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Badge
+                                              className={cn(
+                                                'transition-all duration-300 ease-in-out',
+                                                isAchieved
+                                                  ? `${config.className} scale-110 border-2 border-current shadow-lg`
+                                                  : 'bg-muted border-transparent text-muted-foreground opacity-60 hover:bg-muted'
+                                              )}
+                                            >
+                                              {goal.label}
+                                            </Badge>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <div className="space-y-1 text-xs text-left">
+                                              <p className="font-semibold">{goal.label}</p>
+                                              <p>Meta: {formatValue(goal.threshold, criterion)}</p>
+                                              <p>Prêmio: <span className="font-bold text-green-400">{formatPrize(goal.prize)}</span></p>
+                                              {criterion === 'salesValue' && goal.name === 'Lendária' && (goalsData.salesValue as SalesValueGoals).performanceBonus && (
+                                                <p className="text-xs italic text-primary/80 pt-1 border-t border-border/20 mt-1">
+                                                    Bônus: +{formatPrize((goalsData.salesValue as SalesValueGoals).performanceBonus!.prize)} a cada {formatPrize((goalsData.salesValue as SalesValueGoals).performanceBonus!.per)} extra
+                                                </p>
+                                              )}
+                                              <p>Seu valor: {formatValue(sellerValue, criterion)}</p>
+                                              <p className={cn("font-bold", isAchieved ? 'text-green-400' : 'text-yellow-400')}>
+                                                {isAchieved ? 'Atingida!' : 'Pendente'}
+                                              </p>
+                                            </div>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    );
+                                  })}
+                                </div>
+                              </TableCell>
+                              <TableCell>
                                 <TooltipProvider>
-                                <Tooltip>
+                                  <Tooltip>
                                     <TooltipTrigger asChild>
-                                    <span className="cursor-help border-b border-dotted border-green-400/50 flex items-center justify-end gap-2">
-                                        {formatPrize(seller.totalPrize, 'currency')}
-                                        <Info className="size-3.5 text-muted-foreground" />
-                                    </span>
+                                      <div className="flex flex-col gap-1.5 text-left w-full">
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-sm font-medium">{label}</span>
+                                          <span className="text-sm font-bold">{percent.toFixed(0)}%</span>
+                                        </div>
+                                        <Progress value={percent} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-purple-500" />
+                                      </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                    <div className="p-1 text-sm">
-                                        <h4 className="font-bold mb-2 text-base">Composição do Prêmio</h4>
-                                        <div className="space-y-1">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-muted-foreground">Vendas:</span>
-                                                <span className="font-mono ml-4 font-semibold">{formatPrize(seller.prizes.salesValue, 'currency')}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-muted-foreground">T. Médio:</span>
-                                                <span className="font-mono ml-4 font-semibold">{formatPrize(seller.prizes.ticketAverage, 'currency')}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-muted-foreground">PA:</span>
-                                                <span className="font-mono ml-4 font-semibold">{formatPrize(seller.prizes.pa, 'currency')}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-muted-foreground">Pontos:</span>
-                                                <span className="font-mono ml-4 font-semibold">{formatPrize(seller.prizes.points, 'currency')}</span>
-                                            </div>
-                                            {seller.teamBonus > 0 && (
-                                                <>
-                                                <div className="pt-2 mt-2 border-t border-border/50"></div>
-                                                <div className="flex justify-between items-center text-green-400">
-                                                    <span className="font-bold">Bônus de Equipe:</span>
-                                                    <span className="font-mono ml-4 font-bold">{formatPrize(seller.teamBonus, 'currency')}</span>
-                                                </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
+                                      <p>{details}</p>
                                     </TooltipContent>
-                                </Tooltip>
+                                  </Tooltip>
                                 </TooltipProvider>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-            </Card>
-        </div>
-        <div className="xl:col-span-1">
-            <TeamGoalProgress sellers={sellersData} goals={goalsData} />
-        </div>
-      </div>
+                              </TableCell>
+                            </>
+                          )}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+            </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
