@@ -14,11 +14,11 @@ export const sellersData: Seller[] = [
 
 export const goalsData: Goals = {
   salesValue: {
-    metinha: { threshold: 0, prize: 0 },
-    meta: { threshold: 0, prize: 0 },
-    metona: { threshold: 0, prize: 0 },
-    lendaria: { threshold: 0, prize: 0 },
-    performanceBonus: { per: 0, prize: 0 },
+    metinha: { threshold: 30000, prize: 200 },
+    meta: { threshold: 35000, prize: 250 },
+    metona: { threshold: 40000, prize: 300 },
+    lendaria: { threshold: 40000, prize: 300 },
+    performanceBonus: { per: 1000, prize: 50 },
   },
   ticketAverage: {
     metinha: { threshold: 0, prize: 0 },
