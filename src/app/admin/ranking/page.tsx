@@ -3,11 +3,12 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star, Minus, Users, CheckCircle } from 'lucide-react';
+import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star, Minus, Users, CheckCircle, Info } from 'lucide-react';
 import { useAdminContext } from '@/app/admin/layout';
 import type { Goals, Seller } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { cn, calculateSellerPrizes } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals }) => {
     if (!sellers || !goals?.salesValue?.metinha) {
@@ -79,17 +80,16 @@ export default function RankingPage() {
 
   const rankedSellers = useMemo(() => {
     const teamGoalMet = sellersData.length > 1 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold && goalsData.salesValue.metinha.threshold > 0);
-    const teamBonus = 100;
+    const teamBonusValue = 100;
 
     const sellersWithPrizes = sellersData.map(seller => {
         const calculated = calculateSellerPrizes(seller, goalsData);
         let { totalPrize } = calculated;
+        const teamBonus = teamGoalMet ? teamBonusValue : 0;
         
-        if (teamGoalMet) {
-            totalPrize += teamBonus;
-        }
+        totalPrize += teamBonus;
 
-        return { ...calculated, totalPrize };
+        return { ...calculated, totalPrize, teamBonus };
     });
 
     if (isAllPerformanceZero) return [...sellersWithPrizes].sort((a,b) => a.name.localeCompare(b.name));
@@ -148,7 +148,50 @@ export default function RankingPage() {
                             <TableCell className="text-right font-mono">{formatPrize(seller.salesValue, 'currency')}</TableCell>
                             <TableCell className="text-right font-mono">{formatPrize(seller.ticketAverage, 'currency')}</TableCell>
                             <TableCell className="text-right font-mono">{formatPrize(seller.pa, 'decimal')}</TableCell>
-                            <TableCell className="text-right font-bold text-lg text-green-400">{formatPrize(seller.totalPrize, 'currency')}</TableCell>
+                            <TableCell className="text-right font-bold text-lg text-green-400">
+                                <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                    <span className="cursor-help border-b border-dotted border-green-400/50 flex items-center justify-end gap-2">
+                                        {formatPrize(seller.totalPrize, 'currency')}
+                                        <Info className="size-3.5 text-muted-foreground" />
+                                    </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                    <div className="p-1 text-sm">
+                                        <h4 className="font-bold mb-2 text-base">Composição do Prêmio</h4>
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-muted-foreground">Vendas:</span>
+                                                <span className="font-mono ml-4 font-semibold">{formatPrize(seller.prizes.salesValue, 'currency')}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-muted-foreground">T. Médio:</span>
+                                                <span className="font-mono ml-4 font-semibold">{formatPrize(seller.prizes.ticketAverage, 'currency')}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-muted-foreground">PA:</span>
+                                                <span className="font-mono ml-4 font-semibold">{formatPrize(seller.prizes.pa, 'currency')}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-muted-foreground">Pontos:</span>
+                                                <span className="font-mono ml-4 font-semibold">{formatPrize(seller.prizes.points, 'currency')}</span>
+                                            </div>
+                                            {seller.teamBonus > 0 && (
+                                                <>
+                                                <div className="pt-2 mt-2 border-t border-border/50"></div>
+                                                <div className="flex justify-between items-center text-green-400">
+                                                    <span className="font-bold">Bônus de Equipe:</span>
+                                                    <span className="font-mono ml-4 font-bold">{formatPrize(seller.teamBonus, 'currency')}</span>
+                                                </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                                </TooltipProvider>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
