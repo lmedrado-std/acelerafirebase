@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star } from 'lucide-react';
+import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star, Info } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAdminContext } from '@/app/admin/layout';
@@ -29,9 +29,18 @@ export default function RankingPage() {
   const { sellers: sellersData, goals: goalsData } = useAdminContext();
 
   const sortedSellers = useMemo(() => {
+    const teamGoalMet = sellersData.length > 1 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold && goalsData.salesValue.metinha.threshold > 0);
+    const teamBonus = 100;
+
     const sellersWithPrizes = sellersData.map(seller => {
-        const calculatedPrizes = calculateSellerPrizes(seller, goalsData);
-        return { ...seller, ...calculatedPrizes };
+        const calculated = calculateSellerPrizes(seller, goalsData);
+        let { totalPrize } = calculated;
+        
+        if (teamGoalMet) {
+            totalPrize += teamBonus;
+        }
+
+        return { ...calculated, totalPrize, teamBonusApplied: teamGoalMet };
     });
 
     return sellersWithPrizes.sort((a, b) => {
@@ -217,7 +226,28 @@ export default function RankingPage() {
                           </TableCell>
                           <TableCell className="font-medium">{seller.name}</TableCell>
                            <TableCell className="text-right font-semibold text-green-400">
-                            {formatPrize(prizeToDisplay)}
+                             <div className="flex items-center justify-end gap-1.5">
+                                <span>{formatPrize(prizeToDisplay)}</span>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3.5 text-muted-foreground cursor-pointer" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <div className="p-2 text-sm text-left text-popover-foreground space-y-2 max-w-xs">
+                                                <h4 className="font-bold border-b pb-1 mb-1">Composição do Prêmio Total: {formatPrize(seller.totalPrize)}</h4>
+                                                <div className="flex justify-between gap-4"><span>Vendas:</span> <span className="font-bold">{formatPrize(seller.prizes.salesValue)}</span></div>
+                                                <div className="flex justify-between gap-4"><span>T. Médio:</span> <span className="font-bold">{formatPrize(seller.prizes.ticketAverage)}</span></div>
+                                                <div className="flex justify-between gap-4"><span>PA:</span> <span className="font-bold">{formatPrize(seller.prizes.pa)}</span></div>
+                                                <div className="flex justify-between gap-4"><span>Pontos:</span> <span className="font-bold">{formatPrize(seller.prizes.points)}</span></div>
+                                                {seller.teamBonusApplied && (
+                                                    <div className="flex justify-between gap-4 pt-2 border-t mt-2"><span>Bônus Equipe:</span> <span className="font-bold">{formatPrize(100)}</span></div>
+                                                )}
+                                            </div>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                           </TableCell>
                           {criterion !== 'totalPrize' && criterionGoals && (
                             <>
@@ -225,7 +255,7 @@ export default function RankingPage() {
                                 <div className="flex justify-center items-center gap-1.5 flex-wrap">
                                   {allGoals.map((goal) => {
                                     const isAchieved = sellerValue >= goal.threshold && goal.threshold > 0;
-                                    const config = goalLevelConfig[goal.name];
+                                    const config = goalLevelConfig[goal.label as GoalLevelName];
                                     return (
                                       <TooltipProvider key={goal.name}>
                                         <Tooltip>
@@ -238,12 +268,12 @@ export default function RankingPage() {
                                                   : 'bg-muted border-transparent text-muted-foreground opacity-60 hover:bg-muted'
                                               )}
                                             >
-                                              {goal.label}
+                                              {goal.name}
                                             </Badge>
                                           </TooltipTrigger>
                                           <TooltipContent>
                                             <div className="space-y-1 text-xs text-left">
-                                              <p className="font-semibold">{goal.label}</p>
+                                              <p className="font-semibold">{goal.name}</p>
                                               <p>Meta: {formatValue(goal.threshold, criterion)}</p>
                                               <p>Prêmio: <span className="font-bold text-green-400">{formatPrize(goal.prize)}</span></p>
                                               {criterion === 'salesValue' && goal.name === 'Lendária' && (goalsData.salesValue as SalesValueGoals).performanceBonus && (
