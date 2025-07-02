@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
 import {usePathname, useRouter} from 'next/navigation';
 import {
   GraduationCap,
@@ -98,12 +97,14 @@ function AdminLayoutContent({
   const { isMobile, setOpenMobile } = useSidebar();
   const [pendingPath, setPendingPath] = React.useState<string | null>(null);
 
-  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+  const handleNavigate = (path: string) => {
     if (pathname === '/admin/settings' && isDirty) {
-      e.preventDefault();
       setPendingPath(path);
-    } else if (isMobile) {
-      setOpenMobile(false);
+    } else {
+      router.push(path);
+      if (isMobile) {
+        setOpenMobile(false);
+      }
     }
   };
 
@@ -152,7 +153,7 @@ function AdminLayoutContent({
             {menuItems.map(item => (
               <SidebarMenuItem key={item.label}>
                 <SidebarMenuButton
-                  asChild
+                  onClick={() => handleNavigate(item.href)}
                   isActive={pathname === item.href}
                   className={cn(
                     'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:font-semibold',
@@ -160,12 +161,10 @@ function AdminLayoutContent({
                   )}
                   tooltip={{ children: item.label }}
                 >
-                  <Link href={item.href} onClick={(e) => handleLinkClick(e, item.href)}>
-                    <item.icon className="size-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">
-                      {item.label}
-                    </span>
-                  </Link>
+                  <item.icon className="size-5" />
+                  <span className="group-data-[collapsible=icon]:hidden">
+                    {item.label}
+                  </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
