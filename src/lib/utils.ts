@@ -27,26 +27,27 @@ export const calculateSellerPrizes = (seller: Seller, goals: Goals) => {
           const goalLevels = goals[crit];
           const sellerValue = crit === 'points' ? seller.points + seller.extraPoints : seller[crit];
 
-          let currentPrize = 0;
+          let tierPrize = 0;
           if (sellerValue >= goalLevels.lendaria.threshold && goalLevels.lendaria.threshold > 0) {
-            currentPrize = goalLevels.lendaria.prize;
+            tierPrize = goalLevels.lendaria.prize;
           } else if (sellerValue >= goalLevels.metona.threshold && goalLevels.metona.threshold > 0) {
-            currentPrize = goalLevels.metona.prize;
+            tierPrize = goalLevels.metona.prize;
           } else if (sellerValue >= goalLevels.meta.threshold && goalLevels.meta.threshold > 0) {
-            currentPrize = goalLevels.meta.prize;
+            tierPrize = goalLevels.meta.prize;
           } else if (sellerValue >= goalLevels.metinha.threshold && goalLevels.metinha.threshold > 0) {
-            currentPrize = goalLevels.metinha.prize;
+            tierPrize = goalLevels.metinha.prize;
           }
 
+          // Special case: Add performance bonus for sales on top of the tier prize
           if (crit === 'salesValue') {
               const salesGoals = goalLevels as SalesValueGoals;
               if (seller.salesValue >= salesGoals.lendaria.threshold && salesGoals.lendaria.threshold > 0 && salesGoals.performanceBonus && salesGoals.performanceBonus.per > 0) {
                   const excessSales = seller.salesValue - salesGoals.lendaria.threshold;
                   const bonusUnits = Math.floor(excessSales / salesGoals.performanceBonus.per);
-                  currentPrize += bonusUnits * salesGoals.performanceBonus.prize;
+                  tierPrize += bonusUnits * salesGoals.performanceBonus.prize;
               }
           }
-          prizes[crit] = currentPrize;
+          prizes[crit] = tierPrize;
       }
   });
 
