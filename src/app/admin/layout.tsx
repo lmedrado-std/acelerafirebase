@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import {usePathname, useRouter} from 'next/navigation';
 import {
   GraduationCap,
@@ -44,6 +45,7 @@ import {cn} from '@/lib/utils';
 import type {Admin, Goals, Mission, Seller, CycleSnapshot} from '@/lib/types';
 import {dataStore, useStore} from '@/lib/store';
 
+// Context Definition
 interface AdminContextType {
   sellers: Seller[];
   setSellers: (updater: (prev: Seller[]) => Seller[]) => void;
@@ -81,93 +83,148 @@ const menuItems = [
   {href: '/admin/settings', label: 'Configurações', icon: Shield},
 ];
 
-const AdminSidebarContent = ({
+
+function AdminLayoutContent({
+  children,
   isDirty,
-  setPendingPath,
-  performLogout,
+  setIsDirty,
 }: {
+  children: React.ReactNode;
   isDirty: boolean;
-  setPendingPath: (path: string | null) => void;
-  performLogout: () => void;
-}) => {
+  setIsDirty: (dirty: boolean) => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
+  const [pendingPath, setPendingPath] = React.useState<string | null>(null);
 
-  const handleNavigate = (path: string) => {
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     if (pathname === '/admin/settings' && isDirty) {
+      e.preventDefault();
       setPendingPath(path);
-    } else {
-      router.push(path);
-    }
-     if (isMobile) {
+    } else if (isMobile) {
       setOpenMobile(false);
     }
   };
-  
-  const handleLogoutClick = () => {
-    performLogout();
+
+  const handleLogout = () => {
+    const logoutPath = '/login';
+    if (pathname === '/admin/settings' && isDirty) {
+      setPendingPath(logoutPath);
+    } else {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('loggedInSellerId');
+      }
+      router.push(logoutPath);
+    }
     if (isMobile) {
       setOpenMobile(false);
     }
-  }
+  };
+
+  const handleConfirmNavigation = () => {
+    if (pendingPath) {
+      setIsDirty(false);
+      if (pendingPath === '/login' && typeof window !== 'undefined') {
+        localStorage.removeItem('loggedInSellerId');
+      }
+      router.push(pendingPath);
+      setPendingPath(null);
+      if (isMobile) {
+        setOpenMobile(false);
+      }
+    }
+  };
 
   return (
     <>
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <Logo />
-          <h1 className="text-xl font-semibold text-white group-data-[collapsible=icon]:hidden">
-            Acelera GT
-          </h1>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          {menuItems.map(item => (
-            <SidebarMenuItem key={item.label}>
-              <SidebarMenuButton
-                onClick={() => handleNavigate(item.href)}
-                isActive={pathname === item.href}
-                className={cn(
-                  'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:font-semibold',
-                  'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                )}
-                tooltip={{ children: item.label }}
-              >
-                <item.icon className="size-5" />
-                <span className="group-data-[collapsible=icon]:hidden">
-                  {item.label}
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter className="p-4 space-y-4">
-        <div className="flex items-center justify-center">
+      <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
+        <SidebarHeader className="p-4">
+          <div className="flex items-center gap-3">
+            <Logo />
+            <h1 className="text-xl font-semibold text-white group-data-[collapsible=icon]:hidden">
+              Acelera GT
+            </h1>
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            {menuItems.map(item => (
+              <SidebarMenuItem key={item.label}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === item.href}
+                  className={cn(
+                    'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:font-semibold',
+                    'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                  )}
+                  tooltip={{ children: item.label }}
+                >
+                  <Link href={item.href} onClick={(e) => handleLinkClick(e, item.href)}>
+                    <item.icon className="size-5" />
+                    <span className="group-data-[collapsible=icon]:hidden">
+                      {item.label}
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter className="p-4 space-y-4">
+          <div className="flex items-center justify-center">
             <Button
-              onClick={handleLogoutClick}
+              onClick={handleLogout}
               variant="secondary"
               className="w-full bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-accent-foreground"
             >
               <LogOut className="mr-2 group-data-[collapsible=icon]:mr-0" />
               <span className="group-data-[collapsible=icon]:hidden">Sair</span>
             </Button>
-        </div>
-      </SidebarFooter>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+      
+      <div className="flex flex-col flex-1">
+        <header className="sticky top-0 z-10 md:hidden flex items-center justify-between p-4 border-b bg-background">
+          <div className="flex items-center gap-2">
+            <Logo />
+            <h1 className="text-lg font-semibold text-white">Acelera GT</h1>
+          </div>
+          <SidebarTrigger />
+        </header>
+        <main className="flex-1 p-4 sm:p-6 md:p-8 bg-background">
+          {children}
+        </main>
+      </div>
+
+      <AlertDialog
+        open={!!pendingPath}
+        onOpenChange={() => setPendingPath(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem alterações não salvas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza de que deseja sair? Suas alterações serão perdidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmNavigation}>
+              Sair
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
-  )
+  );
 }
 
 export default function AdminLayout({children}: {children: React.ReactNode}) {
-  const pathname = usePathname();
-  const router = useRouter();
   const state = useStore(s => s);
   const [isClient, setIsClient] = React.useState(false);
-
   const [isDirty, setIsDirty] = React.useState(false);
-  const [pendingPath, setPendingPath] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setIsClient(true);
@@ -188,34 +245,11 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
     setIsDirty,
   }), [state.sellers, state.goals, state.missions, state.adminUser, state.cycleHistory, isDirty]);
 
-  const handleLogout = () => {
-    const logoutPath = '/login';
-    if (pathname === '/admin/settings' && isDirty) {
-      setPendingPath(logoutPath);
-    } else {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('loggedInSellerId');
-      }
-      router.push(logoutPath);
-    }
-  };
-
-  const handleConfirmNavigation = () => {
-    if (pendingPath) {
-      setIsDirty(false); 
-      if (pendingPath === '/login' && typeof window !== 'undefined') {
-        localStorage.removeItem('loggedInSellerId');
-      }
-      router.push(pendingPath);
-      setPendingPath(null);
-    }
-  };
-
   if (!isClient) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
-          <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-          Carregando...
+        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+        Carregando...
       </div>
     );
   }
@@ -224,49 +258,11 @@ export default function AdminLayout({children}: {children: React.ReactNode}) {
     <AdminContext.Provider value={contextValue}>
       <SidebarProvider>
         <div className="flex min-h-screen">
-          <Sidebar
-            collapsible="icon"
-            className="border-r border-sidebar-border bg-sidebar"
-          >
-            <AdminSidebarContent 
-              isDirty={isDirty} 
-              setPendingPath={setPendingPath} 
-              performLogout={handleLogout}
-            />
-          </Sidebar>
-          <div className="flex flex-col flex-1">
-            <header className="sticky top-0 z-10 md:hidden flex items-center justify-between p-4 border-b bg-background">
-              <div className="flex items-center gap-2">
-                <Logo />
-                <h1 className="text-lg font-semibold text-white">Acelera GT</h1>
-              </div>
-              <SidebarTrigger />
-            </header>
-            <main className="flex-1 p-4 sm:p-6 md:p-8 bg-background">
-              {children}
-            </main>
-          </div>
+          <AdminLayoutContent isDirty={isDirty} setIsDirty={setIsDirty}>
+            {children}
+          </AdminLayoutContent>
         </div>
       </SidebarProvider>
-      <AlertDialog
-        open={!!pendingPath}
-        onOpenChange={() => setPendingPath(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Você tem alterações não salvas</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza de que deseja sair? Suas alterações serão perdidas.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmNavigation}>
-              Sair
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </AdminContext.Provider>
   );
 }
