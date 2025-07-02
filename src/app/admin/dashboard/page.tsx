@@ -1,13 +1,95 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Trophy, DollarSign, LayoutGrid, Star, Ticket, Box, Crown } from "lucide-react";
+import { Users, Trophy, DollarSign, LayoutGrid, Star, Ticket, Box, Crown, Flag } from "lucide-react";
 import { useAdminContext } from '@/app/admin/layout';
 import SalesOverviewChart from '@/components/SalesOverviewChart';
+import type { Goals, Seller } from '@/lib/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+
+
+const GoalDistribution = ({ sellers, goals }: { sellers: Seller[], goals: Goals }) => {
+  const goalTiers = ['lendaria', 'metona', 'meta', 'metinha'] as const;
+  const goalLabels = {
+    lendaria: 'Lendária',
+    metona: 'Metona',
+    meta: 'Meta',
+    metinha: 'Metinha',
+    nenhuma: 'Nenhuma'
+  };
+
+  const distribution = useMemo(() => {
+    const criteria = ['salesValue', 'ticketAverage', 'pa', 'points'] as const;
+    const result: Record<typeof criteria[number], Record<string, number>> = {
+      salesValue: { nenhuma: 0, metinha: 0, meta: 0, metona: 0, lendaria: 0 },
+      ticketAverage: { nenhuma: 0, metinha: 0, meta: 0, metona: 0, lendaria: 0 },
+      pa: { nenhuma: 0, metinha: 0, meta: 0, metona: 0, lendaria: 0 },
+      points: { nenhuma: 0, metinha: 0, meta: 0, metona: 0, lendaria: 0 },
+    };
+
+    sellers.forEach(seller => {
+      criteria.forEach(criterion => {
+        const sellerValue = criterion === 'points' ? seller.points + seller.extraPoints : seller[criterion];
+        let tierAchieved: keyof typeof goalLabels = 'nenhuma';
+        
+        for (const tier of goalTiers) {
+          if (sellerValue >= goals[criterion][tier].threshold && goals[criterion][tier].threshold > 0) {
+            tierAchieved = tier;
+            break; // Stop at the highest tier achieved
+          }
+        }
+        result[criterion][tierAchieved]++;
+      });
+    });
+
+    return result;
+  }, [sellers, goals]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+            <Flag className="text-primary"/>
+            <span>Distribuição de Metas</span>
+        </CardTitle>
+        <CardDescription>
+          Quantos vendedores atingiram cada nível de meta.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="salesValue">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto p-1">
+            <TabsTrigger value="salesValue">Vendas</TabsTrigger>
+            <TabsTrigger value="ticketAverage">T. Médio</TabsTrigger>
+            <TabsTrigger value="pa">PA</TabsTrigger>
+            <TabsTrigger value="points">Pontos</TabsTrigger>
+          </TabsList>
+          {Object.keys(distribution).map((criterion) => (
+            <TabsContent key={criterion} value={criterion} className="mt-4">
+              <ul className="space-y-3">
+                {Object.entries(goalLabels).map(([tierKey, tierLabel]) => (
+                   <li key={tierKey} className="flex items-center justify-between text-sm">
+                      <span className={cn(
+                        "font-medium",
+                        tierKey === 'nenhuma' ? 'text-muted-foreground' : 'text-foreground'
+                      )}>{tierLabel}</span>
+                      <span className="font-bold text-primary">{distribution[criterion as keyof typeof distribution][tierKey]}</span>
+                   </li>
+                ))}
+              </ul>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </CardContent>
+    </Card>
+  )
+}
+
 
 export default function DashboardPage() {
-  const { sellers: sellersData } = useAdminContext();
+  const { sellers: sellersData, goals } = useAdminContext();
 
   const { 
     bestSellerByValue,
@@ -19,7 +101,6 @@ export default function DashboardPage() {
     totalPoints,
     averageTicket,
     averagePA,
-    pointsLeaders
   } = useMemo(() => {
     const totalSellers = sellersData.length;
     
@@ -34,7 +115,6 @@ export default function DashboardPage() {
         totalPoints: 0,
         averageTicket: 0,
         averagePA: 0,
-        pointsLeaders: []
       };
     }
 
@@ -55,7 +135,6 @@ export default function DashboardPage() {
       totalPoints,
       averageTicket: totalSellers > 0 ? totalTicket / totalSellers : 0,
       averagePA: totalSellers > 0 ? totalPA / totalSellers : 0,
-      pointsLeaders: [...sellersWithTotalPoints].sort((a, b) => b.totalPoints - a.totalPoints).slice(0, 3)
     };
   }, [sellersData]);
 
@@ -143,107 +222,12 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-       <div className="space-y-4">
-        <h2 className="text-2xl font-bold tracking-tight">Destaques Individuais</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="shadow-lg rounded-xl">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Melhor Vendedor (Vendas)</CardTitle>
-                    <Trophy className="h-4 w-4 text-yellow-400" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{bestSellerByValue.name}</div>
-                    <p className="text-xs text-muted-foreground">
-                        {bestSellerByValue.salesValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} em vendas
-                    </p>
-                </CardContent>
-            </Card>
-            <Card className="shadow-lg rounded-xl">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Melhor Ticket Médio</CardTitle>
-                    <Ticket className="h-4 w-4 text-blue-400" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{bestSellerByTicket.name}</div>
-                    <p className="text-xs text-muted-foreground">
-                        {bestSellerByTicket.ticketAverage.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </p>
-                </CardContent>
-            </Card>
-            <Card className="shadow-lg rounded-xl">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Melhor PA</CardTitle>
-                    <Box className="h-4 w-4 text-green-400" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{bestSellerByPA.name}</div>
-                    <p className="text-xs text-muted-foreground">
-                        {bestSellerByPA.pa.toFixed(2)} produtos por atendimento
-                    </p>
-                </CardContent>
-            </Card>
-            <Card className="shadow-lg rounded-xl">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Campeão de Pontos</CardTitle>
-                    <Star className="h-4 w-4 text-purple-400" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{bestSellerByPoints.name}</div>
-                    <p className="text-xs text-muted-foreground">
-                        {bestSellerByPoints.totalPoints.toLocaleString('pt-BR')} pontos acumulados
-                    </p>
-                </CardContent>
-            </Card>
-        </div>
-      </div>
-
+      
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           <SalesOverviewChart sellers={sellersData} />
         </div>
-        
-        <Card className="shadow-lg rounded-xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Crown className="text-yellow-400" />
-              <span>Destaque do Mês</span>
-            </CardTitle>
-            <CardDescription>
-              O vendedor com mais pontos ao final do mês ganha um prêmio de R$ 100,00.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {pointsLeaders.length > 0 ? (
-              <div>
-                <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/10 border border-primary/20">
-                  <div className="flex items-center justify-center rounded-full bg-primary text-primary-foreground font-bold size-8">1º</div>
-                  <div>
-                    <div className="font-semibold">{pointsLeaders[0].name}</div>
-                    <div className="text-sm text-primary/80">{pointsLeaders[0].totalPoints.toLocaleString('pt-BR')} pontos</div>
-                  </div>
-                </div>
-
-                {pointsLeaders.length > 1 && (
-                  <div className="mt-4">
-                    <h4 className="mb-2 text-sm font-semibold text-muted-foreground">Na disputa pelo pódio:</h4>
-                    <ul className="space-y-3">
-                      {pointsLeaders.slice(1).map((seller, index) => (
-                         <li key={seller.id} className="flex items-center gap-3 text-sm">
-                           <div className="flex items-center justify-center rounded-full bg-muted text-muted-foreground font-bold size-7">{index + 2}º</div>
-                           <div className="font-medium">{seller.name}</div>
-                           <div className="ml-auto font-semibold text-muted-foreground">{seller.totalPoints.toLocaleString('pt-BR')} pts</div>
-                         </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ) : (
-               <p className="text-sm text-center text-muted-foreground pt-8">Não há vendedores suficientes para a disputa.</p>
-            )}
-          </CardContent>
-        </Card>
+        <GoalDistribution sellers={sellersData} goals={goals} />
       </div>
     </div>
   );

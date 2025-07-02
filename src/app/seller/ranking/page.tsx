@@ -1,19 +1,67 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star, Minus, Users, CheckCircle } from 'lucide-react';
-import { useSellerContext } from '@/app/seller/layout';
-import type { Goals, Seller } from '@/lib/types';
-import { Progress } from '@/components/ui/progress';
-import { cn, calculateSellerPrizes } from '@/lib/utils';
+import React, {useMemo, useState} from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {Tabs, TabsList, TabsTrigger} from '@/components/ui/tabs';
+import {
+  Trophy,
+  DollarSign,
+  Ticket,
+  Box,
+  Star,
+  Users,
+  CheckCircle
+} from 'lucide-react';
+import {Label} from '@/components/ui/label';
+import {Badge} from '@/components/ui/badge';
+import {useSellerContext} from '@/app/seller/layout';
+import type {Goals, SalesValueGoals, Seller} from '@/lib/types';
+import {Progress} from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {cn, calculateSellerPrizes} from '@/lib/utils';
 
-const formatPrize = (value: number, type: 'currency' | 'points' | 'decimal') => {
-    if (type === 'currency') return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    if (type === 'points') return value.toLocaleString('pt-BR');
-    return value.toFixed(1);
-}
+type RankingCriterion =
+  | 'ticketAverage'
+  | 'pa'
+  | 'points'
+  | 'totalPrize';
+type GoalLevelName = 'Nenhuma' | 'Metinha' | 'Meta' | 'Metona' | 'Lendária';
+
+const goalLevelConfig: Record<GoalLevelName, {label: string; className: string}> =
+  {
+    Nenhuma: {
+      label: 'Nenhuma',
+      className:
+        'bg-muted border-transparent text-muted-foreground hover:bg-muted',
+    },
+    Metinha: {
+      label: 'Metinha',
+      className: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+    },
+    Meta: {
+      label: 'Meta',
+      className: 'bg-green-500/10 text-green-500 border-green-500/20',
+    },
+    Metona: {
+      label: 'Metona',
+      className: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    },
+    Lendária: {
+      label: 'Lendária',
+      className: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+    },
+  };
 
 const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals }) => {
     if (!sellers || !goals?.salesValue?.metinha) {
@@ -27,16 +75,18 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
     const isGoalAchieved = isGoalAchievable && sellersWhoReachedGoal.length === sellers.length;
     const progress = isGoalAchievable ? (sellersWhoReachedGoal.length / sellers.length) * 100 : 0;
 
+    const formatPrizeValue = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
     return (
         <Card className="bg-card/80 shadow-xl rounded-2xl ring-1 ring-white/10">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Users className="size-6 text-supermoda-secondary" />
-                    <span>Meta de Equipe: Metinha para Todos!</span>
+                    <Users className="size-6 text-secondary" />
+                    <span>Meta de Equipe</span>
                 </CardTitle>
                 <CardDescription>
                     Se todos atingirem a "Metinha" de vendas,
-                    cada um ganha um bônus de <span className="font-bold text-green-400">{formatPrize(teamBonus, 'currency')}</span>.
+                    cada um ganha um bônus de <span className="font-bold text-green-400">{formatPrizeValue(teamBonus)}</span>.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -61,7 +111,7 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
                             <span className="font-medium text-muted-foreground">Progresso</span>
                             <span className="font-bold">{sellersWhoReachedGoal.length} de {sellers.length} vendedores</span>
                         </div>
-                        <Progress value={progress} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-supermoda-primary [&>div]:to-supermoda-secondary" />
+                        <Progress value={progress} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-secondary" />
                     </div>
                 )}
             </CardContent>
@@ -69,11 +119,24 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
     );
 };
 
-export default function RankingPage() {
-  const { sellers: sellersData, goals: goalsData, currentSeller } = useSellerContext();
-  const [criterion, setCriterion] = useState<'totalPrize' | 'salesValue' | 'ticketAverage' | 'pa' | 'points' >('totalPrize');
 
-  const rankedSellers = useMemo(() => {
+export default function RankingPage() {
+  const [criterion, setCriterion] =
+    useState<RankingCriterion>('totalPrize');
+  const {
+    sellers: sellersData,
+    goals: goalsData,
+    currentSeller,
+  } = useSellerContext();
+
+  const tabs: { value: RankingCriterion; label: string; icon: React.ElementType }[] = [
+    { value: 'totalPrize', label: 'Prêmio Total', icon: Trophy },
+    { value: 'points', label: 'Pontos', icon: Star },
+    { value: 'ticketAverage', label: 'Ticket Médio', icon: Ticket },
+    { value: 'pa', label: 'PA', icon: Box },
+  ];
+
+  const sortedSellers = useMemo(() => {
     const teamGoalMet = sellersData.length > 1 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold && goalsData.salesValue.metinha.threshold > 0);
     const teamBonus = 100;
 
@@ -89,78 +152,335 @@ export default function RankingPage() {
     });
 
     return sellersWithPrizes.sort((a, b) => {
-        if (criterion === 'totalPrize') return b.totalPrize - a.totalPrize;
-        if (criterion === 'points') return (b.points + b.extraPoints) - (a.points + a.extraPoints);
-        return b[criterion as 'salesValue' | 'ticketAverage' | 'pa'] - a[criterion as 'salesValue' | 'ticketAverage' | 'pa'];
+      if (criterion === 'totalPrize') {
+        return b.totalPrize - a.totalPrize;
+      }
+      if (criterion === 'points') {
+        return b.points + b.extraPoints - (a.points + a.extraPoints);
+      }
+      return b[criterion] - a[criterion];
     });
   }, [sellersData, goalsData, criterion]);
 
-  const myData = useMemo(() => {
-    if (!currentSeller) return null;
-    const sellerWithPrize = rankedSellers.find(s => s.id === currentSeller.id);
-    if (!sellerWithPrize) return null;
-    const rank = rankedSellers.findIndex(s => s.id === currentSeller.id) + 1;
-    return { ...sellerWithPrize, rank };
-  }, [currentSeller, rankedSellers]);
+  const currentUserRank = useMemo(() => {
+    if (!currentSeller) return 0;
+    const rank = sortedSellers.findIndex(s => s.id === currentSeller.id);
+    return rank + 1;
+  }, [sortedSellers, currentSeller]);
+
+  const getCriterionLabel = (currentCriterion: RankingCriterion) => {
+    const tab = tabs.find(t => t.value === currentCriterion);
+    return tab ? tab.label : '';
+  };
+
+  const formatValue = (value: number, currentCriterion: RankingCriterion | 'salesValue') => {
+    if (currentCriterion === 'pa') {
+      return value.toFixed(1);
+    }
+    if (currentCriterion === 'points') {
+      return value.toLocaleString('pt-BR');
+    }
+    return `R$ ${value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  };
+
+  const formatPrize = (value: number) => {
+    return value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+  };
+
+  const getGoalProgress = (value: number, criterion: RankingCriterion | 'salesValue') => {
+    if (criterion === 'totalPrize')
+      return {percent: 100, label: 'N/A', details: 'N/A'};
+    const goals = goalsData[criterion];
+    let nextGoal, currentGoalBase, nextGoalLabel, progress;
+
+    if (value >= goals.lendaria.threshold) {
+      return {
+        percent: 100,
+        label: `Nível Lendário Atingido!`,
+        details: `${formatValue(value, criterion)}`,
+      };
+    }
+    if (value >= goals.metona.threshold) {
+      nextGoal = goals.lendaria.threshold;
+      currentGoalBase = goals.metona.threshold;
+      nextGoalLabel = 'Lendária';
+    } else if (value >= goals.meta.threshold) {
+      nextGoal = goals.metona.threshold;
+      currentGoalBase = goals.meta.threshold;
+      nextGoalLabel = 'Metona';
+    } else if (value >= goals.metinha.threshold) {
+      nextGoal = goals.meta.threshold;
+      currentGoalBase = goals.metinha.threshold;
+      nextGoalLabel = 'Meta';
+    } else {
+      nextGoal = goals.metinha.threshold;
+      currentGoalBase = 0;
+      nextGoalLabel = 'Metinha';
+    }
+
+    if (nextGoal - currentGoalBase <= 0) {
+      progress = 100;
+    } else {
+      progress = Math.min(
+        100,
+        ((value - currentGoalBase) / (nextGoal - currentGoalBase)) * 100
+      );
+    }
+
+    return {
+      percent: progress,
+      label: `Próximo Nível: ${nextGoalLabel}`,
+      details: `${formatValue(value, criterion)} / ${formatValue(nextGoal, criterion)}`,
+    };
+  };
+  
+  const sellerData = sortedSellers.find(s => s.id === currentSeller.id);
+
+  if (!sellerData) {
+    return (
+        <div className="flex items-center justify-center min-h-[400px]">
+            <p>Carregando seus dados de performance...</p>
+        </div>
+    )
+  }
+  
+  const sellerValue =
+    criterion === 'totalPrize'
+      ? sellerData.totalPrize
+      : criterion === 'points'
+      ? sellerData.points + sellerData.extraPoints
+      : sellerData[criterion];
+
+  const criterionGoals =
+    criterion !== 'totalPrize' ? goalsData[criterion] : null;
+
+  const allGoals: Array<{
+    name: GoalLevelName;
+    threshold: number;
+    prize: number;
+  }> = criterionGoals
+    ? [
+        {name: 'Metinha', ...criterionGoals.metinha},
+        {name: 'Meta', ...criterionGoals.meta},
+        {name: 'Metona', ...criterionGoals.metona},
+        {name: 'Lendária', ...criterionGoals.lendaria},
+      ]
+    : [];
+
+  const {percent, label, details} = getGoalProgress(
+    sellerValue,
+    criterion
+  );
+
+  const prizeToDisplay =
+    criterion === 'totalPrize'
+      ? sellerData.totalPrize
+      : sellerData.prizes[criterion as keyof typeof sellerData.prizes] ||
+        0;
 
 
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
         <Trophy className="size-8 text-primary" />
-        <h1 className="text-3xl font-bold font-sans">Meu Desempenho no Ranking</h1>
+        <h1 className="text-3xl font-bold">Meu Desempenho</h1>
       </div>
-      <div className="w-full pb-2">
-         <Tabs value={criterion} onValueChange={(v) => setCriterion(v as any)} className="w-full">
-            <TabsList className="h-auto p-1 flex flex-wrap justify-start">
-                <TabsTrigger value="totalPrize"><Trophy className="mr-2"/>Prêmio Total</TabsTrigger>
-                <TabsTrigger value="salesValue"><DollarSign className="mr-2"/>Vendas</TabsTrigger>
-                <TabsTrigger value="points"><Star className="mr-2"/>Pontos</TabsTrigger>
-                <TabsTrigger value="ticketAverage"><Ticket className="mr-2"/>T. Médio</TabsTrigger>
-                <TabsTrigger value="pa"><Box className="mr-2"/>PA</TabsTrigger>
-            </TabsList>
-        </Tabs>
-      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sua Posição no Ranking Geral</CardTitle>
+          <CardDescription>
+            Sua classificação atual com base no critério:{' '}
+            <span className="font-bold text-primary">
+              {getCriterionLabel(criterion)}
+            </span>
+            .
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-3xl font-bold">
+            {currentUserRank > 0 ? (
+              <>
+                <span className="text-muted-foreground">Posição:</span>{' '}
+                <span className="text-primary">{currentUserRank}º</span>
+              </>
+            ) : (
+              'Carregando sua posição...'
+            )}
+          </p>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-2 space-y-4">
-            <Card className="bg-gradient-to-br from-card to-background/80 shadow-xl rounded-2xl ring-1 ring-white/10">
-                 <CardHeader>
-                    <CardTitle>Sua Posição por <span className="text-primary">{
-                        {totalPrize: "Prêmio Total", salesValue: "Vendas", points: "Pontos", ticketAverage: "Ticket Médio", pa: "PA"}[criterion]
-                    }</span></CardTitle>
-                 </CardHeader>
-                 <CardContent>
-                    {myData ? (
-                         <div className={cn(
-                            "rounded-xl p-4 shadow-lg border-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4",
-                             myData.rank === 1 && "border-yellow-400/50 bg-primary/10 animate-glow",
-                             myData.rank === 2 && "border-slate-400/50 bg-secondary/10",
-                             myData.rank === 3 && "border-orange-400/50 bg-chart-3/10",
-                             myData.rank > 3 && "border-border/50"
-                         )}>
-                            <div className="flex items-center gap-4">
-                               <div className="text-4xl font-black w-16 text-center">{myData.rank}º</div>
-                               <div>
-                                  <p className="text-2xl font-bold">{myData.name}</p>
-                                  <p className="text-muted-foreground">Sua posição na equipe</p>
-                               </div>
-                            </div>
-                            <div className="w-full sm:w-auto mt-4 sm:mt-0 text-left sm:text-right">
-                               <p className="text-3xl font-bold text-green-400">{formatPrize(
-                                   criterion === 'totalPrize' ? myData.totalPrize : 
-                                   criterion === 'points' ? myData.points + myData.extraPoints :
-                                   myData[criterion as keyof Seller],
-                                   criterion === 'points' ? 'points' : criterion === 'pa' ? 'decimal' : 'currency'
-                               )}</p>
-                               <p className="text-sm text-muted-foreground">Valor no critério</p>
-                            </div>
-                         </div>
-                    ) : (
-                        <p className="text-muted-foreground">Carregando seus dados...</p>
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle>Análise por Critério</CardTitle>
+              <CardDescription>
+                Selecione um critério para visualizar seus resultados em detalhes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Tabs
+                  value={criterion}
+                  onValueChange={value => setCriterion(value as RankingCriterion)}
+                >
+                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-input p-1 h-auto">
+                    {tabs.map(tab => (
+                       <TabsTrigger
+                        key={tab.value}
+                        value={tab.value}
+                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"
+                      >
+                        <tab.icon className="mr-2 size-4" /> {tab.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle>Detalhes por {getCriterionLabel(criterion)}</CardTitle>
+              <CardDescription>
+                Seu resultado detalhado para o critério selecionado.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div className={cn(
+                        "flex flex-col space-y-1 rounded-lg border p-4",
+                        criterion === 'totalPrize' && "sm:col-span-2"
+                     )}>
+                        <p className="text-sm text-muted-foreground">Prêmio Recebido (Neste Critério)</p>
+                        <p className="text-3xl font-bold text-green-400">{formatPrize(prizeToDisplay)}</p>
+                    </div>
+
+                    {criterion !== 'totalPrize' && (
+                      <div className="flex flex-col space-y-1 rounded-lg border p-4">
+                          <p className="text-sm text-muted-foreground">Seu Resultado</p>
+                          <p className="text-3xl font-bold">
+                              {formatValue(sellerValue, criterion)}
+                          </p>
+                      </div>
                     )}
-                 </CardContent>
-            </Card>
+                </div>
+
+                {criterion !== 'totalPrize' && criterionGoals && (
+                <>
+                    <div>
+                        <h4 className="font-semibold mb-3">Níveis de Meta Atingidos</h4>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            {allGoals.map((goal) => {
+                            const isAchieved = sellerValue >= goal.threshold;
+                            const config = goalLevelConfig[goal.name];
+                            return (
+                                <TooltipProvider key={goal.name}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                    <Badge
+                                        className={cn(
+                                        'transition-all duration-300 ease-in-out',
+                                        isAchieved && goal.threshold > 0
+                                            ? `${config.className} scale-110 border-2 border-current shadow-lg`
+                                            : 'bg-muted border-transparent text-muted-foreground opacity-60 hover:bg-muted'
+                                        )}
+                                    >
+                                        {goal.label}
+                                    </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                    <div className="space-y-1 text-xs text-left">
+                                        <p className="font-semibold">
+                                        {goal.name}
+                                        </p>
+                                        <p>
+                                        Meta:{' '}
+                                        {formatValue(
+                                            goal.threshold,
+                                            criterion
+                                        )}
+                                        </p>
+                                        <p>
+                                        Prêmio:{' '}
+                                        <span className="font-bold text-green-400">
+                                            {formatPrize(goal.prize)}
+                                        </span>
+                                        </p>
+                                        {criterion === 'salesValue' &&
+                                        goal.name === 'Lendária' &&
+                                        goalsData.salesValue
+                                            .performanceBonus && (
+                                            <p className="text-xs italic text-primary/80 pt-1 border-t border-border/20 mt-1">
+                                            Bônus: +
+                                            {formatPrize(
+                                                goalsData.salesValue
+                                                .performanceBonus.prize
+                                            )}{' '}
+                                            a cada{' '}
+                                            {formatPrize(
+                                                goalsData.salesValue
+                                                .performanceBonus.per
+                                            )}{' '}
+                                            extra
+                                            </p>
+                                        )}
+                                        <p>
+                                        Seu valor:{' '}
+                                        {formatValue(sellerValue, criterion)}
+                                        </p>
+                                        <p
+                                        className={cn(
+                                            'font-bold',
+                                            isAchieved
+                                            ? 'text-green-400'
+                                            : 'text-yellow-400'
+                                        )}
+                                        >
+                                        {isAchieved
+                                            ? 'Atingida!'
+                                            : 'Pendente'}
+                                        </p>
+                                    </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                                </TooltipProvider>
+                            );
+                            })}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 className="font-semibold mb-3">Progresso para Próxima Meta</h4>
+                        <TooltipProvider>
+                            <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex flex-col gap-1.5 text-left w-full">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-medium">
+                                    {label}
+                                    </span>
+                                    <span className="text-sm font-bold">
+                                    {percent.toFixed(0)}%
+                                    </span>
+                                </div>
+                                <Progress
+                                    value={percent}
+                                    className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-secondary"
+                                />
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{details}</p>
+                            </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                </>
+                )}
+            </CardContent>
+          </Card>
         </div>
         <div className="xl:col-span-1">
              <TeamGoalProgress sellers={sellersData} goals={goalsData} />
