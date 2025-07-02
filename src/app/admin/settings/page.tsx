@@ -166,11 +166,11 @@ export default function SettingsPage() {
   const handleSaveChanges = () => {
     setSellers(() => localSellers);
     setGoals(() => localGoals);
+    setIsDirty(false); // Explicitly reset dirty state after saving
      toast({
         title: "Alterações Salvas!",
         description: "Suas configurações foram atualizadas com sucesso.",
     });
-    setIsDirty(false);
   };
 
   const handleEndCycle = () => {
