@@ -175,8 +175,7 @@ export default function SellerDashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <MetricCard title="Valor de Vendas" icon={DollarSign} value={currentSeller.salesValue} criterion="salesValue" goals={goals} currentSeller={currentSeller} />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <MetricCard title="Total de Pontos" icon={Star} value={totalPoints} criterion="points" goals={goals} currentSeller={currentSeller} />
           <MetricCard title="Ticket Médio" icon={Ticket} value={currentSeller.ticketAverage} criterion="ticketAverage" goals={goals} currentSeller={currentSeller} />
           <MetricCard title="Produtos por Atendimento (PA)" icon={Box} value={currentSeller.pa} criterion="pa" goals={goals} currentSeller={currentSeller} />
