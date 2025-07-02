@@ -24,48 +24,9 @@ import {
 } from '@/components/ui/table';
 import { History, Medal, Trophy, Award } from 'lucide-react';
 import { useAdminContext } from '@/app/admin/layout';
-import type { Seller, Goals, SalesValueGoals } from '@/lib/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-// This function can be a shared utility, but for now, we'll keep it here.
-const calculateSellerPrizes = (seller: Seller, goals: Goals) => {
-    const prizes: Record<keyof Omit<Goals, 'salesValue' | 'gamification'>, number> = {
-        salesValue: 0,
-        ticketAverage: 0,
-        pa: 0,
-        points: 0,
-    };
-
-    const allCriteria: Array<keyof typeof prizes> = ['salesValue', 'ticketAverage', 'pa', 'points'];
-    
-    allCriteria.forEach(crit => {
-        if (crit === 'salesValue' || crit === 'ticketAverage' || crit === 'pa' || crit === 'points') {
-            const goalLevels = goals[crit];
-            const sellerValue = crit === 'points' ? seller.points + seller.extraPoints : seller[crit];
-
-            let currentPrize = 0;
-            if (sellerValue >= goalLevels.metinha.threshold) currentPrize += goalLevels.metinha.prize;
-            if (sellerValue >= goalLevels.meta.threshold) currentPrize += goalLevels.meta.prize;
-            if (sellerValue >= goalLevels.metona.threshold) currentPrize += goalLevels.metona.prize;
-            if (sellerValue >= goalLevels.lendaria.threshold) currentPrize += goalLevels.lendaria.prize;
-
-            if (crit === 'salesValue') {
-                const salesGoals = goalLevels as SalesValueGoals;
-                if (seller.salesValue > salesGoals.lendaria.threshold && salesGoals.performanceBonus && salesGoals.performanceBonus.per > 0) {
-                    const excessSales = seller.salesValue - salesGoals.lendaria.threshold;
-                    const bonusUnits = Math.floor(excessSales / salesGoals.performanceBonus.per);
-                    currentPrize += bonusUnits * salesGoals.performanceBonus.prize;
-                }
-            }
-            prizes[crit] = currentPrize;
-        }
-    });
-
-    const totalPrize = Object.values(prizes).reduce((sum, p) => sum + p, 0);
-
-    return { ...seller, totalPrize };
-}
+import { calculateSellerPrizes } from '@/lib/utils';
 
 const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -100,8 +61,18 @@ export default function HistoricoPage() {
           {reversedHistory.length > 0 ? (
             <Accordion type="single" collapsible className="w-full">
               {reversedHistory.map((snapshot) => {
-                const rankedSellers = snapshot.sellers.map(s => calculateSellerPrizes(s, snapshot.goals))
-                  .sort((a, b) => b.totalPrize - a.totalPrize);
+                const rankedSellers = snapshot.sellers.map(s => {
+                  const teamGoalMet = snapshot.sellers.length > 1 && snapshot.sellers.every(seller => seller.salesValue >= snapshot.goals.salesValue.metinha.threshold && snapshot.goals.salesValue.metinha.threshold > 0);
+                  const teamBonus = 100;
+                  const calculated = calculateSellerPrizes(s, snapshot.goals);
+                  let { totalPrize } = calculated;
+              
+                  if (teamGoalMet) {
+                      totalPrize += teamBonus;
+                  }
+              
+                  return { ...calculated, totalPrize };
+                }).sort((a, b) => b.totalPrize - a.totalPrize);
 
                 return (
                   <AccordionItem value={snapshot.id} key={snapshot.id}>

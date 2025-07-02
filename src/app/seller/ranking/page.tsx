@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Medal, Award, DollarSign, Ticket, Box, Star, Minus, Users, CheckCircle } from 'lucide-react';
 import { useSellerContext } from '@/app/seller/layout';
-import type { Goals, Seller, SalesValueGoals } from '@/lib/types';
+import type { Goals, Seller } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
+import { cn, calculateSellerPrizes } from '@/lib/utils';
 
 const formatPrize = (value: number, type: 'currency' | 'points' | 'decimal') => {
     if (type === 'currency') return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -22,7 +22,7 @@ const TeamGoalProgress = ({ sellers, goals }: { sellers: Seller[], goals: Goals 
     
     const teamBonus = 100;
 
-    const sellersWhoReachedGoal = sellers.filter(s => s.salesValue >= goals.salesValue.metinha.threshold);
+    const sellersWhoReachedGoal = sellers.filter(s => s.salesValue >= goals.salesValue.metinha.threshold && goals.salesValue.metinha.threshold > 0);
     const isGoalAchievable = sellers.length > 1;
     const isGoalAchieved = isGoalAchievable && sellersWhoReachedGoal.length === sellers.length;
     const progress = isGoalAchievable ? (sellersWhoReachedGoal.length / sellers.length) * 100 : 0;
@@ -73,43 +73,19 @@ export default function RankingPage() {
   const { sellers: sellersData, goals: goalsData, currentSeller } = useSellerContext();
   const [criterion, setCriterion] = useState<'totalPrize' | 'salesValue' | 'ticketAverage' | 'pa' | 'points' >('totalPrize');
 
-  const isAllPerformanceZero = useMemo(() => 
-    sellersData.every(s => s.salesValue === 0 && s.ticketAverage === 0 && s.pa === 0 && s.points === 0 && s.extraPoints === 0), [sellersData]);
-
   const rankedSellers = useMemo(() => {
-    const teamGoalMet = sellersData.length > 1 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold);
+    const teamGoalMet = sellersData.length > 1 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold && goalsData.salesValue.metinha.threshold > 0);
     const teamBonus = 100;
 
     const sellersWithPrizes = sellersData.map(seller => {
-        const prizes: Record<keyof Omit<Goals, 'salesValue' | 'gamification'>, number> = {
-            salesValue: 0, ticketAverage: 0, pa: 0, points: 0,
-        };
-        const allCriteria: Array<keyof typeof prizes> = ['salesValue', 'ticketAverage', 'pa', 'points'];
+      const calculated = calculateSellerPrizes(seller, goalsData);
+      let { totalPrize } = calculated;
         
-        allCriteria.forEach(crit => {
-            if (crit in goalsData && (crit === 'salesValue' || crit === 'ticketAverage' || crit === 'pa' || crit === 'points')) {
-                const goals = goalsData[crit];
-                const sellerValue = crit === 'points' ? seller.points + seller.extraPoints : seller[crit];
-                let currentPrize = 0;
-                if (sellerValue >= goals.metinha.threshold) currentPrize += goals.metinha.prize;
-                if (sellerValue >= goals.meta.threshold) currentPrize += goals.meta.prize;
-                if (sellerValue >= goals.metona.threshold) currentPrize += goals.metona.prize;
-                if (sellerValue >= goals.lendaria.threshold) currentPrize += goals.lendaria.prize;
+      if (teamGoalMet) {
+          totalPrize += teamBonus;
+      }
 
-                if (crit === 'salesValue') {
-                    const salesGoals = goals as SalesValueGoals;
-                    if (seller.salesValue > salesGoals.lendaria.threshold && salesGoals.performanceBonus && salesGoals.performanceBonus.per > 0) {
-                        const excessSales = seller.salesValue - salesGoals.lendaria.threshold;
-                        const bonusUnits = Math.floor(excessSales / salesGoals.performanceBonus.per);
-                        currentPrize += bonusUnits * salesGoals.performanceBonus.prize;
-                    }
-                }
-                prizes[crit] = currentPrize;
-            }
-        });
-        let totalPrize = Object.values(prizes).reduce((sum, p) => sum + p, 0);
-        if (teamGoalMet) totalPrize += teamBonus;
-        return { ...seller, totalPrize, prizes };
+      return { ...calculated, totalPrize };
     });
 
     return sellersWithPrizes.sort((a, b) => {
