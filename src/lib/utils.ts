@@ -13,6 +13,12 @@ export const calculateSellerPrizes = (seller: Seller, goals: Goals) => {
     pa: 0,
     points: 0,
   };
+  const zeroedPrizes = {...prizes};
+
+  // Rule: Must meet points 'metinha' to be eligible for any prize
+  if ((seller.points + seller.extraPoints) < goals.points.metinha.threshold) {
+    return { ...seller, prizes: zeroedPrizes, totalPrize: 0 };
+  }
 
   const allCriteria: Array<keyof typeof prizes> = ['salesValue', 'ticketAverage', 'pa', 'points'];
   
@@ -22,8 +28,6 @@ export const calculateSellerPrizes = (seller: Seller, goals: Goals) => {
           const sellerValue = crit === 'points' ? seller.points + seller.extraPoints : seller[crit];
 
           let currentPrize = 0;
-          // Non-cumulative prize logic: check from highest to lowest tier.
-          // A prize is only awarded if the threshold is greater than 0.
           if (sellerValue >= goalLevels.lendaria.threshold && goalLevels.lendaria.threshold > 0) {
             currentPrize = goalLevels.lendaria.prize;
           } else if (sellerValue >= goalLevels.metona.threshold && goalLevels.metona.threshold > 0) {
@@ -34,7 +38,6 @@ export const calculateSellerPrizes = (seller: Seller, goals: Goals) => {
             currentPrize = goalLevels.metinha.prize;
           }
 
-          // Add performance bonus on top of the Lendaria prize
           if (crit === 'salesValue') {
               const salesGoals = goalLevels as SalesValueGoals;
               if (seller.salesValue >= salesGoals.lendaria.threshold && salesGoals.lendaria.threshold > 0 && salesGoals.performanceBonus && salesGoals.performanceBonus.per > 0) {

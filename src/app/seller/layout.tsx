@@ -71,20 +71,20 @@ const SellerSidebarContent = () => {
   const { isMobile, setOpenMobile } = useSidebar();
 
   const handleNavigate = (href: string) => {
+    router.push(href);
     if (isMobile) {
       setOpenMobile(false);
     }
-    router.push(href);
   };
 
   const handleLogout = () => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
     if (typeof window !== 'undefined') {
       localStorage.removeItem('loggedInSellerId');
     }
     router.push('/login');
+     if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   return (
@@ -93,7 +93,7 @@ const SellerSidebarContent = () => {
         <div className="flex items-center gap-3">
           <Logo />
           <h1 className="text-xl font-semibold text-white group-data-[collapsible=icon]:hidden">
-            Acelera GT Supermoda
+            Acelera GT
           </h1>
         </div>
       </SidebarHeader>
@@ -108,6 +108,7 @@ const SellerSidebarContent = () => {
                   'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:font-semibold',
                   'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                 )}
+                tooltip={{ children: item.label }}
               >
                 <item.icon className="size-5" />
                 <span className="group-data-[collapsible=icon]:hidden">
@@ -190,7 +191,7 @@ export default function SellerLayout({children}: {children: React.ReactNode}) {
             <header className="sticky top-0 z-10 md:hidden flex items-center justify-between p-4 border-b bg-background">
               <div className="flex items-center gap-2">
                 <Logo />
-                <h1 className="text-lg font-semibold text-white">Acelera GT Supermoda</h1>
+                <h1 className="text-lg font-semibold text-white">Acelera GT</h1>
               </div>
               <SidebarTrigger />
             </header>

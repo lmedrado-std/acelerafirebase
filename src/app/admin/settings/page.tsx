@@ -9,7 +9,7 @@ import { Users, Trash2, Flag, Shield, Info, ClipboardList, Trophy, RefreshCw, Al
 import React, { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminContext } from '@/app/admin/layout';
-import type { Seller, Goals, GoalLevels, GamificationPoints, PointsGoals } from '@/lib/types';
+import type { Seller, Goals, GoalLevels, GamificationPoints, PointsGoals, SalesValueGoals } from '@/lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
   Tooltip,
@@ -113,16 +113,13 @@ export default function SettingsPage() {
     field: 'per' | 'prize',
     value: string
   ) => {
-    setLocalGoals(prev => ({
-      ...prev,
-      salesValue: {
-        ...prev.salesValue,
-        performanceBonus: {
-          ...(prev.salesValue.performanceBonus ?? { per: 0, prize: 0 }),
-          [field]: parseFloat(value) || 0,
-        },
-      },
-    }));
+    setLocalGoals(prev => {
+      const updatedGoals = JSON.parse(JSON.stringify(prev));
+      const bonus = updatedGoals.salesValue.performanceBonus ?? { per: 0, prize: 0 };
+      bonus[field] = parseFloat(value) || 0;
+      updatedGoals.salesValue.performanceBonus = bonus;
+      return updatedGoals;
+    });
   };
 
   const handleAddSeller = (e: React.FormEvent<HTMLFormElement>) => {
@@ -173,10 +170,10 @@ export default function SettingsPage() {
         title: "Alterações Salvas!",
         description: "Suas configurações foram atualizadas com sucesso.",
     });
+    setIsDirty(false);
   };
 
   const handleEndCycle = () => {
-    // 1. Create a snapshot of the current state
     const snapshot = {
         id: new Date().toISOString(),
         endDate: new Date().toISOString(),
@@ -184,10 +181,8 @@ export default function SettingsPage() {
         goals: JSON.parse(JSON.stringify(goals)),
     };
 
-    // 2. Add snapshot to history
     setCycleHistory(prev => [...prev, snapshot]);
 
-    // 3. Reset performance data for all sellers
     setSellers(prevSellers => 
         prevSellers.map(seller => ({
             ...seller,
@@ -242,7 +237,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
                  {localSellers.length > 0 ? (
-                  <div className="rounded-md border border-border">
+                  <div className="rounded-md border border-border overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -257,7 +252,7 @@ export default function SettingsPage() {
                       <TableBody>
                         {localSellers.map((seller) => (
                           <TableRow key={seller.id}>
-                            <TableCell className="font-medium">{seller.name}</TableCell>
+                            <TableCell className="font-medium whitespace-nowrap">{seller.name}</TableCell>
                             <TableCell>
                                 <Input
                                   type="number"
@@ -341,7 +336,7 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                   {localSellers.length > 0 && (
-                    <div className="rounded-md border border-border mb-6">
+                    <div className="rounded-md border border-border mb-6 overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -354,12 +349,12 @@ export default function SettingsPage() {
                         <TableBody>
                           {localSellers.map((seller) => (
                             <TableRow key={seller.id}>
-                              <TableCell className="font-medium">{seller.name}</TableCell>
+                              <TableCell className="font-medium whitespace-nowrap">{seller.name}</TableCell>
                               <TableCell>
-                                <Input value={seller.nickname} onChange={(e) => handleSellerCredsUpdate(seller.id, 'nickname', e.target.value)} className="bg-input" />
+                                <Input value={seller.nickname} onChange={(e) => handleSellerCredsUpdate(seller.id, 'nickname', e.target.value)} className="bg-input min-w-[150px]" />
                               </TableCell>
                               <TableCell>
-                                <Input type="text" value={seller.password} onChange={(e) => handleSellerCredsUpdate(seller.id, 'password', e.target.value)} className="bg-input" />
+                                <Input type="text" value={seller.password} onChange={(e) => handleSellerCredsUpdate(seller.id, 'password', e.target.value)} className="bg-input min-w-[150px]" />
                               </TableCell>
                               <TableCell className="text-center">
                                 <Button variant="ghost" size="icon" onClick={() => handleDeleteSeller(seller.id)} aria-label="Remover vendedor">
@@ -438,11 +433,11 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md">
                         <div className="space-y-1.5">
                             <Label htmlFor="performance-bonus-prize">Bônus (R$)</Label>
-                            <Input id="performance-bonus-prize" type="number" placeholder="Ex: 50" value={localGoals.salesValue.performanceBonus?.prize ?? ''} onChange={(e) => handlePerformanceBonusChange('prize', e.target.value)} className="bg-input" />
+                            <Input id="performance-bonus-prize" type="number" placeholder="Ex: 50" value={(localGoals.salesValue as SalesValueGoals).performanceBonus?.prize ?? ''} onChange={(e) => handlePerformanceBonusChange('prize', e.target.value)} className="bg-input" />
                         </div>
                         <div className="space-y-1.5">
                             <Label htmlFor="performance-bonus-per">A cada (R$)</Label>
-                            <Input id="performance-bonus-per" type="number" placeholder="Ex: 1000" value={localGoals.salesValue.performanceBonus?.per ?? ''} onChange={(e) => handlePerformanceBonusChange('per', e.target.value)} className="bg-input" />
+                            <Input id="performance-bonus-per" type="number" placeholder="Ex: 1000" value={(localGoals.salesValue as SalesValueGoals).performanceBonus?.per ?? ''} onChange={(e) => handlePerformanceBonusChange('per', e.target.value)} className="bg-input" />
                         </div>
                     </div>
                 </div>

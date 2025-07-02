@@ -37,29 +37,29 @@ export default function RankingPage() {
     const sellersWithPrizes = sellersData.map(seller => {
         const calculated = calculateSellerPrizes(seller, goalsData);
         let { totalPrize, prizes } = calculated;
-
-        const sellerTotalPoints = seller.points + seller.extraPoints;
-        
-        // Rule: Must meet points 'metinha' to be eligible for any prize
-        if (sellerTotalPoints < goalsData.points.metinha.threshold) {
-            totalPrize = 0;
-            // also zero out the prize breakdown
-            (Object.keys(prizes) as Array<keyof typeof prizes>).forEach(k => {
-                prizes[k] = 0;
-            });
-        }
         
         let teamBonusApplied = false;
-        if (teamGoalMet && totalPrize > 0) { // Only apply team bonus if they are eligible for other prizes
+        if (teamGoalMet) { 
             totalPrize += teamBonus;
             teamBonusApplied = true;
         }
 
         let topScorerBonus = 0;
-        if (topScorer && seller.id === topScorer.id && totalPrize > 0) { // Only apply top scorer if eligible
+        if (topScorer && seller.id === topScorer.id) {
             topScorerBonus = goalsData.points.topScorerPrize || 0;
             totalPrize += topScorerBonus;
         }
+        
+        // Final check: if they didn't meet the points goal, they get nothing
+        if ((seller.points + seller.extraPoints) < goalsData.points.metinha.threshold) {
+          totalPrize = 0;
+          (Object.keys(prizes) as Array<keyof typeof prizes>).forEach(k => {
+              prizes[k] = 0;
+          });
+          teamBonusApplied = false;
+          topScorerBonus = 0;
+        }
+
 
         return { ...calculated, prizes, totalPrize, teamBonusApplied, topScorerBonus };
     });
@@ -170,6 +170,9 @@ export default function RankingPage() {
                 <Label className="text-sm font-medium mb-2 block">Critério de Classificação</Label>
                 <Tabs value={criterion} onValueChange={(value) => setCriterion(value as RankingCriterion)}>
                     <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 bg-input p-1 h-auto">
+                        <TabsTrigger value="totalPrize" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+                            <Trophy className="mr-2 size-4" /> Prêmio Total
+                        </TabsTrigger>
                         <TabsTrigger value="salesValue" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
                             <DollarSign className="mr-2 size-4" /> Vendas
                         </TabsTrigger>
@@ -181,9 +184,6 @@ export default function RankingPage() {
                         </TabsTrigger>
                           <TabsTrigger value="points" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
                             <Star className="mr-2 size-4" /> Pontos
-                        </TabsTrigger>
-                         <TabsTrigger value="totalPrize" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
-                            <Trophy className="mr-2 size-4" /> Prêmio Total
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>
@@ -236,10 +236,6 @@ export default function RankingPage() {
 
                       const { percent, label, details } = criterion !== 'totalPrize' ? getGoalProgress(sellerValue, criterion) : { percent: 0, label: '', details: ''};
                       
-                      const prizeToDisplay = criterion === 'totalPrize' 
-                        ? seller.totalPrize 
-                        : (seller.prizes[criterion as keyof typeof seller.prizes] || 0);
-
                       return (
                         <TableRow key={seller.id} className={index < 3 ? 'bg-card-foreground/5' : ''}>
                           <TableCell className="font-bold text-lg flex justify-center items-center h-full py-4">

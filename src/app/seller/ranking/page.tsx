@@ -16,7 +16,8 @@ import {
   Box,
   Star,
   Users,
-  CheckCircle
+  CheckCircle,
+  Info
 } from 'lucide-react';
 import {Label} from '@/components/ui/label';
 import {Badge} from '@/components/ui/badge';
@@ -129,8 +130,9 @@ export default function RankingPage() {
     currentSeller,
   } = useSellerContext();
 
-  const tabs: { value: RankingCriterion; label: string; icon: React.ElementType }[] = [
+  const tabs: { value: RankingCriterion | 'salesValue'; label: string; icon: React.ElementType }[] = [
     { value: 'totalPrize', label: 'Prêmio Total', icon: Trophy },
+    { value: 'salesValue', label: 'Vendas', icon: DollarSign },
     { value: 'points', label: 'Pontos', icon: Star },
     { value: 'ticketAverage', label: 'Ticket Médio', icon: Ticket },
     { value: 'pa', label: 'PA', icon: Box },
@@ -140,15 +142,21 @@ export default function RankingPage() {
     const teamGoalMet = sellersData.length > 1 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold && goalsData.salesValue.metinha.threshold > 0);
     const teamBonus = 100;
 
-    const sellersWithPrizes = sellersData.map(seller => {
-      const calculated = calculateSellerPrizes(seller, goalsData);
-      let { totalPrize } = calculated;
-        
-      if (teamGoalMet) {
-          totalPrize += teamBonus;
-      }
+    const topScorer = sellersData.length > 0 ? sellersData.reduce((max, seller) => (max.points + max.extraPoints) > (seller.points + seller.extraPoints) ? max : seller) : null;
 
-      return { ...calculated, totalPrize };
+    const sellersWithPrizes = sellersData.map(seller => {
+        const calculated = calculateSellerPrizes(seller, goalsData);
+        let { totalPrize } = calculated;
+        
+        if (teamGoalMet) {
+          totalPrize += teamBonus;
+        }
+
+        if (topScorer && seller.id === topScorer.id) {
+          totalPrize += (goalsData.points.topScorerPrize || 0);
+        }
+
+        return { ...calculated, totalPrize };
     });
 
     return sellersWithPrizes.sort((a, b) => {
@@ -156,7 +164,7 @@ export default function RankingPage() {
         return b.totalPrize - a.totalPrize;
       }
       if (criterion === 'points') {
-        return b.points + b.extraPoints - (a.points + a.extraPoints);
+        return (b.points + b.extraPoints) - (a.points + a.extraPoints);
       }
       return b[criterion] - a[criterion];
     });
@@ -168,7 +176,7 @@ export default function RankingPage() {
     return rank + 1;
   }, [sortedSellers, currentSeller]);
 
-  const getCriterionLabel = (currentCriterion: RankingCriterion) => {
+  const getCriterionLabel = (currentCriterion: RankingCriterion | 'salesValue') => {
     const tab = tabs.find(t => t.value === currentCriterion);
     return tab ? tab.label : '';
   };
@@ -219,7 +227,7 @@ export default function RankingPage() {
     }
 
     if (nextGoal - currentGoalBase <= 0) {
-      progress = 100;
+      progress = value > 0 ? 100 : 0;
     } else {
       progress = Math.min(
         100,
@@ -249,7 +257,7 @@ export default function RankingPage() {
       ? sellerData.totalPrize
       : criterion === 'points'
       ? sellerData.points + sellerData.extraPoints
-      : sellerData[criterion];
+      : sellerData[criterion as keyof typeof sellerData];
 
   const criterionGoals =
     criterion !== 'totalPrize' ? goalsData[criterion] : null;
@@ -275,8 +283,7 @@ export default function RankingPage() {
   const prizeToDisplay =
     criterion === 'totalPrize'
       ? sellerData.totalPrize
-      : sellerData.prizes[criterion as keyof typeof sellerData.prizes] ||
-        0;
+      : (sellerData.prizes[criterion as keyof typeof sellerData.prizes] || 0);
 
 
   return (
@@ -325,7 +332,7 @@ export default function RankingPage() {
                   value={criterion}
                   onValueChange={value => setCriterion(value as RankingCriterion)}
                 >
-                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-input p-1 h-auto">
+                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 bg-input p-1 h-auto">
                     {tabs.map(tab => (
                        <TabsTrigger
                         key={tab.value}
@@ -374,7 +381,7 @@ export default function RankingPage() {
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {allGoals.map((goal) => {
                             const isAchieved = sellerValue >= goal.threshold;
-                            const config = goalLevelConfig[goal.name];
+                            const config = goalLevelConfig[goal.name as GoalLevelName];
                             return (
                                 <TooltipProvider key={goal.name}>
                                 <Tooltip>
@@ -387,7 +394,7 @@ export default function RankingPage() {
                                             : 'bg-muted border-transparent text-muted-foreground opacity-60 hover:bg-muted'
                                         )}
                                     >
-                                        {goal.label}
+                                        {config.label}
                                     </Badge>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -410,18 +417,18 @@ export default function RankingPage() {
                                         </p>
                                         {criterion === 'salesValue' &&
                                         goal.name === 'Lendária' &&
-                                        goalsData.salesValue
+                                        (goalsData.salesValue as SalesValueGoals)
                                             .performanceBonus && (
                                             <p className="text-xs italic text-primary/80 pt-1 border-t border-border/20 mt-1">
                                             Bônus: +
                                             {formatPrize(
-                                                goalsData.salesValue
-                                                .performanceBonus.prize
+                                                (goalsData.salesValue as SalesValueGoals)
+                                                .performanceBonus!.prize
                                             )}{' '}
                                             a cada{' '}
                                             {formatPrize(
-                                                goalsData.salesValue
-                                                .performanceBonus.per
+                                                (goalsData.salesValue as SalesValueGoals)
+                                                .performanceBonus!.per
                                             )}{' '}
                                             extra
                                             </p>

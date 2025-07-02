@@ -231,7 +231,6 @@ const generateQuizFlow = ai.defineFlow(
   async input => {
     try {
       const response = await prompt(input);
-      console.log('📤 Resposta da IA:', response);
 
       if (response.output) {
         if (response.output.questions.length === 0) {
@@ -245,7 +244,7 @@ const generateQuizFlow = ai.defineFlow(
       const match = rawText.match(jsonRegex);
       const jsonString = match?.[1] || match?.[2];
 
-      if (!jsonString) throw new Error('JSON inválido ou ausente');
+      if (!jsonString) throw new Error('JSON inválido ou ausente na resposta da IA');
 
       const parsed = JSON.parse(jsonString);
       const validated = GenerateQuizOutputSchema.parse(parsed);
