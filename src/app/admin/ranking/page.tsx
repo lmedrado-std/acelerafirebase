@@ -255,7 +255,7 @@ export default function RankingPage() {
                                 <div className="flex justify-center items-center gap-1.5 flex-wrap">
                                   {allGoals.map((goal) => {
                                     const isAchieved = sellerValue >= goal.threshold && goal.threshold > 0;
-                                    const config = goalLevelConfig[goal.label as GoalLevelName];
+                                    const config = goalLevelConfig[goal.name];
                                     return (
                                       <TooltipProvider key={goal.name}>
                                         <Tooltip>
