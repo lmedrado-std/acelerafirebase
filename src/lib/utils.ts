@@ -22,7 +22,8 @@ export const calculateSellerPrizes = (seller: Seller, goals: Goals) => {
           const sellerValue = crit === 'points' ? seller.points + seller.extraPoints : seller[crit];
 
           let currentPrize = 0;
-          // Non-cumulative prize logic: check from highest to lowest tier
+          // Non-cumulative prize logic: check from highest to lowest tier.
+          // A prize is only awarded if the threshold is greater than 0.
           if (sellerValue >= goalLevels.lendaria.threshold && goalLevels.lendaria.threshold > 0) {
             currentPrize = goalLevels.lendaria.prize;
           } else if (sellerValue >= goalLevels.metona.threshold && goalLevels.metona.threshold > 0) {
