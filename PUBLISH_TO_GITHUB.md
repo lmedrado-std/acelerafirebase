@@ -32,7 +32,7 @@ Este comando prepara sua pasta para o controle de versão. É como dizer "Quero 
 Copie e cole o comando abaixo no terminal e aperte Enter:
 ```bash
 git init -b main
-```
+``
 
 ### Passo 2: Adicionar Todos os Arquivos
 Este comando adiciona todos os seus arquivos de código ao "pacote" que será salvo. O `.` significa "tudo nesta pasta".
