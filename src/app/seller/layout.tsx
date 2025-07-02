@@ -58,9 +58,6 @@ const menuItems = [
   {href: '/seller/dashboard', label: 'Dashboard', icon: LayoutGrid},
   {href: '/seller/ranking', label: 'Meu Desempenho', icon: Trophy},
   {href: '/seller/missions', label: 'Missões', icon: Target},
-  {href: '/seller/academia', label: 'Academia', icon: GraduationCap},
-  {href: '/seller/quiz', label: 'Quiz', icon: Puzzle},
-  {href: '/seller/loja', label: 'Loja', icon: ShoppingBag},
   {href: '/seller/historico', label: 'Histórico', icon: History},
   {href: '/seller/perfil', label: 'Meu Perfil', icon: User},
 ];

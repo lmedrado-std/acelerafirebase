@@ -203,18 +203,21 @@ export default function RankingPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[100px] text-center">Posição</TableHead>
+                      <TableHead className="w-[80px] text-center">Posição</TableHead>
                       <TableHead>Vendedor</TableHead>
-                       <TableHead className="text-right">
+                      {criterion !== 'totalPrize' && (
+                        <TableHead className="text-right">{getCriterionLabel(criterion)}</TableHead>
+                      )}
+                      <TableHead className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                            <span>Prêmios (R$)</span>
+                            <span>Prêmio</span>
                             <Award className="size-4 text-green-400" />
                         </div>
                       </TableHead>
                       {criterion !== 'totalPrize' && (
                         <>
-                          <TableHead className="w-[320px] text-center">Nível da Meta</TableHead>
-                          <TableHead className="w-[300px]">Progresso da Meta</TableHead>
+                          <TableHead className="w-[300px] text-center">Nível da Meta</TableHead>
+                          <TableHead className="w-[280px]">Progresso</TableHead>
                         </>
                       )}
                     </TableRow>
@@ -225,6 +228,9 @@ export default function RankingPage() {
                         ? seller.totalPrize
                         : (criterion === 'points' ? seller.points + seller.extraPoints : seller[criterion]);
 
+                      const prizeForCriterion = seller.prizes[criterion as keyof typeof seller.prizes] || 0;
+                      const prizeToDisplay = criterion === 'totalPrize' ? seller.totalPrize : prizeForCriterion;
+                      
                       const criterionGoals = criterion !== 'totalPrize' ? goalsData[criterion] : null;
                       
                       const allGoals: Array<{ name: GoalLevelName; threshold: number; prize: number }> = criterionGoals ? [
@@ -242,9 +248,12 @@ export default function RankingPage() {
                             {getRankIndicator(index)}
                           </TableCell>
                           <TableCell className="font-medium">{seller.name}</TableCell>
+                          {criterion !== 'totalPrize' && (
+                            <TableCell className="text-right font-semibold">{formatValue(sellerValue, criterion)}</TableCell>
+                          )}
                            <TableCell className="text-right font-semibold text-green-400">
                              <div className="flex items-center justify-end gap-1.5">
-                                <span>{formatPrize(seller.totalPrize)}</span>
+                                <span>{formatPrize(prizeToDisplay)}</span>
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
@@ -252,7 +261,7 @@ export default function RankingPage() {
                                         </TooltipTrigger>
                                         <TooltipContent>
                                             <div className="p-2 text-sm text-left text-popover-foreground space-y-2 max-w-xs">
-                                                <h4 className="font-bold border-b pb-1 mb-1">Composição do Prêmio: {formatPrize(seller.totalPrize)}</h4>
+                                                <h4 className="font-bold border-b pb-1 mb-1">Composição do Prêmio Total: {formatPrize(seller.totalPrize)}</h4>
                                                 <div className="flex justify-between gap-4"><span>Vendas:</span> <span className="font-bold">{formatPrize(seller.prizes.salesValue)}</span></div>
                                                 <div className="flex justify-between gap-4"><span>T. Médio:</span> <span className="font-bold">{formatPrize(seller.prizes.ticketAverage)}</span></div>
                                                 <div className="flex justify-between gap-4"><span>PA:</span> <span className="font-bold">{formatPrize(seller.prizes.pa)}</span></div>
@@ -291,7 +300,7 @@ export default function RankingPage() {
                                                   : 'bg-muted border-transparent text-muted-foreground opacity-60 hover:bg-muted'
                                               )}
                                             >
-                                              {goal.label}
+                                              {config.label}
                                             </Badge>
                                           </TooltipTrigger>
                                           <TooltipContent>
