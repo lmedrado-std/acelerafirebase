@@ -37,6 +37,7 @@ export const goalsData: Goals = {
     meta: { threshold: 1500, prize: 50 },
     metona: { threshold: 2000, prize: 75 },
     lendaria: { threshold: 2500, prize: 100 },
+    topScorerPrize: 100,
   },
   gamification: {
     course: { 'Fácil': 50, 'Médio': 100, 'Difícil': 150 },

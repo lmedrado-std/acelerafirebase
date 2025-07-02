@@ -61,11 +61,15 @@ export type GamificationPoints = {
   };
 };
 
+export type PointsGoals = GoalLevels & {
+  topScorerPrize?: number;
+};
+
 export type Goals = {
   salesValue: SalesValueGoals;
   ticketAverage: GoalLevels;
   pa: GoalLevels;
-  points: GoalLevels;
+  points: PointsGoals;
   gamification: GamificationPoints;
 };
 

@@ -9,7 +9,7 @@ import { Users, Trash2, Flag, Shield, Info, ClipboardList, Trophy, RefreshCw, Al
 import React, { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminContext } from '@/app/admin/layout';
-import type { Seller, Goals, GoalLevels, GamificationPoints } from '@/lib/types';
+import type { Seller, Goals, GoalLevels, GamificationPoints, PointsGoals } from '@/lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
   Tooltip,
@@ -72,23 +72,28 @@ export default function SettingsPage() {
 
 
   const handleGoalChange = (
-    criterion: keyof Goals,
-    level: keyof GoalLevels | keyof GamificationPoints['course'] | keyof GamificationPoints['quiz'],
-    field: 'threshold' | 'prize' | 'points',
+    criterion: keyof Omit<Goals, 'gamification'>,
+    level: keyof GoalLevels,
+    field: 'threshold' | 'prize',
     value: string
   ) => {
     setLocalGoals(prev => {
         const updatedGoals = JSON.parse(JSON.stringify(prev));
-        if (criterion === 'gamification') {
-            if ('course' in updatedGoals.gamification && (level === 'Fácil' || level === 'Médio' || level === 'Difícil')) {
-                 updatedGoals.gamification.course[level] = parseFloat(value) || 0;
-            } else if ('quiz' in updatedGoals.gamification && (level === 'Fácil' || level === 'Médio' || level === 'Difícil')) {
-                 updatedGoals.gamification.quiz[level] = parseFloat(value) || 0;
-            }
-        } else if (criterion !== 'gamification' && (level === 'metinha' || level === 'meta' || level === 'metona' || level === 'lendaria')) {
-             updatedGoals[criterion][level][field as 'threshold' | 'prize'] = parseFloat(value) || 0;
+        if (criterion in updatedGoals) {
+             updatedGoals[criterion][level][field] = parseFloat(value) || 0;
         }
         return updatedGoals;
+    });
+  };
+  
+  const handlePointsPropertyChange = (
+    field: keyof Omit<PointsGoals, keyof GoalLevels>,
+    value: string
+  ) => {
+    setLocalGoals(prev => {
+      const updatedGoals = JSON.parse(JSON.stringify(prev));
+      updatedGoals.points[field] = parseFloat(value) || 0;
+      return updatedGoals;
     });
   };
 
@@ -494,6 +499,19 @@ export default function SettingsPage() {
                             </div>
                         </div>
                     ))}
+                </div>
+                <div className="mt-6 border-t pt-6">
+                    <h4 className="text-base font-medium mb-2 flex items-center gap-2">
+                        <Trophy className="size-5 text-yellow-400" />
+                        Prêmio da Corrida de Pontos
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                        Prêmio extra para o vendedor com a maior pontuação no final do ciclo (deve atingir no mínimo a metinha de pontos).
+                    </p>
+                    <div className="max-w-xs space-y-1.5">
+                        <Label htmlFor="top-scorer-prize">Prêmio (R$)</Label>
+                        <Input id="top-scorer-prize" type="number" placeholder="Ex: 100" value={localGoals.points.topScorerPrize ?? ''} onChange={(e) => handlePointsPropertyChange('topScorerPrize', e.target.value)} className="bg-input" />
+                    </div>
                 </div>
               </div>
                <div className="border-t border-border pt-8">

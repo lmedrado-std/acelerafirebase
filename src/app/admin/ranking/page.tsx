@@ -25,22 +25,43 @@ const goalLevelConfig: Record<GoalLevelName, { label: string; className: string 
 };
 
 export default function RankingPage() {
-  const [criterion, setCriterion] = useState<RankingCriterion>('salesValue');
+  const [criterion, setCriterion] = useState<RankingCriterion>('totalPrize');
   const { sellers: sellersData, goals: goalsData } = useAdminContext();
 
   const sortedSellers = useMemo(() => {
     const teamGoalMet = sellersData.length > 1 && sellersData.every(s => s.salesValue >= goalsData.salesValue.metinha.threshold && goalsData.salesValue.metinha.threshold > 0);
     const teamBonus = 100;
+    
+    const topScorer = sellersData.length > 0 ? sellersData.reduce((max, seller) => (max.points + max.extraPoints) > (seller.points + seller.extraPoints) ? max : seller) : null;
 
     const sellersWithPrizes = sellersData.map(seller => {
         const calculated = calculateSellerPrizes(seller, goalsData);
-        let { totalPrize } = calculated;
+        let { totalPrize, prizes } = calculated;
+
+        const sellerTotalPoints = seller.points + seller.extraPoints;
         
-        if (teamGoalMet) {
+        // Rule: Must meet points 'metinha' to be eligible for any prize
+        if (sellerTotalPoints < goalsData.points.metinha.threshold) {
+            totalPrize = 0;
+            // also zero out the prize breakdown
+            (Object.keys(prizes) as Array<keyof typeof prizes>).forEach(k => {
+                prizes[k] = 0;
+            });
+        }
+        
+        let teamBonusApplied = false;
+        if (teamGoalMet && totalPrize > 0) { // Only apply team bonus if they are eligible for other prizes
             totalPrize += teamBonus;
+            teamBonusApplied = true;
         }
 
-        return { ...calculated, totalPrize, teamBonusApplied: teamGoalMet };
+        let topScorerBonus = 0;
+        if (topScorer && seller.id === topScorer.id && totalPrize > 0) { // Only apply top scorer if eligible
+            topScorerBonus = goalsData.points.topScorerPrize || 0;
+            totalPrize += topScorerBonus;
+        }
+
+        return { ...calculated, prizes, totalPrize, teamBonusApplied, topScorerBonus };
     });
 
     return sellersWithPrizes.sort((a, b) => {
@@ -227,7 +248,7 @@ export default function RankingPage() {
                           <TableCell className="font-medium">{seller.name}</TableCell>
                            <TableCell className="text-right font-semibold text-green-400">
                              <div className="flex items-center justify-end gap-1.5">
-                                <span>{formatPrize(prizeToDisplay)}</span>
+                                <span>{formatPrize(seller.totalPrize)}</span>
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
@@ -235,13 +256,19 @@ export default function RankingPage() {
                                         </TooltipTrigger>
                                         <TooltipContent>
                                             <div className="p-2 text-sm text-left text-popover-foreground space-y-2 max-w-xs">
-                                                <h4 className="font-bold border-b pb-1 mb-1">Composição do Prêmio Total: {formatPrize(seller.totalPrize)}</h4>
+                                                <h4 className="font-bold border-b pb-1 mb-1">Composição do Prêmio: {formatPrize(seller.totalPrize)}</h4>
                                                 <div className="flex justify-between gap-4"><span>Vendas:</span> <span className="font-bold">{formatPrize(seller.prizes.salesValue)}</span></div>
                                                 <div className="flex justify-between gap-4"><span>T. Médio:</span> <span className="font-bold">{formatPrize(seller.prizes.ticketAverage)}</span></div>
                                                 <div className="flex justify-between gap-4"><span>PA:</span> <span className="font-bold">{formatPrize(seller.prizes.pa)}</span></div>
                                                 <div className="flex justify-between gap-4"><span>Pontos:</span> <span className="font-bold">{formatPrize(seller.prizes.points)}</span></div>
                                                 {seller.teamBonusApplied && (
-                                                    <div className="flex justify-between gap-4 pt-2 border-t mt-2"><span>Bônus Equipe:</span> <span className="font-bold">{formatPrize(100)}</span></div>
+                                                    <div className="flex justify-between gap-4 pt-1 border-t mt-1"><span>Bônus Equipe:</span> <span className="font-bold">{formatPrize(100)}</span></div>
+                                                )}
+                                                {seller.topScorerBonus > 0 && (
+                                                    <div className="flex justify-between gap-4 pt-1 border-t mt-1 text-yellow-400"><span>Prêmio Top Pontos:</span> <span className="font-bold">{formatPrize(seller.topScorerBonus)}</span></div>
+                                                )}
+                                                {(seller.points + seller.extraPoints) < goalsData.points.metinha.threshold && (
+                                                    <div className="flex justify-between gap-4 pt-1 border-t mt-1 text-destructive"><span>Não elegível:</span> <span className="font-bold">Não atingiu a metinha de pontos</span></div>
                                                 )}
                                             </div>
                                         </TooltipContent>
@@ -255,7 +282,7 @@ export default function RankingPage() {
                                 <div className="flex justify-center items-center gap-1.5 flex-wrap">
                                   {allGoals.map((goal) => {
                                     const isAchieved = sellerValue >= goal.threshold && goal.threshold > 0;
-                                    const config = goalLevelConfig[goal.name];
+                                    const config = goalLevelConfig[goal.name as GoalLevelName];
                                     return (
                                       <TooltipProvider key={goal.name}>
                                         <Tooltip>
@@ -268,12 +295,12 @@ export default function RankingPage() {
                                                   : 'bg-muted border-transparent text-muted-foreground opacity-60 hover:bg-muted'
                                               )}
                                             >
-                                              {goal.name}
+                                              {goal.label}
                                             </Badge>
                                           </TooltipTrigger>
                                           <TooltipContent>
                                             <div className="space-y-1 text-xs text-left">
-                                              <p className="font-semibold">{goal.name}</p>
+                                              <p className="font-semibold">{goal.label}</p>
                                               <p>Meta: {formatValue(goal.threshold, criterion)}</p>
                                               <p>Prêmio: <span className="font-bold text-green-400">{formatPrize(goal.prize)}</span></p>
                                               {criterion === 'salesValue' && goal.name === 'Lendária' && (goalsData.salesValue as SalesValueGoals).performanceBonus && (
